@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Kinly",
+    "slug": "Kinly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "kinly",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.kinly.familycompanion",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Kinly displays your location to trusted family members on the live family map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Kinly shares background arrival and departure updates with your family circle.",
+        "NSMicrophoneUsageDescription": "Kinly uses your microphone for voice notes and conversational family memories.",
+        "NSCameraUsageDescription": "Kinly uses your camera to capture memories and scan family documents into the vault.",
+        "NSPhotoLibraryUsageDescription": "Kinly lets you select photos for family memories, albums, and member profiles."
+      }
+    },
+    "android": {
+      "package": "com.kinly.familycompanion",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#208AEF",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
