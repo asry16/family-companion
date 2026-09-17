@@ -146,3 +146,4 @@ Kinly treats family data as sacrosanct:
 Kinly is distributed under the MIT License. See [LICENSE](./LICENSE) for details.
 
 Developed with ❤️ for families everywhere.
+# family-companion
