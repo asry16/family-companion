@@ -9,8 +9,8 @@ import {
   Linking,
   Animated,
   PanResponder,
-  Dimensions,
   Modal,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -95,6 +95,17 @@ export function getMemberPresence(member?: FamilyMember | null, isDark: boolean 
   };
 }
 
+// Convert lon/lat to tile numbers for real map raster layer
+function lon2tile(lon: number, zoom: number) {
+  return Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
+}
+function lat2tile(lat: number, zoom: number) {
+  return Math.floor(
+    ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) *
+      Math.pow(2, zoom)
+  );
+}
+
 export const FamilyCommandCenter: React.FC = () => {
   const router = useRouter();
   const { colors, isDark, isElderly } = useAppTheme();
@@ -104,20 +115,22 @@ export const FamilyCommandCenter: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
 
-  // Invite & Join Modal State
+  // Invite Modal State
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
-  const [inviteModalTab, setInviteModalTab] = useState<'invite' | 'join'>('invite');
+
+  // Real GPS & Location Permission State
+  const [locationPermissionNeeded, setLocationPermissionNeeded] = useState<boolean>(false);
+  const [realUserCoords, setRealUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Interactive Map State: Pan & Zoom
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  // Map style toggle (Vector vs Satellite)
+  // Map mode: 'streets' | 'satellite'
   const [mapMode, setMapMode] = useState<'streets' | 'satellite'>('streets');
 
   // Animation drivers
   const pulseAnim = useRef(new Animated.Value(0)).current;
-  const radarAnim = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(400)).current;
 
   // Haptic feedback helper
@@ -149,19 +162,6 @@ export const FamilyCommandCenter: React.FC = () => {
     return () => loop.stop();
   }, [pulseAnim]);
 
-  // Radar circular scan for single-member onboarding
-  useEffect(() => {
-    const radarLoop = Animated.loop(
-      Animated.timing(radarAnim, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: true,
-      })
-    );
-    radarLoop.start();
-    return () => radarLoop.stop();
-  }, [radarAnim]);
-
   // Handle Bottom Sheet Animation
   useEffect(() => {
     if (sheetVisible) {
@@ -180,9 +180,54 @@ export const FamilyCommandCenter: React.FC = () => {
     }
   }, [sheetVisible, sheetTranslateY]);
 
+  // Request real device location
+  const handleRequestLocation = () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationPermissionNeeded(false);
+          setRealUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.log('Location request error:', error.message);
+          setLocationPermissionNeeded(true);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setLocationPermissionNeeded(false);
+    }
+  };
+
+  // Check location permission on mount
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationPermissionNeeded(false);
+          setRealUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          // If denied
+          if (error.code === 1) {
+            setLocationPermissionNeeded(true);
+          }
+        },
+        { timeout: 4000 }
+      );
+    }
+  }, []);
+
   // Ensure active user is displayed if members list is empty
   const displayMembers: FamilyMember[] = useMemo(() => {
-    if (members && members.length > 0) {
+    if (members && Array.isArray(members) && members.length > 0) {
       return members;
     }
     if (activeUser) {
@@ -214,8 +259,8 @@ export const FamilyCommandCenter: React.FC = () => {
   const statusSummary = useMemo(() => {
     let safeCount = 0;
     let homeCount = 0;
-    let movingCount = 0;
-    let latestActivity = 'Just now';
+    let liveCount = 0;
+    let latestActivity = '2 min ago';
 
     displayMembers.forEach((m) => {
       const presence = getMemberPresence(m, isDark);
@@ -225,8 +270,8 @@ export const FamilyCommandCenter: React.FC = () => {
       if (presence.status === 'HOME') {
         homeCount += 1;
       }
-      if (presence.status === 'MOVING') {
-        movingCount += 1;
+      if (presence.isLive) {
+        liveCount += 1;
       }
       if (m.lastUpdated && m.lastUpdated !== 'Just now') {
         latestActivity = m.lastUpdated;
@@ -235,12 +280,38 @@ export const FamilyCommandCenter: React.FC = () => {
 
     return {
       safeCount: Math.max(safeCount, 1),
-      homeCount,
-      movingCount,
+      homeCount: Math.max(homeCount, 1),
+      liveCount: Math.max(liveCount, 1),
       latestActivity,
-      broadcastingCount: displayMembers.filter((m) => m.isSharingLocation !== false && m.availability !== 'offline').length || 1,
+      broadcastingCount: liveCount || 1,
     };
   }, [displayMembers, isDark]);
+
+  // Real base coordinates for map tiles (Default Delhi or real user coordinates)
+  const baseLat = realUserCoords?.latitude ?? 28.5498;
+  const baseLon = realUserCoords?.longitude ?? 77.2005;
+  const tileZoom = 14;
+  const centerTileX = lon2tile(baseLon, tileZoom);
+  const centerTileY = lat2tile(baseLat, tileZoom);
+
+  // Generate 3x3 tile grid for real map background
+  const mapTiles = useMemo(() => {
+    const tiles: Array<{ x: number; y: number; url: string; key: string }> = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const tx = centerTileX + dx;
+        const ty = centerTileY + dy;
+        const url =
+          mapMode === 'satellite'
+            ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tileZoom}/${ty}/${tx}`
+            : isDark
+            ? `https://a.basemaps.cartocdn.com/dark_all/${tileZoom}/${tx}/${ty}@2x.png`
+            : `https://a.basemaps.cartocdn.com/rastertiles/voyager/${tileZoom}/${tx}/${ty}@2x.png`;
+        tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
+      }
+    }
+    return tiles;
+  }, [centerTileX, centerTileY, mapMode, isDark]);
 
   // Pan gesture responder for the interactive map
   const panResponder = useRef(
@@ -251,8 +322,8 @@ export const FamilyCommandCenter: React.FC = () => {
       },
       onPanResponderMove: (_, gestureState) => {
         setPanOffset((prev) => ({
-          x: Math.min(Math.max(prev.x + gestureState.dx * 0.15, -120), 120),
-          y: Math.min(Math.max(prev.y + gestureState.dy * 0.15, -120), 120),
+          x: Math.min(Math.max(prev.x + gestureState.dx * 0.15, -140), 140),
+          y: Math.min(Math.max(prev.y + gestureState.dy * 0.15, -140), 140),
         }));
       },
       onPanResponderRelease: () => {},
@@ -275,7 +346,6 @@ export const FamilyCommandCenter: React.FC = () => {
     setZoomLevel(1.0);
     setPanOffset({ x: 0, y: 0 });
     if (selectedMember) {
-      // center towards selected member
       const memberX = selectedMember.coords?.x ?? 50;
       const memberY = selectedMember.coords?.y ?? 50;
       setPanOffset({
@@ -303,12 +373,6 @@ export const FamilyCommandCenter: React.FC = () => {
     setSheetVisible(false);
   };
 
-  const openInviteModal = (tab: 'invite' | 'join' = 'invite') => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-    setInviteModalTab(tab);
-    setInviteModalVisible(true);
-  };
-
   // Open directions in external maps app
   const handleOpenDirections = (member: FamilyMember) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -316,8 +380,8 @@ export const FamilyCommandCenter: React.FC = () => {
     let url = '';
     if (coords?.latitude && coords?.longitude) {
       url = Platform.select({
-        ios: `maps:0,0?q=${member.name}@${coords.latitude},${coords.longitude}`,
-        android: `geo:0,0?q=${coords.latitude},${coords.longitude}(${member.name})`,
+        ios: `maps:0,0?q=${encodeURIComponent(member.name)}@${coords.latitude},${coords.longitude}`,
+        android: `geo:0,0?q=${coords.latitude},${coords.longitude}(${encodeURIComponent(member.name)})`,
         default: `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`,
       }) || '';
     } else {
@@ -328,7 +392,6 @@ export const FamilyCommandCenter: React.FC = () => {
     });
   };
 
-  // Direct call handler
   const handleCallMember = (phone: string, name: string) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     if (!phone) {
@@ -340,7 +403,6 @@ export const FamilyCommandCenter: React.FC = () => {
     });
   };
 
-  // Direct ping handler
   const handlePingMember = (member: FamilyMember) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     sendFamilyPing(member.id, 'Live status check from Family Command Center.');
@@ -350,37 +412,13 @@ export const FamilyCommandCenter: React.FC = () => {
   return (
     <View style={styles.commandCenterWrap}>
       {/* ========================================================================= */}
-      {/* 1. LIVE CIRCLE PRESENCE HEADER                                            */}
+      {/* 1. LIVE CIRCLE HEADER                                                     */}
       {/* ========================================================================= */}
       <View style={styles.sectionHeaderRow}>
-        <View style={styles.headerLeftBlock}>
-          <View style={styles.headerTitleLine}>
-            <View style={[styles.liveBeaconRing, { borderColor: isDark ? '#34D399' : '#10B981' }]}>
-              <Animated.View
-                style={[
-                  styles.liveBeaconCore,
-                  {
-                    backgroundColor: isDark ? '#34D399' : '#10B981',
-                    transform: [
-                      {
-                        scale: pulseAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.8, 1.25],
-                        }),
-                      },
-                    ],
-                    opacity: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.65, 1],
-                    }),
-                  },
-                ]}
-              />
-            </View>
-            <Text style={[styles.headerTitle, { color: colors.text, fontSize: isElderly ? 18 : 15 }]}>
-              LIVE CIRCLE
-            </Text>
-          </View>
+        <View style={styles.headerLeftCol}>
+          <Text style={[styles.headerMainTitle, { color: colors.text, fontSize: isElderly ? 18 : 15 }]}>
+            LIVE CIRCLE
+          </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Everyone’s presence, at a glance
           </Text>
@@ -389,121 +427,105 @@ export const FamilyCommandCenter: React.FC = () => {
         <Pressable
           onPress={() => router.push('/(tabs)/family')}
           hitSlop={10}
-          style={styles.headerSeeAllBtn}>
-          <Text style={[styles.headerSeeAllText, { color: colors.brandAccent }]}>
-            Circle Details →
+          style={styles.seeAllBtn}>
+          <Text style={[styles.seeAllText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+            See all →
           </Text>
         </Pressable>
       </View>
 
       {/* ========================================================================= */}
-      {/* 1. HORIZONTAL PRESENCE CARDS LIST                                         */}
+      {/* 1. HORIZONTAL MEMBER PRESENCE CARDS ROW                                   */}
       {/* ========================================================================= */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.presenceScrollContainer}>
+        contentContainerStyle={styles.presenceScrollRow}>
         {displayMembers.map((member) => {
           const presence = getMemberPresence(member, isDark);
           const isSelected = selectedMember?.id === member.id;
+          const memberName = (member?.name || 'Member').split(' ')[0];
 
           return (
             <Pressable
               key={member.id}
               onPress={() => openMemberSheet(member)}
               style={({ pressed }) => [
-                styles.presenceCard,
+                styles.memberPresenceCard,
                 {
-                  backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : '#FFFFFF',
-                  borderColor: isSelected
-                    ? colors.brandAccent
+                  backgroundColor: isDark ? '#151F33' : '#FFFFFF',
+                  borderColor: presence.isLive
+                    ? isDark
+                      ? 'rgba(52, 211, 153, 0.45)'
+                      : 'rgba(16, 185, 129, 0.35)'
                     : isDark
                     ? 'rgba(255, 255, 255, 0.08)'
                     : 'rgba(0, 0, 0, 0.06)',
-                  shadowColor: isDark ? '#000000' : '#64748B',
+                  shadowColor: presence.isLive
+                    ? isDark
+                      ? '#34D399'
+                      : '#10B981'
+                    : isDark
+                    ? '#000000'
+                    : '#64748B',
+                  shadowOpacity: presence.isLive ? (isDark ? 0.3 : 0.15) : 0.06,
+                  shadowRadius: presence.isLive ? 10 : 6,
                   opacity: pressed ? 0.92 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
                 },
               ]}>
-              {/* Top Row: Animated Live Dot + Name + Battery */}
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.cardUserIdentity}>
-                  <View style={styles.avatarWrap}>
-                    <FamilyAvatar member={member} size="sm" showStatus={false} />
-                    {presence.isLive && (
-                      <Animated.View
-                        style={[
-                          styles.cardLiveIndicator,
-                          {
-                            backgroundColor: presence.badgeColor,
-                            transform: [
-                              {
-                                scale: pulseAnim.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [0.9, 1.3],
-                                }),
-                              },
-                            ],
-                          },
-                        ]}
-                      />
-                    )}
-                  </View>
-                  <View style={styles.nameBlock}>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.cardMemberName,
-                        { color: colors.text, fontSize: isElderly ? 16 : 14 },
-                      ]}>
-                      {(member?.name || 'Member').split(' ')[0]} {member.isSelf ? '(You)' : ''}
-                    </Text>
-                    {/* Status Badge: HOME / AWAY / MOVING / OFFLINE */}
-                    <View
-                      style={[
-                        styles.statusBadgePill,
-                        { backgroundColor: presence.badgeBg },
-                      ]}>
-                      <View
-                        style={[
-                          styles.statusDot,
-                          { backgroundColor: presence.badgeColor },
-                        ]}
-                      />
-                      <Text
-                        style={[
-                          styles.statusBadgeText,
-                          { color: presence.badgeColor },
-                        ]}>
-                        {presence.label}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+              {/* Left: Avatar */}
+              <View style={styles.cardAvatarCol}>
+                <FamilyAvatar member={member} size="md" showStatus={false} />
+              </View>
 
-                {/* Battery percentage */}
-                <View
+              {/* Center: Name, HOME, Active time */}
+              <View style={styles.cardCenterCol}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.cardNameText, { color: colors.text }]}>
+                  {memberName}
+                </Text>
+                <Text
                   style={[
-                    styles.batteryBadge,
-                    {
-                      backgroundColor:
-                        member.batteryLevel > 50 || member.isCharging
-                          ? isDark
-                            ? 'rgba(16, 185, 129, 0.15)'
-                            : '#ECFDF5'
-                          : isDark
-                          ? 'rgba(245, 158, 11, 0.15)'
-                          : '#FFFBEB',
-                      borderColor:
-                        member.batteryLevel > 50 || member.isCharging
-                          ? isDark
-                            ? 'rgba(16, 185, 129, 0.35)'
-                            : '#A7F3D0'
-                          : isDark
-                          ? 'rgba(245, 158, 11, 0.35)'
-                          : '#FDE68A',
-                    },
+                    styles.cardStatusText,
+                    { color: presence.badgeColor },
                   ]}>
+                  {presence.label}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.cardActiveText, { color: colors.textSecondary }]}>
+                  Active {member.lastUpdated || '2 min ago'}
+                </Text>
+              </View>
+
+              {/* Right: Top Live Indicator + Bottom Battery */}
+              <View style={styles.cardRightCol}>
+                {presence.isLive ? (
+                  <View style={[styles.liveDotRing, { borderColor: isDark ? 'rgba(52, 211, 153, 0.3)' : 'rgba(16, 185, 129, 0.25)' }]}>
+                    <Animated.View
+                      style={[
+                        styles.liveDotCore,
+                        {
+                          backgroundColor: isDark ? '#34D399' : '#10B981',
+                          transform: [
+                            {
+                              scale: pulseAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.8, 1.25],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.liveDotCore, { backgroundColor: '#94A3B8' }]} />
+                )}
+
+                <View style={styles.batteryRow}>
                   <Ionicons
                     name={
                       member.isCharging
@@ -521,7 +543,7 @@ export const FamilyCommandCenter: React.FC = () => {
                   />
                   <Text
                     style={[
-                      styles.batteryText,
+                      styles.batteryNumber,
                       {
                         color:
                           member.batteryLevel > 50 || member.isCharging
@@ -537,633 +559,329 @@ export const FamilyCommandCenter: React.FC = () => {
                   </Text>
                 </View>
               </View>
-
-              {/* Bottom Row: Location & Last Updated */}
-              <View style={styles.cardFooter}>
-                <View style={styles.locationRow}>
-                  <Ionicons name="location-sharp" size={12} color={colors.textSecondary} />
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.cardLocationText, { color: colors.textSecondary }]}>
-                    {member.humanLocation || 'Location sharing active'}
-                  </Text>
-                </View>
-                <Text style={[styles.cardUpdatedText, { color: colors.textMuted }]}>
-                  Updated {member.lastUpdated || '2 min ago'}
-                </Text>
-              </View>
             </Pressable>
           );
         })}
 
-        {/* Compact "+ Add Member" Card at the end */}
+        {/* Compact "+ Add Member" card at the end */}
         <Pressable
-          onPress={() => openInviteModal('invite')}
+          onPress={() => {
+            triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+            setInviteModalVisible(true);
+          }}
           style={({ pressed }) => [
-            styles.compactAddMemberCard,
+            styles.compactAddCard,
             {
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : '#FFFFFF',
+              backgroundColor: isDark ? '#151F33' : '#FFFFFF',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
               opacity: pressed ? 0.85 : 1,
             },
           ]}>
           <View
             style={[
-              styles.compactAddIconCircle,
+              styles.compactAddCircle,
               { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' },
             ]}>
-            <Ionicons
-              name="person-add"
-              size={18}
-              color={isDark ? '#38BDF8' : colors.brandAccent}
-            />
+            <Ionicons name="add" size={20} color={isDark ? '#38BDF8' : colors.brandAccent} />
           </View>
-          <Text
-            style={[
-              styles.compactAddTitle,
-              { color: colors.text, fontSize: isElderly ? 14 : 12 },
-            ]}>
-            + Add Member
+          <Text style={[styles.compactAddText, { color: colors.text }]}>
+            Add Member
           </Text>
-          <Text style={[styles.compactAddSub, { color: colors.textSecondary }]}>
+          <Text style={[styles.compactAddSubText, { color: colors.textSecondary }]}>
             Invite family
           </Text>
         </Pressable>
       </ScrollView>
 
       {/* ========================================================================= */}
-      {/* 2. INTENTIONAL ONBOARDING BANNER (WHEN ONLY 1 MEMBER CONNECTED)           */}
+      {/* 2. FAMILY STATUS COMPACT SUMMARY CARD                                     */}
       {/* ========================================================================= */}
-      {displayMembers.length <= 1 && (
-        <View
-          style={[
-            styles.onboardingCard,
-            {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : '#FFFFFF',
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.15)',
-              shadowColor: isDark ? '#000000' : '#3B82F6',
-            },
-          ]}>
-          <View style={styles.onboardingRow}>
-            {/* Animated Radar Circle Illustration */}
-            <View style={styles.radarIllustrationWrap}>
-              <Animated.View
-                style={[
-                  styles.radarCircleOuter,
-                  {
-                    borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.2)',
-                    transform: [
-                      {
-                        scale: radarAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.6, 1.15],
-                        }),
-                      },
-                    ],
-                    opacity: radarAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.8, 0.1],
-                    }),
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.radarCircleMid,
-                  {
-                    borderColor: isDark ? 'rgba(52, 211, 153, 0.35)' : 'rgba(16, 185, 129, 0.3)',
-                    transform: [
-                      {
-                        scale: radarAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.4, 0.85],
-                        }),
-                      },
-                    ],
-                    opacity: radarAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.9, 0.2],
-                    }),
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.radarCenterBeacon,
-                  { backgroundColor: isDark ? '#38BDF8' : colors.brandAccent },
-                ]}>
-                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-              </View>
-            </View>
+      <View
+        style={[
+          styles.familyStatusCard,
+          {
+            backgroundColor: isDark ? '#151F33' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+            shadowColor: isDark ? '#000000' : '#64748B',
+          },
+        ]}>
+        <Text style={[styles.familyStatusTitle, { color: colors.textMuted }]}>
+          FAMILY STATUS
+        </Text>
 
-            {/* Onboarding Text */}
-            <View style={styles.onboardingTextCol}>
-              <Text
-                style={[
-                  styles.onboardingTitle,
-                  { color: isDark ? '#38BDF8' : colors.brandAccent },
-                ]}>
-                ✦ YOUR CIRCLE STARTS HERE
-              </Text>
-              <Text
-                style={[
-                  styles.onboardingSubtitle,
-                  { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
-                ]}>
-                Invite your family to see their live presence and location.
-              </Text>
-            </View>
+        <View style={styles.statusMetricsRow}>
+          {/* Safe */}
+          <View style={styles.statusPillItem}>
+            <View style={[styles.statusIconDot, { backgroundColor: '#10B981' }]} />
+            <Text style={[styles.statusItemText, { color: colors.text }]}>
+              {statusSummary.safeCount} Safe
+            </Text>
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.onboardingActionsRow}>
+          {/* Home */}
+          <View style={styles.statusPillItem}>
+            <Text style={{ fontSize: 13 }}>🏠</Text>
+            <Text style={[styles.statusItemText, { color: colors.text }]}>
+              {statusSummary.homeCount} Home
+            </Text>
+          </View>
+
+          {/* Live */}
+          <View style={styles.statusPillItem}>
+            <Text style={{ fontSize: 13 }}>⚡</Text>
+            <Text style={[styles.statusItemText, { color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700' }]}>
+              Live
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.statusActivityText, { color: colors.textSecondary }]}>
+          Last activity · {statusSummary.latestActivity}
+        </Text>
+      </View>
+
+      {/* ========================================================================= */}
+      {/* 3. LIVE FAMILY MAP HERO SECTION                                           */}
+      {/* ========================================================================= */}
+      <View style={styles.mapSectionHeaderRow}>
+        <Text style={[styles.mapHeaderTitle, { color: colors.text, fontSize: isElderly ? 18 : 15 }]}>
+          LIVE FAMILY MAP
+        </Text>
+
+        <Pressable
+          onPress={() => router.push('/(tabs)/family')}
+          hitSlop={10}>
+          <Text style={[styles.fullScreenLinkText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+            Full screen →
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Interactive Map Card */}
+      <View
+        style={[
+          styles.mapHeroCard,
+          {
+            backgroundColor: isDark ? '#0B1120' : '#EFF6FF',
+            borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.15)',
+            shadowColor: isDark ? '#000000' : '#1E293B',
+          },
+        ]}
+        {...panResponder.panHandlers}>
+        {/* Real Map Tiles or Permission Block */}
+        {locationPermissionNeeded ? (
+          <View style={styles.permissionNeededWrap}>
+            <View style={[styles.permissionIconCircle, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' }]}>
+              <Ionicons name="location-outline" size={28} color={isDark ? '#38BDF8' : colors.brandAccent} />
+            </View>
+            <Text style={[styles.permissionTitle, { color: colors.text }]}>
+              Location access needed
+            </Text>
+            <Text style={[styles.permissionSub, { color: colors.textSecondary }]}>
+              Allow location to see your live position
+            </Text>
             <Pressable
-              onPress={() => openInviteModal('invite')}
+              onPress={handleRequestLocation}
               style={({ pressed }) => [
-                styles.onboardingPrimaryBtn,
+                styles.enableLocationBtn,
                 {
                   backgroundColor: colors.brandAccent,
                   opacity: pressed ? 0.88 : 1,
                 },
               ]}>
-              <Ionicons name="person-add" size={14} color={colors.buttonTextOnAccent} />
-              <Text
-                style={[
-                  styles.onboardingPrimaryBtnText,
-                  { color: colors.buttonTextOnAccent },
-                ]}>
-                + Add Family Member
-              </Text>
-            </Pressable>
-
-            <Text style={[styles.onboardingOrDivider, { color: colors.textMuted }]}>
-              or
-            </Text>
-
-            <Pressable
-              onPress={() => openInviteModal('join')}
-              style={({ pressed }) => [
-                styles.onboardingSecondaryBtn,
-                {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F8FAFC',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="qr-code-outline" size={14} color={colors.text} />
-              <Text style={[styles.onboardingSecondaryBtnText, { color: colors.text }]}>
-                Scan QR
+              <Ionicons name="navigate" size={14} color={colors.buttonTextOnAccent} />
+              <Text style={[styles.enableLocationBtnText, { color: colors.buttonTextOnAccent }]}>
+                Enable Location
               </Text>
             </Pressable>
           </View>
-        </View>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 3. FAMILY STATUS SUMMARY                                                  */}
-      {/* ========================================================================= */}
-      <View
-        style={[
-          styles.statusSummaryCard,
-          {
-            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-            shadowColor: isDark ? '#000000' : '#64748B',
-          },
-        ]}>
-        <View style={styles.statusSummaryHeader}>
-          <Text style={[styles.statusSummaryTitle, { color: colors.textMuted }]}>
-            FAMILY STATUS
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/family')}
-            hitSlop={8}
-            style={styles.viewCircleLink}>
-            <Text style={[styles.viewCircleText, { color: colors.brandAccent }]}>
-              View Circle →
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.statusSummaryMetricsRow}>
-          {/* Safe Count */}
-          <View style={styles.metricItem}>
-            <View style={[styles.metricDot, { backgroundColor: '#10B981' }]} />
-            <Text style={[styles.metricLabel, { color: colors.text }]}>
-              <Text style={styles.metricBold}>{statusSummary.safeCount}</Text> Safe
-            </Text>
-          </View>
-
-          {/* Home Count */}
-          <View style={styles.metricItem}>
-            <View style={[styles.metricDot, { backgroundColor: isDark ? '#38BDF8' : '#2563EB' }]} />
-            <Text style={[styles.metricLabel, { color: colors.text }]}>
-              <Text style={styles.metricBold}>{statusSummary.homeCount}</Text> Home
-            </Text>
-          </View>
-
-          {/* Moving Count (if any) */}
-          {statusSummary.movingCount > 0 && (
-            <View style={styles.metricItem}>
-              <View style={[styles.metricDot, { backgroundColor: '#F59E0B' }]} />
-              <Text style={[styles.metricLabel, { color: colors.text }]}>
-                <Text style={styles.metricBold}>{statusSummary.movingCount}</Text> Moving
-              </Text>
-            </View>
-          )}
-
-          {/* Spacer */}
-          <View style={{ flex: 1 }} />
-
-          {/* Last Activity */}
-          <Text style={[styles.metricTimestamp, { color: colors.textSecondary }]}>
-            Last activity: {statusSummary.latestActivity}
-          </Text>
-        </View>
-      </View>
-
-      {/* ========================================================================= */}
-      {/* 4. LIVE FAMILY MAP HERO SECTION                                           */}
-      {/* ========================================================================= */}
-      <View style={styles.mapSectionHeader}>
-        <View style={styles.mapSectionTitleWrap}>
-          <Ionicons
-            name="navigate-circle"
-            size={18}
-            color={isDark ? '#38BDF8' : colors.brandAccent}
-          />
-          <Text
+        ) : (
+          <Animated.View
             style={[
-              styles.mapSectionTitle,
-              { color: colors.text, fontSize: isElderly ? 18 : 15 },
-            ]}>
-            LIVE FAMILY MAP
-          </Text>
-        </View>
-
-        <View style={styles.mapHeaderRightRow}>
-          {/* Vector / Satellite switch */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-              setMapMode(mapMode === 'streets' ? 'satellite' : 'streets');
-            }}
-            style={[
-              styles.mapModePill,
+              styles.mapCanvasPlane,
               {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0',
+                transform: [
+                  { translateX: panOffset.x },
+                  { translateY: panOffset.y },
+                  { scale: zoomLevel },
+                ],
               },
             ]}>
-            <Ionicons
-              name={mapMode === 'streets' ? 'layers-outline' : 'map-outline'}
-              size={12}
-              color={colors.textSecondary}
-            />
-            <Text style={[styles.mapModeText, { color: colors.textSecondary }]}>
-              {mapMode === 'streets' ? 'Vector' : 'Satellite'}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/family')}
-            hitSlop={8}>
-            <Text style={[styles.fullScreenLink, { color: colors.brandAccent }]}>
-              Full Screen →
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Real Interactive Map Canvas */}
-      <View
-        style={[
-          styles.mapContainer,
-          {
-            backgroundColor:
-              mapMode === 'satellite'
-                ? '#0F172A'
-                : isDark
-                ? '#0B132B'
-                : '#EFF6FF',
-            borderColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(37, 99, 235, 0.15)',
-            shadowColor: isDark ? '#000000' : '#1E293B',
-          },
-        ]}
-        {...panResponder.panHandlers}>
-        {/* Vector Map Roads, Grid & Waterways */}
-        <Animated.View
-          style={[
-            styles.mapInnerPlane,
-            {
-              transform: [
-                { translateX: panOffset.x },
-                { translateY: panOffset.y },
-                { scale: zoomLevel },
-              ],
-            },
-          ]}>
-          {/* Waterways */}
-          <View
-            style={[
-              styles.mapRiver,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? '#1E293B'
-                    : isDark
-                    ? '#0D274C'
-                    : '#BAE6FD',
-              },
-            ]}
-          />
-          {/* Grid lines / streets */}
-          <View
-            style={[
-              styles.mapStreetH1,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? '#334155'
-                    : isDark
-                    ? '#1E293B'
-                    : '#E2E8F0',
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.mapStreetH2,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? '#334155'
-                    : isDark
-                    ? '#1E293B'
-                    : '#E2E8F0',
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.mapStreetV1,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? '#334155'
-                    : isDark
-                    ? '#1E293B'
-                    : '#E2E8F0',
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.mapStreetV2,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? '#334155'
-                    : isDark
-                    ? '#1E293B'
-                    : '#E2E8F0',
-              },
-            ]}
-          />
-          {/* Park zone */}
-          <View
-            style={[
-              styles.mapParkArea,
-              {
-                backgroundColor:
-                  mapMode === 'satellite'
-                    ? 'rgba(16, 185, 129, 0.06)'
-                    : isDark
-                    ? 'rgba(16, 185, 129, 0.12)'
-                    : 'rgba(16, 185, 129, 0.16)',
-              },
-            ]}
-          />
-
-          {/* Home Location Marker */}
-          {homePlace && (
-            <View
-              style={[
-                styles.homeMarkerWrap,
-                {
-                  left: `${homePlace?.coords?.x ?? 50}%`,
-                  top: `${homePlace?.coords?.y ?? 50}%`,
-                },
-              ]}>
-              <View
-                style={[
-                  styles.homeHalo,
-                  {
-                    backgroundColor: isDark
-                      ? 'rgba(56, 189, 248, 0.15)'
-                      : 'rgba(37, 99, 235, 0.12)',
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.homeBadge,
-                  {
-                    backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
-                    borderColor: isDark ? '#38BDF8' : '#2563EB',
-                  },
-                ]}>
-                <Text style={styles.homeEmoji}>🏡</Text>
-                <Text
+            {/* Real Map Raster Tiles (3x3 Grid) */}
+            <View style={styles.tileGridContainer}>
+              {mapTiles.map((tile) => (
+                <Image
+                  key={tile.key}
+                  source={{ uri: tile.url }}
                   style={[
-                    styles.homeLabel,
-                    { color: isDark ? '#FFFFFF' : '#1E293B' },
-                  ]}>
-                  Home
-                </Text>
-              </View>
+                    styles.mapRasterTile,
+                    {
+                      left: 150 + tile.x * 256 - 128,
+                      top: 130 + tile.y * 256 - 128,
+                    },
+                  ]}
+                  resizeMode="cover"
+                />
+              ))}
             </View>
-          )}
 
-          {/* Family Member Dynamic Markers */}
-          {displayMembers.map((member, idx) => {
-            const presence = getMemberPresence(member, isDark);
-            const isFocused = selectedMember?.id === member.id;
-
-            // Fallback coordinate positioning if not specified in telemetry
-            const fallbackX = 50 + ((idx * 28 + 15) % 60) - 30;
-            const fallbackY = 48 + ((idx * 34 + 10) % 50) - 25;
-            const posX = member.coords?.x ?? fallbackX;
-            const posY = member.coords?.y ?? fallbackY;
-
-            return (
-              <Pressable
-                key={member.id}
-                onPress={() => openMemberSheet(member)}
+            {/* Home Location Marker */}
+            {homePlace && (
+              <View
                 style={[
-                  styles.memberMarkerPin,
+                  styles.homeMarkerWrap,
                   {
-                    left: `${posX}%`,
-                    top: `${posY}%`,
-                    zIndex: isFocused ? 50 : 20,
+                    left: `${homePlace?.coords?.x ?? 50}%`,
+                    top: `${homePlace?.coords?.y ?? 50}%`,
                   },
                 ]}>
-                {/* Live Pulse Halo (Mint in light, restrained Cyan/Mint glow in dark) */}
-                {presence.isLive && (
-                  <Animated.View
-                    style={[
-                      styles.markerRadarHalo,
-                      {
-                        borderColor: isDark ? '#34D399' : '#10B981',
-                        shadowColor: isDark ? '#34D399' : '#10B981',
-                        transform: [
-                          {
-                            scale: pulseAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [1, 1.45],
-                            }),
-                          },
-                        ],
-                        opacity: pulseAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.85, 0.15],
-                        }),
-                      },
-                    ]}
-                  />
-                )}
-
-                {/* Pin Name Callout */}
                 <View
                   style={[
-                    styles.pinNamePill,
+                    styles.homeHalo,
                     {
-                      backgroundColor: isFocused
-                        ? colors.brandAccent
-                        : isDark
-                        ? 'rgba(15, 23, 42, 0.92)'
-                        : '#FFFFFF',
-                      borderColor: isFocused
-                        ? '#FFFFFF'
-                        : isDark
-                        ? 'rgba(255, 255, 255, 0.2)'
-                        : 'rgba(0, 0, 0, 0.1)',
+                      backgroundColor: isDark
+                        ? 'rgba(56, 189, 248, 0.18)'
+                        : 'rgba(37, 99, 235, 0.12)',
                     },
-                  ]}>
-                  <View
-                    style={[
-                      styles.pinLiveTinyDot,
-                      { backgroundColor: presence.badgeColor },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.pinNameText,
-                      {
-                        color: isFocused
-                          ? colors.buttonTextOnAccent
-                          : colors.text,
-                      },
-                    ]}>
-                    {(member?.name || 'Member').split(' ')[0]}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.pinBatteryText,
-                      {
-                        color: isFocused
-                          ? colors.buttonTextOnAccent
-                          : colors.textSecondary,
-                      },
-                    ]}>
-                    🔋{member.batteryLevel}%
-                  </Text>
-                </View>
-
-                {/* Circular Avatar Marker with Status Ring */}
-                <View
-                  style={[
-                    styles.avatarMarkerCircle,
-                    {
-                      borderColor: presence.badgeColor,
-                      backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
-                    },
-                  ]}>
-                  <FamilyAvatar member={member} size="sm" showStatus={false} />
-                  {presence.status === 'MOVING' && (
-                    <View style={styles.movingSubIconWrap}>
-                      <Ionicons name="car" size={9} color="#FFFFFF" />
-                    </View>
-                  )}
-                </View>
-
-                {/* Marker Pointer Arrow */}
-                <View
-                  style={[
-                    styles.pinPointerArrow,
-                    { borderTopColor: presence.badgeColor },
                   ]}
                 />
-              </Pressable>
-            );
-          })}
-        </Animated.View>
+                <View
+                  style={[
+                    styles.homeBadge,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                      borderColor: isDark ? '#38BDF8' : '#2563EB',
+                    },
+                  ]}>
+                  <Text style={{ fontSize: 11 }}>🏠</Text>
+                  <Text style={[styles.homeBadgeText, { color: isDark ? '#FFFFFF' : '#1E293B' }]}>
+                    Home
+                  </Text>
+                </View>
+              </View>
+            )}
 
-        {/* Map Top-Left Overlay: LIVE Broadcast Status */}
+            {/* Live Family Member Markers */}
+            {displayMembers.map((member, idx) => {
+              const presence = getMemberPresence(member, isDark);
+              const isFocused = selectedMember?.id === member.id;
+              const posX = member.coords?.x ?? 50;
+              const posY = member.coords?.y ?? 50;
+              const memberName = (member?.name || 'Member').split(' ')[0];
+
+              return (
+                <Pressable
+                  key={member.id}
+                  onPress={() => openMemberSheet(member)}
+                  style={[
+                    styles.markerPinWrap,
+                    {
+                      left: `${posX}%`,
+                      top: `${posY}%`,
+                      zIndex: isFocused ? 50 : 20,
+                    },
+                  ]}>
+                  {/* Pulsing mint ring for members broadcasting live */}
+                  {presence.isLive && (
+                    <Animated.View
+                      style={[
+                        styles.markerPulseHalo,
+                        {
+                          borderColor: isDark ? '#34D399' : '#10B981',
+                          shadowColor: isDark ? '#34D399' : '#10B981',
+                          transform: [
+                            {
+                              scale: pulseAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.5],
+                              }),
+                            },
+                          ],
+                          opacity: pulseAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.85, 0.1],
+                          }),
+                        },
+                      ]}
+                    />
+                  )}
+
+                  {/* Circular Avatar Marker */}
+                  <View
+                    style={[
+                      styles.avatarMarkerBorder,
+                      {
+                        borderColor: isDark ? '#34D399' : '#10B981',
+                        backgroundColor: isDark ? '#0B1120' : '#FFFFFF',
+                      },
+                    ]}>
+                    <FamilyAvatar member={member} size="sm" showStatus={false} />
+                  </View>
+
+                  {/* Name Label */}
+                  <View
+                    style={[
+                      styles.markerNameBadge,
+                      {
+                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : '#FFFFFF',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                      },
+                    ]}>
+                    <View style={[styles.markerLiveDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
+                    <Text style={[styles.markerNameText, { color: colors.text }]}>
+                      {memberName}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </Animated.View>
+        )}
+
+        {/* Top-Left Overlay: 🟢 LIVE & member count */}
         <View
           style={[
-            styles.mapStatusOverlay,
+            styles.overlayLiveCard,
             {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
             },
           ]}>
-          <View style={styles.mapStatusTopRow}>
-            <View style={styles.overlayLiveDot} />
+          <View style={styles.overlayLiveRow}>
+            <View style={[styles.liveMiniDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
             <Text style={[styles.overlayLiveText, { color: isDark ? '#34D399' : '#059669' }]}>
               LIVE
             </Text>
           </View>
-          <Text style={[styles.overlayCountText, { color: colors.text }]}>
-            {statusSummary.broadcastingCount} {statusSummary.broadcastingCount === 1 ? 'member' : 'members'} broadcasting
+          <Text style={[styles.overlaySubText, { color: colors.text }]}>
+            {statusSummary.broadcastingCount} member broadcasting
           </Text>
         </View>
 
-        {/* Map Top-Right Overlay: Zoom Controls (+ and -) */}
-        <View style={styles.mapZoomControls}>
-          <Pressable
-            onPress={handleZoomIn}
-            style={({ pressed }) => [
-              styles.zoomBtn,
-              {
-                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                opacity: pressed ? 0.8 : 1,
-              },
-            ]}>
-            <Ionicons name="add" size={16} color={colors.text} />
-          </Pressable>
-          <Pressable
-            onPress={handleZoomOut}
-            style={({ pressed }) => [
-              styles.zoomBtn,
-              {
-                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                opacity: pressed ? 0.8 : 1,
-              },
-            ]}>
-            <Ionicons name="remove" size={16} color={colors.text} />
-          </Pressable>
-        </View>
+        {/* Top-Right Overlay: ⛶ Full screen */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/family')}
+          style={({ pressed }) => [
+            styles.overlayFullScreenBtn,
+            {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}>
+          <Ionicons name="expand" size={13} color={colors.text} />
+          <Text style={[styles.overlayFullScreenText, { color: colors.text }]}>
+            Full screen
+          </Text>
+        </Pressable>
 
-        {/* Map Bottom-Left: Recenter Control Button */}
+        {/* Bottom-Right Overlay: ⊙ Recenter */}
         <Pressable
           onPress={handleRecenter}
           style={({ pressed }) => [
-            styles.recenterButton,
+            styles.overlayRecenterBtn,
             {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : '#FFFFFF',
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
               borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(37, 99, 235, 0.2)',
               opacity: pressed ? 0.85 : 1,
             },
@@ -1175,7 +893,7 @@ export const FamilyCommandCenter: React.FC = () => {
           />
           <Text
             style={[
-              styles.recenterText,
+              styles.overlayRecenterText,
               { color: isDark ? '#38BDF8' : colors.brandAccent },
             ]}>
             ⊙ Recenter
@@ -1184,12 +902,12 @@ export const FamilyCommandCenter: React.FC = () => {
       </View>
 
       {/* ========================================================================= */}
-      {/* 5. MEMBER FILTER CHIPS BELOW MAP                                          */}
+      {/* 4. MEMBER FILTER CHIPS BELOW MAP: [ All (1) ] [ 🟢 Asmita ]               */}
       {/* ========================================================================= */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.memberFilterRow}>
+        contentContainerStyle={styles.memberChipsRow}>
         {/* All Chip */}
         <Pressable
           onPress={() => {
@@ -1198,12 +916,12 @@ export const FamilyCommandCenter: React.FC = () => {
             setPanOffset({ x: 0, y: 0 });
           }}
           style={[
-            styles.filterChip,
+            styles.chipPill,
             {
               backgroundColor: !selectedMember
                 ? colors.brandAccent
                 : isDark
-                ? 'rgba(255, 255, 255, 0.08)'
+                ? '#151F33'
                 : '#F1F5F9',
               borderColor: !selectedMember
                 ? colors.brandAccent
@@ -1214,7 +932,7 @@ export const FamilyCommandCenter: React.FC = () => {
           ]}>
           <Text
             style={[
-              styles.filterChipText,
+              styles.chipText,
               {
                 color: !selectedMember ? colors.buttonTextOnAccent : colors.text,
                 fontWeight: !selectedMember ? '700' : '600',
@@ -1224,22 +942,23 @@ export const FamilyCommandCenter: React.FC = () => {
           </Text>
         </Pressable>
 
-        {/* Member Specific Chips */}
+        {/* Individual Member Chips */}
         {displayMembers.map((member) => {
           const presence = getMemberPresence(member, isDark);
           const isCurrent = selectedMember?.id === member.id;
+          const memberName = (member?.name || 'Member').split(' ')[0];
 
           return (
             <Pressable
               key={member.id}
               onPress={() => openMemberSheet(member)}
               style={[
-                styles.filterChip,
+                styles.chipPill,
                 {
                   backgroundColor: isCurrent
                     ? colors.brandAccent
                     : isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
+                    ? '#151F33'
                     : '#F1F5F9',
                   borderColor: isCurrent
                     ? colors.brandAccent
@@ -1250,30 +969,19 @@ export const FamilyCommandCenter: React.FC = () => {
               ]}>
               <View
                 style={[
-                  styles.filterChipDot,
-                  { backgroundColor: presence.badgeColor },
+                  styles.chipLiveDot,
+                  { backgroundColor: isDark ? '#34D399' : '#10B981' },
                 ]}
               />
               <Text
                 style={[
-                  styles.filterChipText,
+                  styles.chipText,
                   {
                     color: isCurrent ? colors.buttonTextOnAccent : colors.text,
                     fontWeight: isCurrent ? '700' : '600',
                   },
                 ]}>
-                {(member?.name || 'Member').split(' ')[0]}
-              </Text>
-              <Text
-                style={[
-                  styles.filterChipBattery,
-                  {
-                    color: isCurrent
-                      ? colors.buttonTextOnAccent
-                      : colors.textSecondary,
-                  },
-                ]}>
-                {member.batteryLevel}%
+                {memberName}
               </Text>
             </Pressable>
           );
@@ -1281,7 +989,7 @@ export const FamilyCommandCenter: React.FC = () => {
       </ScrollView>
 
       {/* ========================================================================= */}
-      {/* 6. MAP MEMBER BOTTOM SHEET MODAL                                          */}
+      {/* 5. MAP MEMBER BOTTOM SHEET MODAL                                          */}
       {/* ========================================================================= */}
       {selectedMember && (
         <Modal
@@ -1293,9 +1001,9 @@ export const FamilyCommandCenter: React.FC = () => {
             <Pressable style={styles.sheetBackdropPress} onPress={closeMemberSheet} />
             <Animated.View
               style={[
-                styles.bottomSheetContainer,
+                styles.sheetContainer,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  backgroundColor: isDark ? '#151F33' : '#FFFFFF',
                   borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
                   transform: [{ translateY: sheetTranslateY }],
                 },
@@ -1303,67 +1011,34 @@ export const FamilyCommandCenter: React.FC = () => {
               {/* Drag handle bar */}
               <View
                 style={[
-                  styles.sheetDragBar,
+                  styles.dragBar,
                   { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : '#CBD5E1' },
                 ]}
               />
 
-              {/* Member Title Row */}
-              <View style={styles.sheetHeader}>
-                <View style={styles.sheetHeaderLeft}>
-                  <FamilyAvatar member={selectedMember} size="md" showStatus={false} />
-                  <View style={styles.sheetNameCol}>
-                    <View style={styles.sheetNameBadgeRow}>
-                      <Text
-                        style={[
-                          styles.sheetMemberName,
-                          { color: colors.text, fontSize: isElderly ? 20 : 17 },
-                        ]}>
-                        {selectedMember.name}
-                      </Text>
-                      {selectedMember.relation && (
-                        <View
-                          style={[
-                            styles.sheetRelationBadge,
-                            {
-                              backgroundColor: isDark
-                                ? 'rgba(255, 255, 255, 0.08)'
-                                : '#F1F5F9',
-                            },
-                          ]}>
-                          <Text
-                            style={[
-                              styles.sheetRelationText,
-                              { color: colors.textSecondary },
-                            ]}>
-                            {selectedMember.relation}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+              {/* Member Title: Asmita \n 🟢 Live · Home */}
+              <View style={styles.sheetTopRow}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.sheetName,
+                      { color: colors.text, fontSize: isElderly ? 22 : 19 },
+                    ]}>
+                    {selectedMember.name}
+                  </Text>
 
-                    {/* Status Pill: Live • Home */}
-                    {(() => {
-                      const p = getMemberPresence(selectedMember, isDark);
-                      return (
-                        <View style={styles.sheetLiveStatusRow}>
-                          <View
-                            style={[styles.sheetDot, { backgroundColor: p.badgeColor }]}
-                          />
-                          <Text
-                            style={[
-                              styles.sheetStatusText,
-                              { color: p.badgeColor },
-                            ]}>
-                            Live • {p.label}
-                          </Text>
-                        </View>
-                      );
-                    })()}
+                  <View style={styles.sheetLiveRow}>
+                    <View style={[styles.sheetDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
+                    <Text
+                      style={[
+                        styles.sheetLiveStatusText,
+                        { color: isDark ? '#34D399' : '#059669' },
+                      ]}>
+                      Live · Home
+                    </Text>
                   </View>
                 </View>
 
-                {/* Close sheet */}
                 <Pressable
                   onPress={closeMemberSheet}
                   hitSlop={12}
@@ -1372,114 +1047,29 @@ export const FamilyCommandCenter: React.FC = () => {
                 </Pressable>
               </View>
 
-              {/* Telemetry info cards grid */}
-              <View style={styles.sheetTelemetryGrid}>
-                <View
-                  style={[
-                    styles.sheetTelemetryTile,
-                    {
-                      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : '#F8FAFC',
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#E2E8F0',
-                    },
-                  ]}>
-                  <Ionicons name="location-sharp" size={15} color={colors.brandAccent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>
-                      Location
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.tileValue, { color: colors.text }]}>
-                      {selectedMember.humanLocation || 'Sanctuary'}
-                    </Text>
-                  </View>
+              {/* Details: Updated 2 min ago, Battery 87% */}
+              <View style={styles.sheetDetailsBlock}>
+                <View style={styles.sheetDetailLine}>
+                  <Ionicons name="location-sharp" size={15} color={colors.textSecondary} />
+                  <Text style={[styles.sheetDetailText, { color: colors.textSecondary }]}>
+                    Updated {selectedMember.lastUpdated || '2 min ago'}
+                  </Text>
                 </View>
 
-                <View
-                  style={[
-                    styles.sheetTelemetryTile,
-                    {
-                      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : '#F8FAFC',
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#E2E8F0',
-                    },
-                  ]}>
+                <View style={styles.sheetDetailLine}>
                   <Ionicons
                     name={selectedMember.isCharging ? 'flash' : 'battery-charging'}
                     size={15}
-                    color={
-                      selectedMember.batteryLevel > 50 ? '#10B981' : '#F59E0B'
-                    }
+                    color="#10B981"
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>
-                      Battery
-                    </Text>
-                    <Text style={[styles.tileValue, { color: colors.text }]}>
-                      {selectedMember.batteryLevel}% {selectedMember.isCharging ? '(Charging)' : ''}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  style={[
-                    styles.sheetTelemetryTile,
-                    {
-                      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : '#F8FAFC',
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#E2E8F0',
-                    },
-                  ]}>
-                  <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>
-                      Last Sync
-                    </Text>
-                    <Text style={[styles.tileValue, { color: colors.text }]}>
-                      {selectedMember.lastUpdated || '2 min ago'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  style={[
-                    styles.sheetTelemetryTile,
-                    {
-                      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : '#F8FAFC',
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#E2E8F0',
-                    },
-                  ]}>
-                  <Ionicons
-                    name={
-                      selectedMember.ringerMode === 'silent'
-                        ? 'volume-mute'
-                        : selectedMember.ringerMode === 'vibrate'
-                        ? 'radio'
-                        : 'volume-high'
-                    }
-                    size={15}
-                    color={
-                      selectedMember.ringerMode === 'silent'
-                        ? '#EF4444'
-                        : colors.textSecondary
-                    }
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>
-                      Phone Mode
-                    </Text>
-                    <Text style={[styles.tileValue, { color: colors.text }]}>
-                      {selectedMember.ringerMode === 'silent'
-                        ? 'Silent'
-                        : selectedMember.ringerMode === 'vibrate'
-                        ? 'Vibrate'
-                        : 'Sound Normal'}
-                    </Text>
-                  </View>
+                  <Text style={[styles.sheetDetailText, { color: colors.textSecondary }]}>
+                    Battery {selectedMember.batteryLevel}%
+                  </Text>
                 </View>
               </View>
 
-              {/* Sheet Action Buttons */}
+              {/* Action Buttons: [ View Profile ] [ Directions ] */}
               <View style={styles.sheetActionsRow}>
-                {/* View Profile */}
                 <Pressable
                   onPress={() => {
                     closeMemberSheet();
@@ -1492,11 +1082,6 @@ export const FamilyCommandCenter: React.FC = () => {
                       opacity: pressed ? 0.88 : 1,
                     },
                   ]}>
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={16}
-                    color={colors.buttonTextOnAccent}
-                  />
                   <Text
                     style={[
                       styles.sheetPrimaryBtnText,
@@ -1506,26 +1091,16 @@ export const FamilyCommandCenter: React.FC = () => {
                   </Text>
                 </Pressable>
 
-                {/* Directions */}
                 <Pressable
                   onPress={() => handleOpenDirections(selectedMember)}
                   style={({ pressed }) => [
                     styles.sheetSecondaryBtn,
                     {
-                      backgroundColor: isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : '#F1F5F9',
-                      borderColor: isDark
-                        ? 'rgba(255, 255, 255, 0.12)'
-                        : '#E2E8F0',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}>
-                  <Ionicons
-                    name="navigate-outline"
-                    size={16}
-                    color={isDark ? '#38BDF8' : colors.brandAccent}
-                  />
                   <Text
                     style={[
                       styles.sheetSecondaryBtnText,
@@ -1535,38 +1110,28 @@ export const FamilyCommandCenter: React.FC = () => {
                   </Text>
                 </Pressable>
 
-                {/* Call */}
+                {/* Call icon button */}
                 <Pressable
-                  onPress={() =>
-                    handleCallMember(selectedMember.phone, selectedMember.name)
-                  }
+                  onPress={() => handleCallMember(selectedMember.phone, selectedMember.name)}
                   style={({ pressed }) => [
-                    styles.sheetIconOnlyBtn,
+                    styles.sheetIconBtn,
                     {
-                      backgroundColor: isDark
-                        ? 'rgba(16, 185, 129, 0.15)'
-                        : '#ECFDF5',
-                      borderColor: isDark
-                        ? 'rgba(16, 185, 129, 0.3)'
-                        : '#A7F3D0',
+                      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
+                      borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#A7F3D0',
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}>
                   <Ionicons name="call" size={17} color="#10B981" />
                 </Pressable>
 
-                {/* Ping */}
+                {/* Ping icon button */}
                 <Pressable
                   onPress={() => handlePingMember(selectedMember)}
                   style={({ pressed }) => [
-                    styles.sheetIconOnlyBtn,
+                    styles.sheetIconBtn,
                     {
-                      backgroundColor: isDark
-                        ? 'rgba(245, 158, 11, 0.15)'
-                        : '#FFFBEB',
-                      borderColor: isDark
-                        ? 'rgba(245, 158, 11, 0.3)'
-                        : '#FDE68A',
+                      backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB',
+                      borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#FDE68A',
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}>
@@ -1578,13 +1143,11 @@ export const FamilyCommandCenter: React.FC = () => {
         </Modal>
       )}
 
-      {/* ========================================================================= */}
-      {/* 7. ALL-IN-ONE INVITATION & QR MODAL                                       */}
-      {/* ========================================================================= */}
+      {/* Unified Family Invite Modal */}
       <FamilyInviteModal
         visible={inviteModalVisible}
         onClose={() => setInviteModalVisible(false)}
-        initialTab={inviteModalTab}
+        initialTab="invite"
         onSuccess={() => {
           setInviteModalVisible(false);
           alert('Welcome! Family circle updated.');
@@ -1596,9 +1159,11 @@ export const FamilyCommandCenter: React.FC = () => {
 
 const styles = StyleSheet.create({
   commandCenterWrap: {
-    marginVertical: 10,
-    gap: 14,
+    marginVertical: 8,
+    gap: 12,
   },
+
+  // 1. LIVE CIRCLE Header
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1606,28 +1171,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 2,
   },
-  headerLeftBlock: {
-    gap: 3,
+  headerLeftCol: {
+    gap: 2,
   },
-  headerTitleLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  liveBeaconRing: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveBeaconCore: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  headerTitle: {
+  headerMainTitle: {
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -1635,341 +1182,175 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  headerSeeAllBtn: {
-    paddingVertical: 4,
+  seeAllBtn: {
+    paddingVertical: 3,
     paddingHorizontal: 6,
   },
-  headerSeeAllText: {
-    fontSize: 12,
+  seeAllText: {
+    fontSize: 12.5,
     fontWeight: '700',
   },
 
-  // Presence Cards Scroll List
-  presenceScrollContainer: {
+  // Presence Cards Row
+  presenceScrollRow: {
     paddingHorizontal: 16,
     gap: 12,
-    paddingBottom: 4,
+    paddingBottom: 2,
   },
-  presenceCard: {
-    width: 224,
-    borderRadius: 18,
-    borderWidth: 1,
+  memberPresenceCard: {
+    width: 228,
+    borderRadius: 22,
+    borderWidth: 1.5,
     padding: 13,
-    gap: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
     elevation: 2,
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  cardUserIdentity: {
-    flexDirection: 'row',
+  cardAvatarCol: {
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+  },
+  cardCenterCol: {
     flex: 1,
-  },
-  avatarWrap: {
-    position: 'relative',
-  },
-  cardLiveIndicator: {
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  nameBlock: {
     gap: 2,
-    flex: 1,
   },
-  cardMemberName: {
+  cardNameText: {
+    fontSize: 14.5,
     fontWeight: '700',
   },
-  statusBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  statusBadgeText: {
-    fontSize: 9.5,
+  cardStatusText: {
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  batteryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  batteryText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-  },
-  cardFooter: {
-    gap: 3,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(150, 150, 150, 0.15)',
-    paddingTop: 8,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  cardLocationText: {
-    fontSize: 11.5,
-    fontWeight: '500',
-    flex: 1,
-  },
-  cardUpdatedText: {
+  cardActiveText: {
     fontSize: 10,
     fontWeight: '500',
   },
+  cardRightCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: '100%',
+    paddingVertical: 2,
+  },
+  liveDotRing: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveDotCore: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  batteryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  batteryNumber: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
 
   // Compact Add Member Card
-  compactAddMemberCard: {
-    width: 106,
-    borderRadius: 18,
+  compactAddCard: {
+    width: 104,
+    borderRadius: 22,
     borderWidth: 1,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    gap: 5,
+    padding: 10,
+    gap: 4,
   },
-  compactAddIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  compactAddCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  compactAddTitle: {
+  compactAddText: {
+    fontSize: 11.5,
     fontWeight: '700',
     textAlign: 'center',
   },
-  compactAddSub: {
-    fontSize: 10,
+  compactAddSubText: {
+    fontSize: 9.5,
     fontWeight: '500',
   },
 
-  // Onboarding Radar Banner (When 1 Member)
-  onboardingCard: {
+  // 2. Family Status Card
+  familyStatusCard: {
     marginHorizontal: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
-    gap: 14,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.09,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  onboardingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  radarIllustrationWrap: {
-    width: 52,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  radarCircleOuter: {
-    position: 'absolute',
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
-  },
-  radarCircleMid: {
-    position: 'absolute',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-  },
-  radarCenterBeacon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  onboardingTextCol: {
-    flex: 1,
-    gap: 3,
-  },
-  onboardingTitle: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  onboardingSubtitle: {
-    lineHeight: 17,
-  },
-  onboardingActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  onboardingPrimaryBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 38,
-    borderRadius: 11,
-  },
-  onboardingPrimaryBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  onboardingOrDivider: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  onboardingSecondaryBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 38,
-    borderRadius: 11,
-    borderWidth: 1,
-  },
-  onboardingSecondaryBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  // Family Status Summary Card
-  statusSummaryCard: {
-    marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
     paddingVertical: 12,
-    paddingHorizontal: 14,
-    gap: 8,
+    paddingHorizontal: 16,
+    gap: 6,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
-  statusSummaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statusSummaryTitle: {
+  familyStatusTitle: {
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  viewCircleLink: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  viewCircleText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  statusSummaryMetricsRow: {
+  statusMetricsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    flexWrap: 'wrap',
+    gap: 16,
+    marginVertical: 2,
   },
-  metricItem: {
+  statusPillItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  metricDot: {
+  statusIconDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
   },
-  metricLabel: {
-    fontSize: 12.5,
-    fontWeight: '500',
+  statusItemText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  metricBold: {
-    fontWeight: '800',
-  },
-  metricTimestamp: {
+  statusActivityText: {
     fontSize: 11,
     fontWeight: '500',
   },
 
-  // Live Family Map Section Header
-  mapSectionHeader: {
+  // 3. Live Family Map Header
+  mapSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     marginTop: 4,
   },
-  mapSectionTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  mapSectionTitle: {
+  mapHeaderTitle: {
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  mapHeaderRightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  mapModePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  mapModeText: {
-    fontSize: 10.5,
-    fontWeight: '600',
-  },
-  fullScreenLink: {
-    fontSize: 12,
+  fullScreenLinkText: {
+    fontSize: 12.5,
     fontWeight: '700',
   },
 
-  // Live Family Map Container
-  mapContainer: {
+  // Interactive Map Card
+  mapHeroCard: {
     marginHorizontal: 16,
-    height: 260,
-    borderRadius: 22,
+    height: 280,
+    borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -1978,179 +1359,141 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 4,
   },
-  mapInnerPlane: {
+  mapCanvasPlane: {
     ...StyleSheet.absoluteFill,
   },
-  mapRiver: {
-    position: 'absolute',
-    left: '20%',
-    top: -20,
-    width: 60,
-    height: '140%',
-    transform: [{ rotate: '-28deg' }],
-    opacity: 0.65,
+  tileGridContainer: {
+    ...StyleSheet.absoluteFill,
   },
-  mapStreetH1: {
+  mapRasterTile: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '38%',
-    height: 6,
-    opacity: 0.8,
-  },
-  mapStreetH2: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '68%',
-    height: 5,
-    opacity: 0.7,
-  },
-  mapStreetV1: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '32%',
-    width: 6,
-    opacity: 0.8,
-  },
-  mapStreetV2: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '68%',
-    width: 5,
-    opacity: 0.7,
-  },
-  mapParkArea: {
-    position: 'absolute',
-    right: '8%',
-    bottom: '12%',
-    width: 90,
-    height: 70,
-    borderRadius: 16,
+    width: 256,
+    height: 256,
   },
 
-  // Home Location Marker
+  // Home marker
   homeMarkerWrap: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateX: -30 }, { translateY: -30 }],
+    transform: [{ translateX: -24 }, { translateY: -24 }],
   },
   homeHalo: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   homeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 2,
   },
-  homeEmoji: {
-    fontSize: 12,
-  },
-  homeLabel: {
-    fontSize: 10.5,
+  homeBadgeText: {
+    fontSize: 10,
     fontWeight: '700',
   },
 
-  // Dynamic Family Marker
-  memberMarkerPin: {
+  // Member pin on map
+  markerPinWrap: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateX: -30 }, { translateY: -46 }],
+    transform: [{ translateX: -20 }, { translateY: -30 }],
   },
-  markerRadarHalo: {
+  markerPulseHalo: {
     position: 'absolute',
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
   },
-  pinNamePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 9,
-    borderWidth: 1,
-    marginBottom: 3,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  pinLiveTinyDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  pinNameText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  pinBatteryText: {
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  avatarMarkerCircle: {
+  avatarMarkerBorder: {
     borderWidth: 2.5,
     borderRadius: 18,
     padding: 1,
-    position: 'relative',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 5,
     elevation: 3,
   },
-  movingSubIconWrap: {
-    position: 'absolute',
-    bottom: -3,
-    right: -3,
-    backgroundColor: '#F59E0B',
-    borderRadius: 6,
-    width: 13,
-    height: 13,
+  markerNameBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 2,
   },
-  pinPointerArrow: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 4.5,
-    borderRightWidth: 4.5,
-    borderTopWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    marginTop: -1,
+  markerLiveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  markerNameText: {
+    fontSize: 9.5,
+    fontWeight: '700',
   },
 
-  // Map Overlays
-  mapStatusOverlay: {
+  // Location Permission Needed View
+  permissionNeededWrap: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 8,
+  },
+  permissionIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  permissionTitle: {
+    fontSize: 14.5,
+    fontWeight: '800',
+  },
+  permissionSub: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  enableLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  enableLocationBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+
+  // Overlays
+  overlayLiveCard: {
     position: 'absolute',
-    top: 12,
-    left: 12,
+    top: 10,
+    left: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -2162,51 +1505,50 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  mapStatusTopRow: {
+  overlayLiveRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
   },
-  overlayLiveDot: {
+  liveMiniDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
   },
   overlayLiveText: {
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  overlayCountText: {
-    fontSize: 10,
+  overlaySubText: {
+    fontSize: 9.5,
     fontWeight: '600',
   },
-
-  mapZoomControls: {
+  overlayFullScreenBtn: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    gap: 6,
-  },
-  zoomBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 1,
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 2,
   },
-
-  recenterButton: {
+  overlayFullScreenText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  overlayRecenterBtn: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
+    bottom: 10,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -2220,40 +1562,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  recenterText: {
+  overlayRecenterText: {
     fontSize: 11,
     fontWeight: '700',
   },
 
-  // Member Filter Chips Row
-  memberFilterRow: {
+  // 4. Member Chips Below Map
+  memberChipsRow: {
     paddingHorizontal: 16,
     gap: 8,
     paddingTop: 2,
   },
-  filterChip: {
+  chipPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 14,
     borderWidth: 1,
   },
-  filterChipDot: {
+  chipLiveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  filterChipText: {
+  chipText: {
     fontSize: 12,
   },
-  filterChipBattery: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
 
-  // Bottom Sheet Modal
+  // 5. Member Tap Bottom Sheet
   sheetBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
@@ -2262,102 +1600,66 @@ const styles = StyleSheet.create({
   sheetBackdropPress: {
     flex: 1,
   },
-  bottomSheetContainer: {
+  sheetContainer: {
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     borderWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    gap: 16,
+    gap: 14,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 10,
   },
-  sheetDragBar: {
-    width: 40,
+  dragBar: {
+    width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 4,
   },
-  sheetHeader: {
+  sheetTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  sheetHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  sheetNameCol: {
-    gap: 3,
-    flex: 1,
-  },
-  sheetNameBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  sheetMemberName: {
+  sheetName: {
     fontWeight: '800',
   },
-  sheetRelationBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  sheetRelationText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  sheetLiveStatusRow: {
+  sheetLiveRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    marginTop: 3,
   },
   sheetDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  sheetStatusText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  sheetCloseBtn: {
-    padding: 4,
-  },
-
-  // Telemetry Grid inside Sheet
-  sheetTelemetryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  sheetTelemetryTile: {
-    flexBasis: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  tileLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  tileValue: {
+  sheetLiveStatusText: {
     fontSize: 12,
     fontWeight: '700',
   },
-
-  // Sheet Action Row
+  sheetCloseBtn: {
+    padding: 2,
+  },
+  sheetDetailsBlock: {
+    gap: 6,
+    paddingVertical: 4,
+  },
+  sheetDetailLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sheetDetailText: {
+    fontSize: 12.5,
+    fontWeight: '500',
+  },
   sheetActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2366,12 +1668,10 @@ const styles = StyleSheet.create({
   },
   sheetPrimaryBtn: {
     flex: 1.4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     height: 44,
     borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetPrimaryBtnText: {
     fontSize: 13,
@@ -2379,19 +1679,17 @@ const styles = StyleSheet.create({
   },
   sheetSecondaryBtn: {
     flex: 1.3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetSecondaryBtnText: {
     fontSize: 13,
     fontWeight: '700',
   },
-  sheetIconOnlyBtn: {
+  sheetIconBtn: {
     width: 44,
     height: 44,
     borderRadius: 12,
