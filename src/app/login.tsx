@@ -688,7 +688,7 @@ export default function LoginScreen() {
                       borderRadius: 8,
                       backgroundColor: colors.brandAccent,
                     }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Auto-Fill</Text>
+                    <Text style={{ color: colors.buttonTextOnAccent, fontSize: 12, fontWeight: '700' }}>Auto-Fill</Text>
                   </Pressable>
                 </View>
               )}
@@ -852,11 +852,11 @@ export default function LoginScreen() {
                         <Text
                           style={[
                             styles.primaryActionText,
-                            { fontSize: isElderly ? 18 : 16 },
+                            { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
                           ]}>
                           Sign In with Password
                         </Text>
-                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                        <Ionicons name="arrow-forward" size={18} color={colors.buttonTextOnAccent} />
                       </View>
                     )}
                   </Pressable>
@@ -883,11 +883,11 @@ export default function LoginScreen() {
                         <ActivityIndicator color="#FFFFFF" />
                       ) : (
                         <View style={styles.buttonContentRow}>
-                          <Ionicons name="paper-plane-outline" size={18} color="#FFFFFF" />
+                          <Ionicons name="paper-plane-outline" size={18} color={colors.buttonTextOnAccent} />
                           <Text
                             style={[
                               styles.primaryActionText,
-                              { fontSize: isElderly ? 18 : 16 },
+                              { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
                             ]}>
                             Send Verification Code
                           </Text>
@@ -973,11 +973,11 @@ export default function LoginScreen() {
                             <Text
                               style={[
                                 styles.primaryActionText,
-                                { fontSize: isElderly ? 18 : 16 },
+                                { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
                               ]}>
                               Verify & Sign In
                             </Text>
-                            <Ionicons name="checkmark-done" size={18} color="#FFFFFF" />
+                            <Ionicons name="checkmark-done" size={18} color={colors.buttonTextOnAccent} />
                           </View>
                         )}
                       </Pressable>

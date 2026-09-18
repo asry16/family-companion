@@ -117,23 +117,27 @@ router.post('/ping', async (req: AuthenticatedRequest, res: Response) => {
 });
 
 // -------------------------------------------------------------
+// -------------------------------------------------------------
 // POST /api/telemetry/sos - Emergency SOS Broadcast Alert
 // -------------------------------------------------------------
 router.post('/sos', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { message } = req.body || {};
+    const { message, coords, humanLocation, batteryLevel } = req.body || {};
 
     const senderId = req.user!.memberId || req.user!.id;
     const sender = membersRepo.findById(senderId);
     const senderName = sender?.name || req.user!.name || 'Family member';
+    const senderRelation = sender?.relation || 'Family';
+    const loc = humanLocation || sender?.human_location || 'Current Location';
+    const batt = batteryLevel ?? sender?.battery_level ?? 95;
 
     const notifId = `sos_${Date.now()}`;
     notificationsRepo.create({
       id: notifId,
       family_id: familyId,
-      title: `🚨 EMERGENCY SOS: ${senderName}`,
-      body: message || `${senderName} activated emergency broadcast. Check live map immediately.`,
+      title: `🚨 EMERGENCY SOS: ${senderName} (${senderRelation})`,
+      body: message ? `${message} • Location: ${loc}` : `Emergency SOS activated at ${loc}. Battery: ${batt}%. Check live map immediately.`,
       priority: 'urgent',
       is_read: 0,
       category: 'sos',
@@ -143,11 +147,20 @@ router.post('/sos', async (req: AuthenticatedRequest, res: Response) => {
       type: 'EMERGENCY_SOS',
       senderId,
       senderName,
+      senderRelation,
+      humanLocation: loc,
+      batteryLevel: batt,
+      coords: coords || (sender ? { x: sender.coords_x, y: sender.coords_y, latitude: sender.latitude, longitude: sender.longitude } : undefined),
       message: message || 'Emergency broadcast triggered.',
       timestamp: new Date().toISOString(),
     });
 
-    return res.json({ success: true, message: 'Emergency broadcast dispatched to family.' });
+    return res.json({
+      success: true,
+      message: 'Emergency broadcast dispatched to all family members.',
+      senderName,
+      location: loc,
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to dispatch SOS.' });
   }

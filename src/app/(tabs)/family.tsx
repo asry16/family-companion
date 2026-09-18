@@ -20,13 +20,17 @@ import { FamilyMemberCard } from '@/components/cards/FamilyMemberCard';
 import { StylizedFamilyMap } from '@/components/location/StylizedFamilyMap';
 import { LiveFamilyMap } from '@/components/location/LiveFamilyMap';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 export default function FamilyScreen() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
   const { isAuthenticated } = useAuth();
-  const { profile, members, sendFamilyPing } = useFamily();
+  const { profile, members, sendFamilyPing, sendEmergencySos } = useFamily();
   const { speak } = useVoice();
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/login');
@@ -128,6 +132,36 @@ export default function FamilyScreen() {
           </Text>
           <View style={styles.headerActionsRow}>
             <Pressable
+              onPress={() => setQrModalVisible(true)}
+              style={({ pressed }) => [
+                styles.actionPill,
+                {
+                  backgroundColor: colors.separator,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}>
+              <Ionicons name="qr-code" size={12} color={colors.text} />
+              <Text style={[styles.actionPillText, { color: colors.text }]}>QR Code</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setJoinModalVisible(true)}
+              style={({ pressed }) => [
+                styles.actionPill,
+                {
+                  backgroundColor: colors.separator,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}>
+              <Ionicons name="scan-outline" size={12} color={colors.text} />
+              <Text style={[styles.actionPillText, { color: colors.text }]}>Join Circle</Text>
+            </Pressable>
+
+            <Pressable
               onPress={() => router.push('/modal/family-settings')}
               style={({ pressed }) => [
                 styles.actionPill,
@@ -136,8 +170,8 @@ export default function FamilyScreen() {
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Ionicons name="person-add" size={12} color="#FFFFFF" />
-              <Text style={styles.actionPillText}>Add Member</Text>
+              <Ionicons name="person-add" size={12} color={colors.buttonTextOnAccent} />
+              <Text style={[styles.actionPillText, { color: colors.buttonTextOnAccent }]}>Add Member</Text>
             </Pressable>
 
             <Pressable
@@ -192,18 +226,40 @@ export default function FamilyScreen() {
               Add your spouse, children, parents, or companions to coordinate tasks, check phone battery, and view live radar locations.
             </Text>
 
-            <Pressable
-              onPress={() => router.push('/modal/family-settings')}
-              style={({ pressed }) => [
-                styles.primaryAddBtn,
-                {
-                  backgroundColor: colors.brandAccent,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="person-add" size={16} color="#FFFFFF" />
-              <Text style={styles.primaryAddBtnText}>Add Family Member</Text>
-            </Pressable>
+            <View style={styles.emptyActionRow}>
+              <Pressable
+                onPress={() => setQrModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.primaryAddBtn,
+                  {
+                    backgroundColor: colors.brandAccent,
+                    flex: 1,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="qr-code" size={16} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.primaryAddBtnText, { color: colors.buttonTextOnAccent }]}>
+                  Share QR Invite
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setJoinModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.secondaryAddBtn,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    flex: 1,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="scan-outline" size={16} color={colors.text} />
+                <Text style={[styles.secondaryAddBtnText, { color: colors.text }]}>
+                  Join via QR
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -242,8 +298,9 @@ export default function FamilyScreen() {
               description:
                 'This will alert all 5 family members with your live location and highest priority notification.',
               confirmLabel: 'Confirm Family Alert',
-              onConfirm: () => {
+              onConfirm: async () => {
                 setModalState((prev) => ({ ...prev, visible: false }));
+                await sendEmergencySos('Discreet Family Check-In Alert');
                 speak('Family safety alert dispatched.');
               },
             });
@@ -270,6 +327,18 @@ export default function FamilyScreen() {
         confirmLabel={modalState.confirmLabel}
         onConfirm={modalState.onConfirm}
         onCancel={() => setModalState((prev) => ({ ...prev, visible: false }))}
+      />
+
+      {/* Family QR & Join Modals */}
+      <FamilyQRModal
+        visible={qrModalVisible}
+        onClose={() => setQrModalVisible(false)}
+        familyCode={profile.code}
+        familyName={profile.name}
+      />
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
       />
     </View>
   );
@@ -401,6 +470,26 @@ const styles = StyleSheet.create({
   },
   primaryAddBtnText: {
     color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  emptyActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 8,
+  },
+  secondaryAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  secondaryAddBtnText: {
     fontWeight: '700',
     fontSize: 13,
   },

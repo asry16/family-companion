@@ -243,11 +243,24 @@ export const apiClient = {
     triggerSOS: async (data: {
       latitude?: number;
       longitude?: number;
+      coords?: { x?: number; y?: number; latitude?: number; longitude?: number };
+      humanLocation?: string;
+      batteryLevel?: number;
+      message?: string;
       note?: string;
+      memberId?: string;
+      senderName?: string;
     }) => {
-      return request('/api/telemetry/sos', {
+      return request<{ success: boolean; message: string; senderName?: string; location?: string }>('/api/telemetry/sos', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          memberId: data.memberId,
+          senderName: data.senderName,
+          message: data.message || data.note,
+          coords: data.coords || (data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : undefined),
+          humanLocation: data.humanLocation,
+          batteryLevel: data.batteryLevel,
+        }),
       });
     },
   },

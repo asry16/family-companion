@@ -680,11 +680,11 @@ export default function RegisterScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <View style={styles.buttonContentRow}>
-                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryButtonText}>
+                <Ionicons name="sparkles" size={18} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.primaryButtonText, { color: colors.buttonTextOnAccent }]}>
                   {isCreateFamily ? 'Create Family Space & Continue' : 'Create Account & Continue'}
                 </Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                <Ionicons name="arrow-forward" size={18} color={colors.buttonTextOnAccent} />
               </View>
             )}
           </Pressable>
@@ -884,10 +884,10 @@ export default function RegisterScreen() {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <View style={styles.buttonContentRow}>
-                  <Text style={styles.primaryButtonText}>
+                  <Text style={[styles.primaryButtonText, { color: colors.buttonTextOnAccent }]}>
                     Verify & Enter FamilyOS
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={16} color={colors.buttonTextOnAccent} />
                 </View>
               )}
             </Pressable>

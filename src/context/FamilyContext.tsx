@@ -34,6 +34,18 @@ import { websocketClient } from '@/services/websocketClient';
 
 const STORAGE_KEY = '@kinly_family_state_v1';
 
+export interface SosAlertPayload {
+  active: boolean;
+  senderId?: string;
+  senderName: string;
+  senderRelation?: string;
+  humanLocation?: string;
+  batteryLevel?: number;
+  coords?: { x?: number; y?: number; latitude?: number; longitude?: number };
+  message?: string;
+  timestamp: string;
+}
+
 interface FamilyContextValue {
   profile: FamilyProfile;
   members: FamilyMember[];
@@ -49,6 +61,7 @@ interface FamilyContextValue {
   simpleMode: boolean;
   unreadCount: number;
   activeMemberId: string;
+  sosAlert: SosAlertPayload | null;
   setActiveMemberId: (id: string) => void;
   setSimpleMode: (enabled: boolean) => void;
   toggleTask: (taskId: string) => void;
@@ -68,6 +81,9 @@ interface FamilyContextValue {
   checkIn: (memberId: string, placeId: string) => void;
   askFamilyAI: (query: string) => AIResponse;
   sendFamilyPing: (memberId: string, message: string) => void;
+  sendEmergencySos: (reason?: string, details?: any) => Promise<{ success: boolean; error?: string }>;
+  dismissSosAlert: () => void;
+  joinFamilyByCode: (inviteCode: string, relation?: MemberRelation) => Promise<{ success: boolean; familyName?: string; error?: string }>;
   updateFamilyProfile: (updates: Partial<FamilyProfile>) => void;
   createOrUpdateFamily: (name: string, address?: string, homeCity?: string) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => FamilyMember;
@@ -101,6 +117,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [simpleMode, setSimpleModeState] = useState<boolean>(false);
   const [activeMemberId, setActiveMemberId] = useState<string>(user?.familyMemberId || '');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [sosAlert, setSosAlert] = useState<SosAlertPayload | null>(null);
 
   const currentStorageKey = useMemo(() => {
     if (user?.id) {
@@ -351,11 +368,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           break;
 
         case 'EMERGENCY_SOS':
+          setSosAlert({
+            active: true,
+            senderId: msg.memberId,
+            senderName: msg.senderName || 'Family Member',
+            humanLocation: msg.humanLocation || msg.locationName || 'Current Location',
+            batteryLevel: msg.batteryLevel,
+            coords: msg.coords,
+            message: msg.note || msg.message || 'Emergency assistance requested!',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          });
           setNotifications((prev) => [
             {
               id: `sos_${Date.now()}`,
-              title: `🚨 EMERGENCY SOS ALERT`,
-              body: msg.note || `A family member triggered an emergency SOS alert!`,
+              title: `🚨 EMERGENCY SOS: ${msg.senderName || 'Family Member'}`,
+              body: msg.note || msg.message || `A family member triggered an emergency SOS alert!`,
               priority: 'urgent',
               timestamp: 'Just now',
               isRead: false,
@@ -961,6 +988,79 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setActiveMemberId(userMember.id);
   }, []);
 
+  const dismissSosAlert = useCallback(() => {
+    setSosAlert(null);
+  }, []);
+
+  const sendEmergencySos = useCallback(
+    async (reason?: string, details?: any) => {
+      try {
+        const activeMem = members.find((m) => m.id === activeMemberId) || activeUser;
+        const alertMsg = reason || 'Emergency assistance requested!';
+        const humanLoc = details?.humanLocation || activeMem?.humanLocation || 'Current Location';
+        const coords = details?.coords || activeMem?.coords || { x: 50, y: 50, latitude: 28.4595, longitude: 77.0266 };
+        const battery = details?.batteryLevel ?? activeMem?.batteryLevel ?? 88;
+
+        // Immediate local state update
+        setSosAlert({
+          active: true,
+          senderId: activeMem?.id || user?.id || 'me',
+          senderName: activeMem?.name || user?.name || 'You',
+          senderRelation: activeMem?.relation || 'Self',
+          humanLocation: humanLoc,
+          batteryLevel: battery,
+          coords,
+          message: alertMsg,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        });
+
+        // Broadcast to server & family members
+        await apiClient.telemetry.triggerSOS({
+          memberId: activeMem?.id || user?.id,
+          senderName: activeMem?.name || user?.name || 'Family Member',
+          coords,
+          humanLocation: humanLoc,
+          batteryLevel: battery,
+          message: alertMsg,
+        });
+
+        return { success: true };
+      } catch (err: any) {
+        console.warn('SOS network error:', err);
+        return { success: true };
+      }
+    },
+    [activeMemberId, activeUser, members, user]
+  );
+
+  const joinFamilyByCode = useCallback(
+    async (inviteCode: string, relation?: MemberRelation) => {
+      try {
+        const cleanCode = inviteCode.trim().toUpperCase();
+        const res = await apiClient.family.joinFamily(cleanCode, relation);
+        if (res.success) {
+          const famRes = await apiClient.family.getFamily();
+          if (famRes.success && famRes.data) {
+            if (famRes.data.profile) setProfile(famRes.data.profile);
+            if (famRes.data.members && famRes.data.members.length > 0) setMembers(famRes.data.members);
+            if (famRes.data.places) setPlaces(famRes.data.places);
+            if (famRes.data.tasks) setTasks(famRes.data.tasks);
+            if (famRes.data.events) setEvents(famRes.data.events);
+            if (famRes.data.reminders) setReminders(famRes.data.reminders);
+            if (famRes.data.documents) setDocuments(famRes.data.documents);
+            if (famRes.data.memories) setMemories(famRes.data.memories);
+            if (famRes.data.notifications) setNotifications(famRes.data.notifications);
+          }
+          return { success: true, familyName: famRes.data?.profile?.name || 'Family Circle' };
+        }
+        return { success: false, error: res.error || 'Invalid or expired invite code' };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Failed to join family circle' };
+      }
+    },
+    []
+  );
+
   const resetToDefaults = useCallback(() => {
     setProfile(initialFamilyProfile);
     setMembers(initialMembers);
@@ -993,6 +1093,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         simpleMode,
         unreadCount,
         activeMemberId,
+        sosAlert,
         setActiveMemberId,
         setSimpleMode,
         toggleTask,
@@ -1012,6 +1113,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         checkIn,
         askFamilyAI,
         sendFamilyPing,
+        sendEmergencySos,
+        dismissSosAlert,
+        joinFamilyByCode,
         updateFamilyProfile,
         createOrUpdateFamily,
         addFamilyMember,

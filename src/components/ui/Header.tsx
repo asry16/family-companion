@@ -9,6 +9,9 @@ import { useAuth } from '@/context/AuthContext';
 import { FamilyAvatar } from './FamilyAvatar';
 import { PrimaryButton } from './PrimaryButton';
 import { SecondaryButton } from './SecondaryButton';
+import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
+import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 interface HeaderProps {
   title?: string;
@@ -23,9 +26,23 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const { colors, isElderly, theme, themePreference, setThemePreference, toggleTheme, isDark } = useAppTheme();
-  const { profile, activeUser, members, tasks, unreadCount, simpleMode, setSimpleMode } = useFamily();
+  const {
+    profile,
+    activeUser,
+    members,
+    tasks,
+    unreadCount,
+    simpleMode,
+    setSimpleMode,
+    sosAlert,
+    dismissSosAlert,
+    sendEmergencySos,
+  } = useFamily();
   const { user, isAuthenticated, signOut } = useAuth();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [sosModalVisible, setSosModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -141,37 +158,62 @@ export const Header: React.FC<HeaderProps> = ({
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Ionicons name="log-in-outline" size={15} color="#FFFFFF" />
-              <Text style={styles.signInHeaderText}>Sign In</Text>
+              <Ionicons name="log-in-outline" size={15} color={colors.buttonTextOnAccent} />
+              <Text style={[styles.signInHeaderText, { color: colors.buttonTextOnAccent }]}>Sign In</Text>
             </Pressable>
           ) : (
-            showSimpleToggle && (
+            <>
+              {/* Emergency SOS Button */}
               <Pressable
-                onPress={handleToggleSimpleMode}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    try {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    } catch (e) {}
+                  }
+                  setSosModalVisible(true);
+                }}
+                accessibilityLabel="Trigger Emergency SOS"
                 style={({ pressed }) => [
-                  styles.simpleModePill,
+                  styles.sosHeaderButton,
                   {
-                    backgroundColor: simpleMode ? colors.yellowSoft : colors.separator,
-                    borderColor: simpleMode ? colors.yellowBorder : colors.border,
+                    backgroundColor: colors.red + '22',
+                    borderColor: colors.red,
                     opacity: pressed ? 0.75 : 1,
                   },
                 ]}>
-                <Ionicons
-                  name={simpleMode ? 'heart' : 'heart-outline'}
-                  size={15}
-                  color={simpleMode ? colors.yellow : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.simpleModeText,
+                <Ionicons name="warning" size={13} color={colors.red} />
+                <Text style={[styles.sosHeaderText, { color: colors.red }]}>SOS</Text>
+              </Pressable>
+
+              {showSimpleToggle && (
+                <Pressable
+                  onPress={handleToggleSimpleMode}
+                  style={({ pressed }) => [
+                    styles.simpleModePill,
                     {
-                      color: simpleMode ? colors.yellow : colors.textSecondary,
+                      backgroundColor: simpleMode ? colors.yellowSoft : colors.separator,
+                      borderColor: simpleMode ? colors.yellowBorder : colors.border,
+                      opacity: pressed ? 0.75 : 1,
                     },
                   ]}>
-                  {simpleMode ? 'Simple' : 'Elderly'}
-                </Text>
-              </Pressable>
-            )
+                  <Ionicons
+                    name={simpleMode ? 'heart' : 'heart-outline'}
+                    size={15}
+                    color={simpleMode ? colors.yellow : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.simpleModeText,
+                      {
+                        color: simpleMode ? colors.yellow : colors.textSecondary,
+                      },
+                    ]}>
+                    {simpleMode ? 'Simple' : 'Elderly'}
+                  </Text>
+                </Pressable>
+              )}
+            </>
           )}
 
           {/* Quick Dark / Light Mode Toggle */}
@@ -240,6 +282,30 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </View>
       </View>
+
+      {/* Active SOS Global Alert Banner */}
+      {sosAlert?.active && (
+        <View style={[styles.sosBannerContainer, { backgroundColor: colors.red }]}>
+          <View style={styles.sosBannerRow}>
+            <View style={styles.sosBeaconDot}>
+              <Ionicons name="alert-circle" size={18} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sosBannerTitle}>
+                🚨 SOS ALERT: {sosAlert.senderName?.toUpperCase() || 'FAMILY MEMBER'}
+              </Text>
+              <Text style={styles.sosBannerSub} numberOfLines={1}>
+                {sosAlert.humanLocation || 'Location shared'} • 🔋 {sosAlert.batteryLevel ?? 88}% • {sosAlert.message}
+              </Text>
+            </View>
+            <Pressable
+              onPress={dismissSosAlert}
+              style={styles.sosDismissButton}>
+              <Text style={styles.sosDismissText}>Dismiss</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {/* Luxury User Profile & Session Modal Sheet */}
       <Modal
@@ -397,13 +463,13 @@ export const Header: React.FC<HeaderProps> = ({
                             : 'phone-portrait-outline'
                         }
                         size={13}
-                        color={isSelected ? '#FFFFFF' : colors.textSecondary}
+                        color={isSelected ? colors.buttonTextOnAccent : colors.textSecondary}
                       />
                       <Text
                         style={[
                           styles.themeSegmentText,
                           {
-                            color: isSelected ? '#FFFFFF' : colors.text,
+                            color: isSelected ? colors.buttonTextOnAccent : colors.text,
                             fontWeight: isSelected ? '700' : '500',
                           },
                         ]}>
@@ -422,6 +488,20 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => {
                   setProfileModalVisible(false);
                   router.push('/modal/family-settings');
+                }}
+              />
+              <SecondaryButton
+                label="📲 Share Family QR Code"
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  setQrModalVisible(true);
+                }}
+              />
+              <SecondaryButton
+                label="🔍 Join Family with Code / QR"
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  setJoinModalVisible(true);
                 }}
               />
               <SecondaryButton
@@ -450,6 +530,25 @@ export const Header: React.FC<HeaderProps> = ({
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Emergency & QR Modals */}
+      <EmergencySosModal
+        visible={sosModalVisible}
+        onClose={() => setSosModalVisible(false)}
+        onTriggerSos={async (reason, details) => {
+          await sendEmergencySos(reason, details);
+        }}
+      />
+      <FamilyQRModal
+        visible={qrModalVisible}
+        onClose={() => setQrModalVisible(false)}
+        familyCode={profile.code}
+        familyName={profile.name}
+      />
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
+      />
     </>
   );
 };
@@ -712,5 +811,61 @@ const styles = StyleSheet.create({
   },
   themeSegmentText: {
     fontSize: 12,
+  },
+  sosHeaderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  sosHeaderText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sosBannerContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
+  },
+  sosBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sosBeaconDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sosBannerTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sosBannerSub: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  sosDismissButton: {
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  sosDismissText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

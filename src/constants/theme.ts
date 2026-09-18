@@ -43,6 +43,11 @@ export const Colors = {
     activeTab: '#1E293B',
     inactiveTab: '#94A3B8',
     ripple: 'rgba(0, 0, 0, 0.05)',
+
+    // High-contrast button typography tokens
+    buttonTextOnAccent: '#FFFFFF',
+    buttonTextOnBright: '#0F172A',
+    buttonTextOnDanger: '#FFFFFF',
   },
   dark: {
     background: '#0B0F19',
@@ -81,6 +86,11 @@ export const Colors = {
     activeTab: '#60A5FA',
     inactiveTab: '#64748B',
     ripple: 'rgba(255, 255, 255, 0.08)',
+
+    // High-contrast button typography tokens (Black font on bright buttons in Night Mode!)
+    buttonTextOnAccent: '#000000',
+    buttonTextOnBright: '#000000',
+    buttonTextOnDanger: '#000000',
   },
   elderly: {
     // High-contrast simple mode tokens
@@ -120,6 +130,11 @@ export const Colors = {
     activeTab: '#FDE047',
     inactiveTab: '#94A3B8',
     ripple: 'rgba(255, 255, 255, 0.2)',
+
+    // High-contrast button typography tokens
+    buttonTextOnAccent: '#000000',
+    buttonTextOnBright: '#000000',
+    buttonTextOnDanger: '#FFFFFF',
   }
 } as const;
 

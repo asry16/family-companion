@@ -23,6 +23,9 @@ import { EventCard } from '@/components/cards/EventCard';
 import { VoiceButton } from '@/components/ui/VoiceButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LiveFamilyMap } from '@/components/location/LiveFamilyMap';
+import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
+import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -38,8 +41,12 @@ export default function HomeScreen() {
     acceptSuggestion,
     dismissSuggestion,
     sendFamilyPing,
+    sendEmergencySos,
   } = useFamily();
   const { startListening, speak } = useVoice();
+  const [sosModalVisible, setSosModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
 
   // Confirmation modal state for user decision
   const [modalState, setModalState] = useState<{
@@ -215,6 +222,43 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
+
+        {/* ========================================================================= */}
+        {/* EMERGENCY SOS QUICK BROADCAST BAR                                         */}
+        {/* ========================================================================= */}
+        <Pressable
+          onPress={() => {
+            if (Platform.OS !== 'web') {
+              try {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              } catch (e) {}
+            }
+            setSosModalVisible(true);
+          }}
+          accessibilityLabel="Trigger Emergency SOS"
+          style={({ pressed }) => [
+            styles.homeSosTriggerBar,
+            {
+              backgroundColor: colors.red + '15',
+              borderColor: colors.red + '40',
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}>
+          <View style={[styles.homeSosIconWrap, { backgroundColor: colors.red }]}>
+            <Ionicons name="warning" size={16} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.homeSosTitle, { color: colors.red }]}>
+              🚨 Emergency SOS Broadcast
+            </Text>
+            <Text style={[styles.homeSosSub, { color: colors.textSecondary }]}>
+              Instant alarm & live GPS location broadcast to entire family
+            </Text>
+          </View>
+          <View style={[styles.homeSosBtnPill, { backgroundColor: colors.red }]}>
+            <Text style={styles.homeSosBtnPillText}>SOS</Text>
+          </View>
+        </Pressable>
 
         {/* ========================================================================= */}
         {/* EXECUTIVE QUICK ACTION DOCK                                               */}
@@ -528,18 +572,40 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </View>
-            <Pressable
-              onPress={() => router.push('/modal/family-settings')}
-              style={({ pressed }) => [
-                styles.familySetupBtn,
-                {
-                  backgroundColor: colors.brandAccent,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="person-add" size={14} color="#FFFFFF" />
-              <Text style={styles.familySetupBtnText}>Add People to Family</Text>
-            </Pressable>
+            <View style={styles.familySetupBtnRow}>
+              <Pressable
+                onPress={() => setQrModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.familySetupBtn,
+                  {
+                    backgroundColor: colors.brandAccent,
+                    flex: 1,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="qr-code" size={14} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.familySetupBtnText, { color: colors.buttonTextOnAccent }]}>
+                  Share QR Invite
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setJoinModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.familySetupSecondaryBtn,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
+                    flex: 1,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="scan-outline" size={14} color={colors.text} />
+                <Text style={[styles.familySetupSecondaryBtnText, { color: colors.text }]}>
+                  Join with QR
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -644,6 +710,25 @@ export default function HomeScreen() {
         confirmLabel={modalState.confirmLabel}
         onConfirm={modalState.onConfirm}
         onCancel={() => setModalState((prev) => ({ ...prev, visible: false }))}
+      />
+
+      {/* Emergency SOS & QR Modals */}
+      <EmergencySosModal
+        visible={sosModalVisible}
+        onClose={() => setSosModalVisible(false)}
+        onTriggerSos={async (reason, details) => {
+          await sendEmergencySos(reason, details);
+        }}
+      />
+      <FamilyQRModal
+        visible={qrModalVisible}
+        onClose={() => setQrModalVisible(false)}
+        familyCode={profile.code}
+        familyName={profile.name}
+      />
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
       />
     </View>
   );
@@ -983,5 +1068,62 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 13,
+  },
+  homeSosTriggerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  homeSosIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeSosTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  homeSosSub: {
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  homeSosBtnPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  homeSosBtnPillText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  familySetupBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 4,
+  },
+  familySetupSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  familySetupSecondaryBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

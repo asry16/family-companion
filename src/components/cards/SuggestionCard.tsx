@@ -111,12 +111,12 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
           <Ionicons
             name="paper-plane"
             size={15}
-            color={isElderly ? '#000000' : '#FFFFFF'}
+            color={colors.buttonTextOnAccent}
           />
           <Text
             style={[
               styles.primaryActionText,
-              { color: isElderly ? '#000000' : '#FFFFFF' },
+              { color: colors.buttonTextOnAccent },
             ]}>
             {suggestion.primaryActionLabel}
           </Text>

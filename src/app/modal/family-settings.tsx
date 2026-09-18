@@ -18,6 +18,8 @@ import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { FamilyMember, MemberRelation } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
+import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 const AVATAR_COLORS = [
   '#3B82F6', // Blue
@@ -58,6 +60,8 @@ export default function FamilySettingsModal() {
   const [address, setAddress] = useState(profile.address || 'B-42 Palm Grove');
   const [city, setCity] = useState(profile.homeCity || 'Gurgaon, NCR');
   const [profileSaved, setProfileSaved] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
 
   // Add member modal state
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -437,12 +441,97 @@ export default function FamilySettingsModal() {
               <Ionicons
                 name={profileSaved ? 'checkmark-circle' : 'save-outline'}
                 size={18}
-                color="#FFFFFF"
+                color={colors.buttonTextOnAccent}
               />
-              <Text style={styles.saveButtonText}>
+              <Text style={[styles.saveButtonText, { color: colors.buttonTextOnAccent }]}>
                 {profileSaved ? 'Household Saved!' : 'Save Household Details'}
               </Text>
             </Pressable>
+          </View>
+        </View>
+
+        {/* Family Invitation & QR Code Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="qr-code" size={18} color={colors.brandAccent} />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.text, fontSize: isElderly ? 18 : 15 },
+              ]}>
+              FAMILY INVITATION & QR CODE
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View style={styles.qrSectionHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.qrCodeLabel, { color: colors.textSecondary }]}>
+                  Household Private Invite Code
+                </Text>
+                <Text style={[styles.qrCodeValue, { color: colors.brandAccent }]}>
+                  {profile.code || 'KIN-4892'}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setQrModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.qrViewButton,
+                  {
+                    backgroundColor: colors.brandAccent,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="qr-code-outline" size={16} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.qrViewButtonText, { color: colors.buttonTextOnAccent }]}>
+                  View QR
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>
+              Anyone with this QR code or 8-character invite code can instantly join {profile.name} and sync real-time safety status.
+            </Text>
+
+            <View style={styles.qrActionButtonsRow}>
+              <Pressable
+                onPress={() => setQrModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.qrActionButtonPrimary,
+                  {
+                    backgroundColor: colors.brandAccent,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="share-social-outline" size={16} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.qrActionButtonPrimaryText, { color: colors.buttonTextOnAccent }]}>
+                  Share QR Invite
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setJoinModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.qrActionButtonSecondary,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}>
+                <Ionicons name="scan-outline" size={16} color={colors.text} />
+                <Text style={[styles.qrActionButtonSecondaryText, { color: colors.text }]}>
+                  Join Other Family
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -466,8 +555,8 @@ export default function FamilySettingsModal() {
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Ionicons name="person-add" size={14} color="#FFFFFF" />
-              <Text style={styles.addMemberPillText}>Add Member</Text>
+              <Ionicons name="person-add" size={14} color={colors.buttonTextOnAccent} />
+              <Text style={[styles.addMemberPillText, { color: colors.buttonTextOnAccent }]}>Add Member</Text>
             </Pressable>
           </View>
 
@@ -716,7 +805,7 @@ export default function FamilySettingsModal() {
                         style={[
                           styles.roleChipText,
                           {
-                            color: selected ? '#FFFFFF' : colors.text,
+                            color: selected ? colors.buttonTextOnAccent : colors.text,
                             fontWeight: selected ? '700' : '500',
                           },
                         ]}>
@@ -776,7 +865,7 @@ export default function FamilySettingsModal() {
                         style={[
                           styles.roleChipText,
                           {
-                            color: selected ? '#FFFFFF' : colors.text,
+                            color: selected ? colors.buttonTextOnAccent : colors.text,
                             fontWeight: selected ? '700' : '500',
                           },
                         ]}>
@@ -841,8 +930,8 @@ export default function FamilySettingsModal() {
                   styles.saveButton,
                   { backgroundColor: colors.brandAccent },
                 ]}>
-                <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                <Text style={styles.saveButtonText}>Add to Family</Text>
+                <Ionicons name="checkmark" size={18} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.saveButtonText, { color: colors.buttonTextOnAccent }]}>Add to Family</Text>
               </Pressable>
 
               <Pressable
@@ -928,7 +1017,7 @@ export default function FamilySettingsModal() {
                         style={[
                           styles.roleChipText,
                           {
-                            color: selected ? '#FFFFFF' : colors.text,
+                            color: selected ? colors.buttonTextOnAccent : colors.text,
                             fontWeight: selected ? '700' : '500',
                           },
                         ]}>
@@ -986,8 +1075,8 @@ export default function FamilySettingsModal() {
                   styles.saveButton,
                   { backgroundColor: colors.brandAccent },
                 ]}>
-                <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Ionicons name="checkmark" size={18} color={colors.buttonTextOnAccent} />
+                <Text style={[styles.saveButtonText, { color: colors.buttonTextOnAccent }]}>Save Changes</Text>
               </Pressable>
 
               <Pressable
@@ -1062,6 +1151,18 @@ export default function FamilySettingsModal() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Family QR & Join Modals */}
+      <FamilyQRModal
+        visible={qrModalVisible}
+        onClose={() => setQrModalVisible(false)}
+        familyCode={profile.code}
+        familyName={profile.name}
+      />
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
+      />
     </View>
   );
 }
@@ -1400,5 +1501,64 @@ const styles = StyleSheet.create({
   themeCardSub: {
     fontSize: 11,
     marginTop: 2,
+  },
+  qrSectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  qrCodeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  qrCodeValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginTop: 2,
+  },
+  qrViewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  qrViewButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  qrActionButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  qrActionButtonPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  qrActionButtonPrimaryText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  qrActionButtonSecondary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  qrActionButtonSecondaryText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
