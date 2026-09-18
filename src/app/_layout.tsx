@@ -49,7 +49,11 @@ function RootNavigator() {
         styles.outerContainer,
         {
           backgroundColor:
-            Platform.OS === 'web' ? '#0A0E1A' : colors.background,
+            Platform.OS === 'web'
+              ? theme === 'light'
+                ? '#E2E8F0'
+                : '#070A12'
+              : colors.background,
         },
       ]}>
       <View
@@ -57,7 +61,12 @@ function RootNavigator() {
           styles.phoneFrame,
           {
             backgroundColor: colors.background,
-            borderColor: Platform.OS === 'web' ? '#1E293B' : 'transparent',
+            borderColor:
+              Platform.OS === 'web'
+                ? theme === 'light'
+                  ? '#CBD5E1'
+                  : '#1E293B'
+                : 'transparent',
           },
         ]}>
         <StatusBar style={theme === 'light' ? 'dark' : 'light'} />

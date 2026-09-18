@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   showSimpleToggle = true,
 }) => {
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isElderly, theme, themePreference, setThemePreference, toggleTheme, isDark } = useAppTheme();
   const { profile, activeUser, members, tasks, unreadCount, simpleMode, setSimpleMode } = useFamily();
   const { user, isAuthenticated, signOut } = useAuth();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
@@ -174,6 +174,32 @@ export const Header: React.FC<HeaderProps> = ({
             )
           )}
 
+          {/* Quick Dark / Light Mode Toggle */}
+          <Pressable
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                try {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                } catch (e) {}
+              }
+              toggleTheme();
+            }}
+            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
+            style={({ pressed }) => [
+              styles.iconButton,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: isDark ? colors.brandAccent + '40' : colors.border,
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}>
+            <Ionicons
+              name={isDark ? 'sunny' : 'moon'}
+              size={18}
+              color={isDark ? '#FBBF24' : colors.brandAccent}
+            />
+          </Pressable>
+
           {/* Notifications Bell */}
           <Pressable
             onPress={() => router.push('/modal/notifications')}
@@ -309,6 +335,83 @@ export const Header: React.FC<HeaderProps> = ({
                 <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
                   Vault Synced
                 </Text>
+              </View>
+            </View>
+
+            {/* Theme & Appearance Segmented Selector */}
+            <View
+              style={[
+                styles.appearanceBox,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <View style={styles.appearanceTopRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons
+                    name={isDark ? 'moon' : 'sunny'}
+                    size={14}
+                    color={colors.brandAccent}
+                  />
+                  <Text style={[styles.appearanceTitle, { color: colors.text }]}>
+                    Theme & Appearance
+                  </Text>
+                </View>
+                <Text style={[styles.appearanceActiveBadge, { color: colors.textSecondary }]}>
+                  {themePreference === 'system' ? 'System Default' : isDark ? 'Dark Mode' : 'Light Mode'}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.themeSegmentRow,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.borderSubtle },
+                ]}>
+                {(['light', 'dark', 'system'] as const).map((pref) => {
+                  const isSelected = themePreference === pref;
+                  return (
+                    <Pressable
+                      key={pref}
+                      onPress={() => {
+                        if (Platform.OS !== 'web') {
+                          try {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          } catch (e) {}
+                        }
+                        setThemePreference(pref);
+                      }}
+                      style={[
+                        styles.themeSegmentBtn,
+                        isSelected && {
+                          backgroundColor: colors.brandAccent,
+                          borderColor: colors.brandAccent,
+                        },
+                      ]}>
+                      <Ionicons
+                        name={
+                          pref === 'light'
+                            ? 'sunny'
+                            : pref === 'dark'
+                            ? 'moon'
+                            : 'phone-portrait-outline'
+                        }
+                        size={13}
+                        color={isSelected ? '#FFFFFF' : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.themeSegmentText,
+                          {
+                            color: isSelected ? '#FFFFFF' : colors.text,
+                            fontWeight: isSelected ? '700' : '500',
+                          },
+                        ]}>
+                        {pref === 'light' ? 'Light' : pref === 'dark' ? 'Dark' : 'System'}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
 
@@ -570,5 +673,44 @@ const styles = StyleSheet.create({
   logoutPillText: {
     fontWeight: '700',
     fontSize: 14,
+  },
+  appearanceBox: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+  },
+  appearanceTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  appearanceTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  appearanceActiveBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  themeSegmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 3,
+    gap: 4,
+  },
+  themeSegmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    borderRadius: 9,
+  },
+  themeSegmentText: {
+    fontSize: 12,
   },
 });

@@ -41,7 +41,7 @@ const ROLES_LIST: MemberRelation[] = [
 
 export default function FamilySettingsModal() {
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isElderly, theme, themePreference, setThemePreference, isDark } = useAppTheme();
   const { user, signOut } = useAuth();
   const {
     profile,
@@ -252,6 +252,98 @@ export default function FamilySettingsModal() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
+        {/* Appearance & Theme Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.brandAccent} />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.text, fontSize: isElderly ? 18 : 15 },
+              ]}>
+              APPEARANCE & THEME
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}>
+            <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>
+              Customize Kinly's interface for comfortable viewing day or night.
+            </Text>
+
+            <View style={styles.themeOptionsGrid}>
+              {[
+                {
+                  id: 'light' as const,
+                  label: 'Light Mode',
+                  sub: 'Clean luxury daytime palette',
+                  icon: 'sunny' as const,
+                  iconColor: '#F59E0B',
+                },
+                {
+                  id: 'dark' as const,
+                  label: 'Dark Mode',
+                  sub: 'Deep OLED midnight slate',
+                  icon: 'moon' as const,
+                  iconColor: '#818CF8',
+                },
+                {
+                  id: 'system' as const,
+                  label: 'System Default',
+                  sub: 'Syncs with your device settings',
+                  icon: 'phone-portrait-outline' as const,
+                  iconColor: colors.brandAccent,
+                },
+              ].map((item) => {
+                const isSelected = themePreference === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        try {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        } catch (e) {}
+                      }
+                      setThemePreference(item.id);
+                    }}
+                    style={({ pressed }) => [
+                      styles.themeCardItem,
+                      {
+                        backgroundColor: isSelected ? colors.brandAccent + '15' : colors.background,
+                        borderColor: isSelected ? colors.brandAccent : colors.border,
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}>
+                    <View style={styles.themeCardIconWrap}>
+                      <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.themeCardLabel, { color: colors.text }]}>
+                          {item.label}
+                        </Text>
+                        <Text style={[styles.themeCardSub, { color: colors.textSecondary }]}>
+                          {item.sub}
+                        </Text>
+                      </View>
+                      <Ionicons
+                        name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                        size={20}
+                        color={isSelected ? colors.brandAccent : colors.textMuted}
+                      />
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
         {/* Household Information Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
@@ -1282,5 +1374,31 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  settingSubtext: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  themeOptionsGrid: {
+    gap: 8,
+  },
+  themeCardItem: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 12,
+  },
+  themeCardIconWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeCardLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  themeCardSub: {
+    fontSize: 11,
+    marginTop: 2,
   },
 });
