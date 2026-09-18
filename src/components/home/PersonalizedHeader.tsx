@@ -6,8 +6,11 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { IconCircleButton } from '@/components/ui/IconCircleButton';
+
+import { HeaderAmbientArt } from './HeaderAmbientArt';
 
 interface PersonalizedHeaderProps {
   onOpenSettings?: () => void;
@@ -15,22 +18,14 @@ interface PersonalizedHeaderProps {
 
 export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSettings }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isElderly, themePreference, setThemePreference, toggleTheme, isDark } = useAppTheme();
   const { profile, activeUser, members, tasks, unreadCount, sosAlert, dismissSosAlert } = useFamily();
   const { user, isAuthenticated, signOut } = useAuth();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
 
-  const hour = new Date().getHours();
-  const isNight = hour < 6 || hour >= 18;
-  const greetingText = hour < 12 ? 'Good morning,' : hour < 17 ? 'Good afternoon,' : 'Good evening,';
-  const timeIcon = isNight ? '🌙' : hour < 12 ? '☀️' : '🌤️';
-
   const rawName = user?.name || activeUser?.name || 'Asmita';
   const firstName = rawName.split(' ')[0] || 'Asmita';
-
-  const safeCount = members.filter((m) => m.availability !== 'offline').length;
-  const totalCount = members.length || 1;
-  const allSafe = safeCount >= totalCount;
 
   const handleSignOut = async () => {
     setProfileModalVisible(false);
@@ -42,111 +37,80 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
 
   return (
     <>
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 6, Platform.OS === 'ios' ? 12 : 10) }]}>
+        {/* Ambient Top Background Illustration (Light: Faint leaf / Dark: Stars, shooting star, mountain silhouette) */}
+        <HeaderAmbientArt />
+
         {/* Top Profile & Greeting Row */}
         <View style={styles.topRow}>
-          {/* Left: Avatar with Online Halo */}
-          <Pressable
-            onPress={() => {
-              if (isAuthenticated) {
-                setProfileModalVisible(true);
-              } else {
-                router.push('/login');
-              }
-            }}
-            accessibilityLabel="Open User Profile"
-            style={({ pressed }) => [
-              styles.avatarPressable,
-              { opacity: pressed ? 0.85 : 1 },
-            ]}>
-            <View
-              style={[
-                styles.avatarRing,
-                {
-                  borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(37, 99, 235, 0.25)',
-                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-                },
-              ]}>
-              <FamilyAvatar member={activeUser} size="md" showStatus={false} />
-              <View style={[styles.avatarStatusBadge, { backgroundColor: colors.green }]} />
-            </View>
-          </Pressable>
-
-          {/* Center: Deco Greeting & Name */}
+          {/* Left: Greeting Block */}
           <View style={styles.greetingBlock}>
-            <View style={styles.greetingLine}>
-              <Text
-                style={[
-                  styles.decoGreeting,
-                  {
-                    color: isDark ? colors.textMuted : colors.textSecondary,
-                  },
-                ]}>
-                {greetingText}
-              </Text>
-              <Text style={styles.timeEmoji}>{timeIcon}</Text>
-            </View>
-
             <Text
-              numberOfLines={1}
               style={[
-                styles.userNameText,
+                styles.decoGreeting,
                 {
-                  color: colors.text,
-                  fontSize: isElderly ? 24 : 21,
+                  color: isDark ? colors.textMuted : colors.textSecondary,
                 },
               ]}>
-              {firstName}
+              Good evening,
             </Text>
 
-            {/* Glowing Safety Status */}
-            <View style={styles.safetyStatusRow}>
-              <View
+            <View style={styles.nameRow}>
+              <Text
+                numberOfLines={1}
                 style={[
-                  styles.statusBeaconOuter,
-                  { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(34, 197, 139, 0.15)' },
+                  styles.userNameText,
+                  {
+                    color: colors.text,
+                    fontSize: isElderly ? 24 : 22,
+                  },
                 ]}>
+                {firstName}
+              </Text>
+              <Text style={styles.moonEmoji}>🌙</Text>
+            </View>
+
+            {/* Below it: green dot + "Your family is safe" */}
+            <View style={styles.safeStatusRow}>
+              <View style={[styles.statusBeaconOuter, { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(34, 197, 139, 0.15)' }]}>
                 <View style={[styles.statusBeaconInner, { backgroundColor: colors.green }]} />
               </View>
-              <Text style={[styles.safetyStatusText, { color: isDark ? colors.green : '#059669' }]}>
-                {allSafe ? `All ${totalCount} members safe` : `${safeCount} of ${totalCount} safe`}
-              </Text>
-              <Text style={[styles.safetyDotSeparator, { color: colors.textMuted }]}>•</Text>
-              <Text style={[styles.safetySubText, { color: colors.textSecondary }]}>
-                Vault synced
+              <Text style={[styles.safeStatusText, { color: isDark ? colors.green : '#059669' }]}>
+                Your family is safe
               </Text>
             </View>
           </View>
 
-          {/* Right: Frosted Circular Actions */}
+          {/* Right: Three Circular Icon Buttons (bell with red dot, sun = theme toggle, settings gear) */}
           <View style={styles.actionsCluster}>
-            {/* Theme Toggle Button */}
+            {/* 1. Bell with Red Notification Dot */}
+            <IconCircleButton
+              name="notifications-outline"
+              size={40}
+              iconSize={18}
+              color={colors.text}
+              showBadgeDot={true}
+              badgeColor={colors.red}
+              onPress={() => router.push('/modal/notifications')}
+              accessibilityLabel="Notifications"
+            />
+
+            {/* 2. Sun = Theme Toggle */}
             <IconCircleButton
               name={isDark ? 'sunny' : 'moon'}
-              size={38}
-              iconSize={17}
+              size={40}
+              iconSize={18}
               color={isDark ? '#FBBF24' : colors.blue}
               glowColor={isDark ? '#FBBF24' : undefined}
               onPress={toggleTheme}
               accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
             />
 
-            {/* Notifications Button */}
-            <IconCircleButton
-              name="notifications-outline"
-              size={38}
-              iconSize={17}
-              color={colors.text}
-              badgeCount={unreadCount}
-              onPress={() => router.push('/modal/notifications')}
-              accessibilityLabel="Notifications"
-            />
-
-            {/* Settings Gear */}
+            {/* 3. Settings Gear */}
             <IconCircleButton
               name="settings-outline"
-              size={38}
-              iconSize={17}
+              size={40}
+              iconSize={18}
               color={colors.text}
               onPress={() => {
                 if (onOpenSettings) {
@@ -409,10 +373,11 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
 
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingTop: Platform.OS === 'ios' ? 12 : 10,
-    paddingBottom: 8,
-    gap: 10,
+    paddingBottom: 6,
+    position: 'relative',
+    overflow: 'hidden',
   },
   topRow: {
     flexDirection: 'row',
@@ -420,64 +385,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  avatarPressable: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarRing: {
-    padding: 2.5,
-    borderRadius: 30,
-    borderWidth: 1.5,
-    position: 'relative',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  avatarStatusBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
   greetingBlock: {
     flex: 1,
     justifyContent: 'center',
-    gap: 2,
+    gap: 1,
   },
-  greetingLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  // Art Deco styled typographic treatment - italic serif/script
   decoGreeting: {
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' }),
     fontStyle: 'italic',
-    fontSize: 13.5,
-    letterSpacing: 0.3,
+    fontSize: 14,
+    letterSpacing: 0.2,
     fontWeight: '500',
   },
-  timeEmoji: {
-    fontSize: 12,
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   userNameText: {
     fontFamily: Platform.select({ ios: 'System', android: 'Roboto', default: 'Inter, system-ui, -apple-system, sans-serif' }),
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    marginTop: -1,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  safetyStatusRow: {
+  moonEmoji: {
+    fontSize: 18,
+    marginTop: -2,
+  },
+  safeStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginTop: 2,
+    gap: 6,
+    marginTop: 3,
   },
+  safeStatusText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+
   statusBeaconOuter: {
     width: 14,
     height: 14,

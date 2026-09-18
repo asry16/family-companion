@@ -26,23 +26,23 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: isDark ? '#38BDF8' : colors.brandAccent,
-        tabBarInactiveTintColor: isDark ? '#64748B' : '#94A3B8',
+        tabBarActiveTintColor: colors.blue,
+        tabBarInactiveTintColor: isDark ? colors.textMuted : colors.textSecondary,
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.select({ ios: 20, default: 14 }),
           left: 14,
           right: 14,
-          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
-          borderColor: isDark ? 'rgba(56, 189, 248, 0.22)' : 'rgba(0, 0, 0, 0.08)',
+          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.88)' : 'rgba(255, 255, 255, 0.88)',
+          borderColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(20, 32, 58, 0.08)',
           borderWidth: 1,
           borderRadius: 28,
           height: Platform.select({ ios: 68, default: 64 }),
           paddingBottom: Platform.select({ ios: 10, default: 8 }),
           paddingTop: 6,
-          shadowColor: isDark ? '#000000' : '#0F172A',
+          shadowColor: isDark ? colors.blue : '#14203A',
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: isDark ? 0.45 : 0.08,
+          shadowOpacity: isDark ? 0.35 : 0.08,
           shadowRadius: 18,
           elevation: 12,
         },
@@ -53,7 +53,7 @@ export default function TabsLayout() {
           marginTop: 2,
         },
       }}>
-      {/* 1. Home Tab */}
+      {/* 1. Home Tab (Active Blue) */}
       <Tabs.Screen
         name="index"
         listeners={{
@@ -67,13 +67,13 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(37, 99, 235, 0.1)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
                 size={20}
-                color={focused ? (isDark ? '#38BDF8' : colors.brandAccent) : color}
+                color={focused ? colors.blue : color}
               />
             </View>
           ),
@@ -94,20 +94,20 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(37, 99, 235, 0.1)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'people' : 'people-outline'}
                 size={20}
-                color={focused ? (isDark ? '#38BDF8' : colors.brandAccent) : color}
+                color={focused ? colors.blue : color}
               />
             </View>
           ),
         }}
       />
 
-      {/* 3. Center Assistant Tab (Elevated, Larger with Glowing Blue/Purple) */}
+      {/* 3. Center Assistant Tab (Raised Gradient Orb Blue-to-Purple with Sparkle Icon and Soft Glow) */}
       <Tabs.Screen
         name="ai"
         listeners={{
@@ -117,7 +117,7 @@ export default function TabsLayout() {
           title: 'Assistant',
           tabBarBadge: activeSuggestions > 0 ? '•' : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: isDark ? '#38BDF8' : '#2563EB',
+            backgroundColor: colors.purple,
             color: '#FFFFFF',
             fontSize: 10,
             minWidth: 10,
@@ -129,47 +129,28 @@ export default function TabsLayout() {
             <Text
               style={{
                 fontSize: 10,
-                fontWeight: '800',
+                fontWeight: '700',
                 color: focused
-                  ? isDark
-                    ? '#C084FC'
-                    : '#7C3AED'
+                  ? colors.purple
                   : isDark
-                  ? '#94A3B8'
-                  : '#64748B',
-                marginTop: 1,
+                  ? colors.textMuted
+                  : colors.textSecondary,
+                marginTop: 2,
               }}>
               Assistant
             </Text>
           ),
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: () => (
             <View style={styles.centerAssistantWrap}>
               <LinearGradient
-                colors={
-                  focused
-                    ? ['#38BDF8', '#8B5CF6']
-                    : isDark
-                    ? ['rgba(56, 189, 248, 0.28)', 'rgba(139, 92, 246, 0.35)']
-                    : ['#EFF6FF', '#F3E8FF']
-                }
+                colors={['#3B6FF0', '#7C5CE0']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[
-                  styles.centerAssistantCircle,
-                  {
-                    borderColor: focused
-                      ? '#FFFFFF'
-                      : isDark
-                      ? 'rgba(192, 132, 252, 0.4)'
-                      : 'rgba(139, 92, 246, 0.25)',
-                    shadowColor: isDark ? '#A855F7' : '#3B82F6',
-                    shadowOpacity: focused ? 0.55 : 0.25,
-                  },
-                ]}>
+                style={styles.centerAssistantCircle}>
                 <Ionicons
                   name="sparkles"
-                  size={19}
-                  color={focused ? '#FFFFFF' : isDark ? '#C084FC' : '#7C3AED'}
+                  size={21}
+                  color="#FFFFFF"
                 />
               </LinearGradient>
             </View>
@@ -261,18 +242,21 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    top: -6,
+    top: -10,
   },
   centerAssistantCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#7C5CE0',
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 8,
   },
 });
 

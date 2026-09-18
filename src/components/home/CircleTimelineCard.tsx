@@ -23,46 +23,50 @@ export const CircleTimelineCard: React.FC = () => {
     id: string;
     time: string;
     title: string;
-    details: string;
+    subtitle?: string;
     nodeColor: string;
     variant: StatusChipVariant;
+    colorScheme?: 'green' | 'blue' | 'purple' | 'yellow';
     route: string;
   }> = [
     {
       id: 'evt_1',
-      time: '09:42 AM',
-      title: 'Asmita arrived at Home',
-      details: 'Geofence Sanctuary verified',
+      time: '22:18',
+      title: 'Asmita arrived Home',
       nodeColor: colors.green,
       variant: 'Safe',
+      colorScheme: 'green',
       route: '/(tabs)/family',
     },
     {
       id: 'evt_2',
-      time: '11:15 AM',
-      title: 'Pediatric checkup confirmed',
-      details: 'Dr. Sharma • Clinic Downtown',
-      nodeColor: colors.blue,
+      time: '20:42',
+      title: 'Check-in completed',
+      subtitle: 'Asmita',
+      nodeColor: colors.green,
       variant: 'All good',
+      colorScheme: 'green',
       route: '/(tabs)/plans',
     },
     {
       id: 'evt_3',
-      time: '01:30 PM',
-      title: 'Health card document synced',
-      details: 'Updated to Private Family Vault',
-      nodeColor: colors.purple,
-      variant: 'Vault',
-      route: '/(tabs)/memory',
+      time: '18:05',
+      title: 'Location updated',
+      subtitle: 'Asmita',
+      nodeColor: colors.blue,
+      variant: 'View',
+      colorScheme: 'blue',
+      route: '/(tabs)/plans',
     },
     {
       id: 'evt_4',
-      time: '04:05 PM',
-      title: 'School pickup & grocery route',
-      details: 'Whole Foods • 3 items pending',
-      nodeColor: isDark ? colors.yellow : '#D97706',
-      variant: 'View',
-      route: '/(tabs)/plans',
+      time: '15:20',
+      title: 'Document added to Vault',
+      subtitle: 'Identity Card',
+      nodeColor: colors.purple,
+      variant: 'Vault',
+      colorScheme: 'purple',
+      route: '/(tabs)/memory',
     },
   ];
 
@@ -72,24 +76,31 @@ export const CircleTimelineCard: React.FC = () => {
       glowColor={isDark ? colors.blue : undefined}
       style={styles.cardContainer}
       contentStyle={styles.cardContent}>
-      {/* Header */}
+      {/* Header: Clock Icon + "Today in your Circle" + "View all →" */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <Text style={[styles.mainHeading, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
+          <Ionicons
+            name="time-outline"
+            size={18}
+            color={isDark ? colors.blue : colors.blue}
+          />
+          <Text style={[styles.mainHeading, { color: colors.text, fontSize: isElderly ? 18 : 16.5 }]}>
             Today in your Circle
           </Text>
-          <View style={[styles.eventCountTag, { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.15)' : 'rgba(59, 111, 240, 0.10)' }]}>
-            <Text style={[styles.eventCountText, { color: colors.blue }]}>
-              {timelineEvents.length} events
-            </Text>
-          </View>
         </View>
 
         <Pressable
-          onPress={() => router.push('/(tabs)/plans')}
-          hitSlop={8}>
-          <Text style={[styles.timelineAllText, { color: colors.blue }]}>
-            History →
+          onPress={() => {
+            triggerHaptic();
+            router.push('/(tabs)/plans');
+          }}
+          hitSlop={10}
+          style={({ pressed }) => [
+            styles.viewAllPressable,
+            { opacity: pressed ? 0.75 : 1 },
+          ]}>
+          <Text style={[styles.timelineAllText, { color: isDark ? colors.blue : colors.blue }]}>
+            View all →
           </Text>
         </Pressable>
       </View>
@@ -117,9 +128,9 @@ export const CircleTimelineCard: React.FC = () => {
                 </Text>
               </View>
 
-              {/* Center: Glowing Node & Vertical Track */}
+              {/* Center: Colored Dot Node & Vertical Track */}
               <View style={styles.nodeColumn}>
-                <View style={[styles.glowingNodeOuter, { backgroundColor: item.nodeColor + '25' }]}>
+                <View style={[styles.glowingNodeOuter, { backgroundColor: item.nodeColor + '28' }]}>
                   <View style={[styles.glowingNodeInner, { backgroundColor: item.nodeColor }]} />
                 </View>
                 {!isLast && (
@@ -132,30 +143,36 @@ export const CircleTimelineCard: React.FC = () => {
                 )}
               </View>
 
-              {/* Right: Content Stack & Status Pill via StatusChip */}
+              {/* Right: Content Stack (title, optional subtitle) & Right-Aligned StatusChip + Chevron */}
               <View style={styles.contentColumn}>
                 <View style={styles.eventTextStack}>
                   <Text
                     numberOfLines={1}
                     style={[
                       styles.eventTitle,
-                      { color: colors.text, fontSize: isElderly ? 15 : 13.5 },
+                      { color: colors.text, fontSize: isElderly ? 15 : 14 },
                     ]}>
                     {item.title}
                   </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.eventDetails,
-                      { color: isDark ? colors.textMuted : colors.textSecondary },
-                    ]}>
-                    {item.details}
-                  </Text>
+                  {item.subtitle ? (
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.eventSubtitle,
+                        { color: isDark ? colors.textMuted : colors.textSecondary },
+                      ]}>
+                      {item.subtitle}
+                    </Text>
+                  ) : null}
                 </View>
 
-                {/* StatusChip & Navigation Chevron */}
-                <View style={styles.pillWithChevron}>
-                  <StatusChip variant={item.variant} size="sm" />
+                {/* Right-aligned StatusChip & Chevron */}
+                <View style={styles.chipAndChevronWrap}>
+                  <StatusChip
+                    variant={item.variant}
+                    colorScheme={item.colorScheme}
+                    size="sm"
+                  />
                   <Ionicons
                     name="chevron-forward"
                     size={14}
@@ -176,6 +193,7 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   cardContent: {
+    padding: 16,
     gap: 16,
   },
   headerRow: {
@@ -189,44 +207,40 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mainHeading: {
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  eventCountTag: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  eventCountText: {
-    fontSize: 10,
     fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  viewAllPressable: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
   timelineAllText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
+    letterSpacing: -0.1,
   },
-
-  // Timeline list
   timelineList: {
-    gap: 16,
+    gap: 0,
   },
   timelineRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    minHeight: 52,
   },
   timeColumn: {
-    width: 62,
-    paddingTop: 2,
+    width: 44,
+    paddingTop: 3,
+    alignItems: 'flex-start',
   },
   timeText: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: -0.1,
+    fontVariant: ['tabular-nums'],
   },
   nodeColumn: {
+    width: 24,
     alignItems: 'center',
-    width: 22,
-    marginRight: 10,
+    height: '100%',
     position: 'relative',
   },
   glowingNodeOuter: {
@@ -235,6 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
     zIndex: 2,
   },
   glowingNodeInner: {
@@ -244,8 +259,8 @@ const styles = StyleSheet.create({
   },
   trackLine: {
     position: 'absolute',
-    top: 16,
-    bottom: -18,
+    top: 18,
+    bottom: -8,
     width: 1.5,
     zIndex: 1,
   },
@@ -254,6 +269,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingLeft: 8,
+    paddingBottom: 14,
     gap: 8,
   },
   eventTextStack: {
@@ -261,24 +278,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eventTitle: {
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
-  eventDetails: {
-    fontSize: 11,
+  eventSubtitle: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  pillWithChevron: {
+  chipAndChevronWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  statusPillText: {
-    fontSize: 10.5,
-    fontWeight: '800',
   },
 });

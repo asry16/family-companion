@@ -4,19 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { useFamily } from '@/context/FamilyContext';
 
 interface EmergencySosCardProps {
   onTriggerSos: (reason: string, details: string) => void;
-  onOpenSosModal: () => void;
+  onOpenSosModal?: () => void;
 }
 
 export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
   onTriggerSos,
-  onOpenSosModal,
 }) => {
   const { colors, isDark, isElderly } = useAppTheme();
-  const { members } = useFamily();
 
   // Hold-to-confirm animation state (2 seconds hold)
   const [isHolding, setIsHolding] = useState(false);
@@ -27,18 +24,18 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Ambient gentle pulse on the SOS button
+  // Concentric ambient pulse rings around SOS button
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 1600,
+          duration: 1800,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0,
-          duration: 1600,
+          duration: 1800,
           useNativeDriver: true,
         }),
       ])
@@ -47,7 +44,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
     return () => loop.stop();
   }, [pulseAnim]);
 
-  // Start hold-to-confirm (2000ms)
+  // Press In: starts 2s hold timer and progress animation
   const handlePressIn = () => {
     setIsHolding(true);
     setHoldSuccess(false);
@@ -58,7 +55,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
       } catch (e) {}
     }
 
-    // Interval haptics during hold
+    // Repeated haptic pulses while holding
     let ticks = 0;
     hapticIntervalRef.current = setInterval(() => {
       ticks++;
@@ -71,9 +68,9 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           );
         } catch (e) {}
       }
-    }, 450);
+    }, 400);
 
-    // Animate progress 0 -> 1 over 2000ms
+    // Progress animation 0 -> 1 over exactly 2000ms
     Animated.timing(holdProgress, {
       toValue: 1,
       duration: 2000,
@@ -90,7 +87,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         } catch (e) {}
       }
-      onTriggerSos('Urgent Emergency', 'Hold-to-confirm triggered from Home Screen');
+      onTriggerSos('Urgent Emergency', '2s Hold-to-confirm triggered from Home Screen');
       setTimeout(() => {
         setHoldSuccess(false);
         setIsHolding(false);
@@ -99,7 +96,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
     }, 2000);
   };
 
-  // Cancel hold if released early
+  // Press Out: A tap alone does NOTHING. If released before 2s, cancel hold and reset smoothly.
   const handlePressOut = () => {
     if (holdSuccess) return;
     clearTimers();
@@ -107,7 +104,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
 
     Animated.timing(holdProgress, {
       toValue: 0,
-      duration: 220,
+      duration: 200,
       useNativeDriver: false,
     }).start();
 
@@ -129,6 +126,9 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
     }
   };
 
+  // SVG circular progress calculations (Radius 36 -> circumference ~226)
+
+
   return (
     <LinearGradient
       colors={
@@ -145,170 +145,152 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           shadowColor: isDark ? colors.red : '#F0524D',
         },
       ]}>
-      {/* Top Header Row */}
-      <View style={styles.topRow}>
-        <View style={styles.headingCol}>
-          <View style={styles.titleWithIcon}>
-            <View
-              style={[
-                styles.iconBadge,
-                {
-                  backgroundColor: isDark ? 'rgba(244, 63, 94, 0.2)' : '#FFE4E6',
-                  borderColor: isDark ? 'rgba(244, 63, 94, 0.4)' : '#FDA4AF',
-                },
-              ]}>
-              <Ionicons name="warning-outline" size={14} color="#EF4444" />
+      <View style={styles.cardInnerRow}>
+        {/* Left Content Column */}
+        <View style={styles.leftCol}>
+          {/* Header Row: Red Warning-Triangle Icon + "Need Help?" */}
+          <View style={styles.titleRow}>
+            <View style={[styles.triangleBadge, { backgroundColor: isDark ? 'rgba(240, 82, 77, 0.22)' : '#FFE4E6' }]}>
+              <Ionicons name="warning" size={15} color={colors.red} />
             </View>
-            <Text
-              style={[
-                styles.titleText,
-                { color: isDark ? '#F8FAFC' : '#881337', fontSize: isElderly ? 20 : 17 },
-              ]}>
+            <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#881337', fontSize: isElderly ? 20 : 17.5 }]}>
               Need Help?
             </Text>
           </View>
-          <Text
-            style={[
-              styles.instructionText,
-              { color: isDark ? '#FDA4AF' : '#9F1239' },
-            ]}>
+
+          {/* Subtitle */}
+          <Text style={[styles.subtitleText, { color: isDark ? 'rgba(255, 255, 255, 0.75)' : '#9F1239' }]}>
             Hold for 2 seconds to alert your circle
           </Text>
+
+          {/* Bottom Row of Small Icon Chips: GPS • 1m accuracy • Circle notified */}
+          <View style={styles.bottomChipsRow}>
+            <View style={styles.chipItem}>
+              <Ionicons name="navigate" size={11} color={colors.red} />
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+                GPS
+              </Text>
+            </View>
+
+            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#FDA4AF' }]}>•</Text>
+
+            <View style={styles.chipItem}>
+              <Ionicons name="locate" size={11} color={colors.red} />
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+                1m accuracy
+              </Text>
+            </View>
+
+            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#FDA4AF' }]}>•</Text>
+
+            <View style={styles.chipItem}>
+              <Ionicons name="people" size={11} color={colors.red} />
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+                Circle notified
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* Options / Preset Modal trigger */}
-        <Pressable
-          onPress={onOpenSosModal}
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.optionsBtn,
-            {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#FECDD3',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Text style={[styles.optionsText, { color: isDark ? '#F8FAFC' : '#9F1239' }]}>
-            Options ▾
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Center Interactive Circular SOS Button */}
-      <View style={styles.sosButtonArea}>
-        <View style={styles.buttonPositioner}>
-          {/* Animated Ambient Pulse Rings */}
+        {/* Right Content Column: Large Red Circular "SOS" Button with Two Soft Concentric Glow Rings */}
+        <View style={styles.sosButtonArea}>
+          {/* Ring 1 (Outer Glow Ring) */}
           <Animated.View
             style={[
-              styles.ambientHalo,
+              styles.outerGlowRing,
               {
-                borderColor: '#EF4444',
+                backgroundColor: 'rgba(240, 82, 77, 0.16)',
                 transform: [
                   {
                     scale: pulseAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [1, 1.35],
+                      outputRange: [1, 1.28],
                     }),
                   },
                 ],
                 opacity: pulseAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0.65, 0],
+                  outputRange: [0.7, 0.15],
                 }),
               },
             ]}
           />
 
-          {/* Hold Progress Background Ring */}
-          <View style={styles.progressRingBg} />
+          {/* Ring 2 (Inner Glow Ring) */}
+          <Animated.View
+            style={[
+              styles.innerGlowRing,
+              {
+                backgroundColor: 'rgba(240, 82, 77, 0.26)',
+                transform: [
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.95, 1.15],
+                    }),
+                  },
+                ],
+                opacity: pulseAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 0.3],
+                }),
+              },
+            ]}
+          />
 
-          {/* Main Pressable SOS Circular Button */}
+          {/* Animated Progress Ring (Active on hold) */}
+          <Animated.View
+            style={[
+              styles.progressRing,
+              {
+                borderColor: holdSuccess ? '#22C58B' : '#FFFFFF',
+                opacity: holdProgress.interpolate({
+                  inputRange: [0, 0.05, 1],
+                  outputRange: [0, 0.85, 1],
+                }),
+                borderWidth: holdProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1.5, 3.5],
+                }),
+                transform: [
+                  {
+                    scale: holdProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.98, 1.15],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+
+          {/* The Circular Button Pressable */}
           <Pressable
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            accessibilityLabel="Emergency SOS Button. Hold for 2 seconds to broadcast alarm."
+            accessibilityRole="button"
+            accessibilityLabel="Emergency SOS button. Hold for 2 seconds."
             style={({ pressed }) => [
-              styles.sosCircle,
+              styles.sosCoreButton,
               {
+                backgroundColor: holdSuccess ? '#22C58B' : colors.red,
                 transform: [{ scale: pressed || isHolding ? 0.94 : 1 }],
               },
             ]}>
             <LinearGradient
               colors={
                 holdSuccess
-                  ? ['#10B981', '#059669']
-                  : isHolding
-                  ? ['#DC2626', '#991B1B']
-                  : ['#EF4444', '#DC2626']
+                  ? ['#22C58B', '#10B981']
+                  : [colors.red, '#DC2626']
               }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.sosCircleGradient}>
+              style={styles.sosButtonGradient}>
               {holdSuccess ? (
-                <Ionicons name="checkmark-circle" size={32} color="#FFFFFF" />
+                <Ionicons name="checkmark" size={26} color="#FFFFFF" />
               ) : (
-                <>
-                  <Ionicons name="warning" size={24} color="#FFFFFF" />
-                  <Text style={styles.sosButtonText}>SOS</Text>
-                </>
+                <Text style={styles.sosText}>SOS</Text>
               )}
             </LinearGradient>
           </Pressable>
-        </View>
-
-        {/* Dynamic Status / Progress Bar Indicator */}
-        <View style={styles.progressTrackWrap}>
-          <View
-            style={[
-              styles.progressTrackBg,
-              { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(225, 29, 72, 0.12)' },
-            ]}>
-            <Animated.View
-              style={[
-                styles.progressBarFill,
-                {
-                  backgroundColor: holdSuccess ? '#10B981' : '#EF4444',
-                  width: holdProgress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%'],
-                  }),
-                },
-              ]}
-            />
-          </View>
-          <Text style={[styles.holdFeedbackText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
-            {holdSuccess
-              ? '🚨 Emergency Broadcast Sent to Circle!'
-              : isHolding
-              ? 'Hold tight... confirming emergency'
-              : 'Press & hold 2s for instant dispatch'}
-          </Text>
-        </View>
-      </View>
-
-      {/* Supporting Telemetry Information Row */}
-      <View
-        style={[
-          styles.telemetryCard,
-          {
-            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(225, 29, 72, 0.1)',
-          },
-        ]}>
-        <View style={styles.telemetryItem}>
-          <Ionicons name="navigate-circle" size={15} color={colors.green} />
-          <Text style={[styles.telemetryItemText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-            GPS Live • ±4m accuracy
-          </Text>
-        </View>
-
-        <View style={[styles.telemetryDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#FECDD3' }]} />
-
-        <View style={styles.telemetryItem}>
-          <Ionicons name="people" size={14} color="#38BDF8" />
-          <Text style={[styles.telemetryItemText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-            Alerts {members.length} members
-          </Text>
         </View>
       </View>
     </LinearGradient>
@@ -319,154 +301,109 @@ const styles = StyleSheet.create({
   cardContainer: {
     borderRadius: 26,
     borderWidth: 1,
-    padding: 18,
-    gap: 16,
+    padding: 16,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 4,
   },
-  topRow: {
+  cardInnerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
-  headingCol: {
+  leftCol: {
     flex: 1,
-    gap: 4,
+    gap: 5,
   },
-  titleWithIcon: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  iconBadge: {
+  triangleBadge: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titleText: {
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  instructionText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 1,
-  },
-  optionsBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4.5,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  optionsText: {
-    fontSize: 11,
     fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  subtitleText: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  bottomChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
+  chipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  chipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  dotSeparator: {
+    fontSize: 9,
   },
 
-  // SOS Button Area
+  // SOS button right area
   sosButtonArea: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 4,
-  },
-  buttonPositioner: {
-    width: 86,
-    height: 86,
+    width: 80,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  ambientHalo: {
-    position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
-  },
-  progressRingBg: {
+  outerGlowRing: {
     position: 'absolute',
     width: 86,
     height: 86,
     borderRadius: 43,
-    borderWidth: 3,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
-  sosCircle: {
+  innerGlowRing: {
+    position: 'absolute',
     width: 74,
     height: 74,
     borderRadius: 37,
-    overflow: 'hidden',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 8,
   },
-  sosCircleGradient: {
+  progressRing: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  sosCoreButton: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  sosButtonGradient: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
   },
-  sosButtonText: {
+  sosText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 1.2,
-  },
-
-  // Progress Feedback
-  progressTrackWrap: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 6,
-  },
-  progressTrackBg: {
-    width: '80%',
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  holdFeedbackText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    textAlign: 'center',
-  },
-
-  // Telemetry Card
-  telemetryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  telemetryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-  },
-  telemetryItemText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  telemetryDivider: {
-    width: 1,
-    height: 18,
-    marginHorizontal: 8,
+    letterSpacing: 0.5,
   },
 });

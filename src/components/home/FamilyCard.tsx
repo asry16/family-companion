@@ -7,7 +7,6 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { StatusChip } from '@/components/ui/StatusChip';
 import { PillButton } from '@/components/ui/PillButton';
 
 interface FamilyCardProps {
@@ -16,21 +15,20 @@ interface FamilyCardProps {
 
 export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
   const { colors, isDark, isElderly } = useAppTheme();
-  const { members, activeUser, places } = useFamily();
+  const { members, activeUser } = useFamily();
 
-  // Highlight member: activeUser or first member
   const primaryMember = activeUser || members[0] || {
     id: 'self',
     name: 'Asmita',
     relation: 'Self',
     availability: 'available',
     isSharingLocation: true,
-    humanLocation: 'Home • Family Sanctuary',
+    humanLocation: 'Home',
     lastUpdated: '2 min ago',
     batteryLevel: 87,
   };
 
-  // Continuous subtle pulse animation for the shield and map beacon
+  // Continuous subtle pulse animation for glowing green shield circle
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -60,236 +58,165 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
     }
   };
 
-  // Safe place name
-  const homePlace = places?.find((p) => p.type === 'home') || { name: 'Family Sanctuary', address: 'Home' };
-
   return (
-    <View style={styles.outerContainer}>
-      {/* Section Identifier as requested: "Family Card" */}
-      <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionCategoryTag, { color: isDark ? '#38BDF8' : '#2563EB' }]}>
-          FAMILY CARD
-        </Text>
+    <GlassCard
+      borderRadius={26}
+      glowColor={isDark ? colors.green : undefined}
+      onPress={() => {
+        triggerHaptic();
+        onViewLiveMap();
+      }}
+      style={styles.card}
+      contentStyle={styles.cardContent}>
+      
+      {/* 1. Header: Glowing green circle with shield icon, "Family Pulse", subtitle, chevron on right */}
+      <View style={styles.headerRow}>
+        <View style={styles.titleWithShield}>
+          {/* Glowing Green Circle with Shield Icon */}
+          <View style={styles.shieldGlowWrap}>
+            <Animated.View
+              style={[
+                styles.shieldHalo,
+                {
+                  backgroundColor: isDark ? 'rgba(34, 197, 139, 0.28)' : 'rgba(34, 197, 139, 0.16)',
+                  transform: [
+                    {
+                      scale: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.95, 1.25],
+                      }),
+                    },
+                  ],
+                  opacity: pulseAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.6, 0.2],
+                  }),
+                },
+              ]}
+            />
+            <LinearGradient
+              colors={['#22C58B', '#10B981']}
+              style={styles.shieldCoreCircle}>
+              <Ionicons name="shield-checkmark" size={17} color="#FFFFFF" />
+            </LinearGradient>
+          </View>
+
+          <View style={styles.headingTextCol}>
+            <Text
+              style={[
+                styles.cardMainHeading,
+                { color: colors.text, fontSize: isElderly ? 21 : 18 },
+              ]}>
+              Family Pulse
+            </Text>
+            <Text style={[styles.cardSubHeading, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              Live Presence Active • Vault Synced
+            </Text>
+          </View>
+        </View>
+
+        {/* Tappable Chevron on Right */}
+        <Ionicons
+          name="chevron-forward"
+          size={19}
+          color={isDark ? colors.textMuted : colors.textSecondary}
+        />
       </View>
 
-      {/* Main Glassmorphic Card */}
-      <GlassCard
-        borderRadius={26}
-        glowColor={isDark ? colors.blue : undefined}
-        style={styles.card}
-        contentStyle={styles.cardContent}>
-        {/* Top Header Row: 🛡️ Glowing Shield • "Family" */}
-        <View style={styles.cardTopRow}>
-          <View style={styles.titleWithShield}>
-            {/* Glowing Circular Shield Element */}
-            <View style={styles.shieldGlowWrap}>
-              <Animated.View
-                style={[
-                  styles.shieldHalo,
-                  {
-                    backgroundColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(59, 111, 240, 0.15)',
-                    transform: [
-                      {
-                        scale: pulseAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.95, 1.25],
-                        }),
-                      },
-                    ],
-                    opacity: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.6, 0.2],
-                    }),
-                  },
-                ]}
-              />
-              <LinearGradient
-                colors={isDark ? [colors.blue, '#2563EB'] : ['#2563EB', '#1D4ED8']}
-                style={styles.shieldCoreCircle}>
-                <Ionicons name="shield-checkmark" size={17} color="#FFFFFF" />
-              </LinearGradient>
-            </View>
-
-            <View style={styles.headingTextCol}>
-              <Text
-                style={[
-                  styles.cardMainHeading,
-                  { color: colors.text, fontSize: isElderly ? 21 : 18 },
-                ]}>
-                Family
-              </Text>
-              <Text style={[styles.cardSubHeading, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-                Live Presence Active • Vault Synced
-              </Text>
-            </View>
-          </View>
-
-          {/* Quick live indicator tag via StatusChip */}
-          <StatusChip variant="Safe" label="LIVE" size="sm" />
-        </View>
-
-        {/* Member Profile Details Strip */}
-        <View
-          style={[
-            styles.memberPresenceStrip,
-            {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.65)' : '#F8FAFC',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-            },
-          ]}>
-          <View style={styles.memberAvatarWrap}>
+      {/* 2. Inner Row & Mini Map Section */}
+      <View style={styles.bodySection}>
+        {/* Left: Avatar, Asmita with green dot, Home with pin icon, divider, Last active / 2 min ago */}
+        <View style={styles.memberInfoContainer}>
+          <View style={styles.avatarWithStatus}>
             <FamilyAvatar member={primaryMember as any} size="md" showStatus={false} />
-            <View style={[styles.onlineDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
           </View>
 
-          <View style={styles.memberInfoCol}>
-            <View style={styles.nameRow}>
-              <Text style={[styles.memberName, { color: colors.text }]}>
+          <View style={styles.memberDetailsCol}>
+            <View style={styles.memberNameRow}>
+              <View style={[styles.inlineDot, { backgroundColor: colors.green }]} />
+              <Text style={[styles.memberNameText, { color: colors.text }]}>
                 {primaryMember.name}
               </Text>
-              <View
-                style={[
-                  styles.relationBadge,
-                  {
-                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF',
-                  },
-                ]}>
-                <Text style={[styles.relationText, { color: isDark ? '#38BDF8' : '#2563EB' }]}>
-                  {primaryMember.relation || 'Self'}
-                </Text>
-              </View>
             </View>
 
-            <View style={styles.telemetryRow}>
-              <View style={styles.locationPill}>
-                <Ionicons name="home" size={11} color={colors.green} />
-                <Text style={[styles.telemetryText, { color: colors.textSecondary }]}>
-                  {homePlace.name || 'Home'}
+            <View style={styles.statusMetaRow}>
+              <View style={styles.locationTag}>
+                <Ionicons name="location-sharp" size={12} color={colors.green} />
+                <Text style={[styles.locationText, { color: colors.textSecondary }]}>
+                  Home
                 </Text>
               </View>
-              <Text style={[styles.telemetryDot, { color: colors.textMuted }]}>•</Text>
-              <Text style={[styles.telemetryText, { color: colors.textSecondary }]}>
-                Active {primaryMember.lastUpdated || '2m ago'}
+
+              <View style={[styles.verticalDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.12)' }]} />
+
+              <Text style={[styles.lastActiveText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                Last active / 2 min ago
               </Text>
-              <Text style={[styles.telemetryDot, { color: colors.textMuted }]}>•</Text>
-              <View style={styles.batteryPill}>
-                <Ionicons name="battery-half" size={11} color="#10B981" />
-                <Text style={[styles.batteryText, { color: colors.textSecondary }]}>
-                  {primaryMember.batteryLevel ?? 87}%
-                </Text>
-              </View>
             </View>
           </View>
         </View>
 
-        {/* Small Integrated Map Preview */}
+        {/* Right: Faded mini-map thumbnail with green pin + "View Live Map →" pill button over it */}
         <View
           style={[
-            styles.mapPreviewContainer,
+            styles.miniMapWrap,
             {
-              backgroundColor: isDark ? '#0B1120' : '#E2E8F0',
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(37, 99, 235, 0.15)',
+              borderColor: isDark ? 'rgba(34, 197, 139, 0.3)' : 'rgba(34, 197, 139, 0.2)',
             },
           ]}>
-          {/* Stylized Raster Tile Snapshot Background */}
           <Image
             source={{
               uri: isDark
                 ? 'https://a.basemaps.cartocdn.com/dark_all/14/9889/6249@2x.png'
                 : 'https://a.basemaps.cartocdn.com/rastertiles/voyager/14/9889/6249@2x.png',
             }}
-            style={styles.mapBackgroundImage}
+            style={styles.miniMapImage}
             resizeMode="cover"
           />
 
-          {/* Radar Scanner Grid Overlay */}
-          <View style={styles.radarGridOverlay}>
-            <View style={[styles.radarCrosshairH, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(37, 99, 235, 0.12)' }]} />
-            <View style={[styles.radarCrosshairV, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(37, 99, 235, 0.12)' }]} />
-          </View>
+          {/* Faded overlay */}
+          <View
+            style={[
+              styles.mapOverlay,
+              {
+                backgroundColor: isDark ? 'rgba(6, 11, 31, 0.45)' : 'rgba(255, 255, 255, 0.35)',
+              },
+            ]}
+          />
 
-          {/* Glowing Center Beacon Marker */}
-          <View style={styles.centerBeaconWrap}>
-            <Animated.View
-              style={[
-                styles.beaconRadarWave,
-                {
-                  borderColor: isDark ? '#38BDF8' : '#2563EB',
-                  transform: [
-                    {
-                      scale: pulseAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 2.1],
-                      }),
-                    },
-                  ],
-                  opacity: pulseAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.8, 0],
-                  }),
-                },
-              ]}
-            />
-            <View
-              style={[
-                styles.beaconPinCircle,
-                {
-                  backgroundColor: isDark ? '#38BDF8' : '#2563EB',
-                  borderColor: '#FFFFFF',
-                },
-              ]}>
-              <Text style={{ fontSize: 9 }}>🏡</Text>
-            </View>
-            <View
-              style={[
-                styles.beaconLabelPill,
-                {
-                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
-                  borderColor: isDark ? '#38BDF8' : '#2563EB',
-                },
-              ]}>
-              <Text style={[styles.beaconLabelText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-                {primaryMember.name}: Sanctuary
-              </Text>
+          {/* Green Pin */}
+          <View style={styles.greenPinWrap}>
+            <View style={[styles.greenPinPulse, { backgroundColor: 'rgba(34, 197, 139, 0.35)' }]} />
+            <View style={[styles.greenPinCircle, { backgroundColor: colors.green }]}>
+              <Ionicons name="location" size={10} color="#FFFFFF" />
             </View>
           </View>
 
-          {/* Prominent "View Live Map →" Button via PillButton */}
+          {/* "View Live Map →" Pill Button Over It */}
           <PillButton
             title="View Live Map →"
             variant="primary"
             size="sm"
-            onPress={() => {
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-              onViewLiveMap();
-            }}
-            style={styles.viewMapButton}
+            onPress={onViewLiveMap}
+            style={styles.viewLiveMapBtn}
+            textStyle={styles.viewLiveMapBtnText}
           />
         </View>
-      </GlassCard>
-    </View>
+      </View>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    gap: 8,
-  },
-  sectionHeaderRow: {
-    paddingHorizontal: 4,
-  },
-  sectionCategoryTag: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-  },
   card: {
     padding: 0,
   },
   cardContent: {
+    padding: 16,
     gap: 14,
   },
-  cardTopRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -301,27 +228,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   shieldGlowWrap: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   shieldHalo: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   shieldCoreCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#22C58B',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 3,
   },
@@ -330,110 +257,82 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardMainHeading: {
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   cardSubHeading: {
     fontSize: 11.5,
     fontWeight: '500',
   },
-  liveTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  liveMiniDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  liveTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
 
-  // Member details strip
-  memberPresenceStrip: {
+  // Body section
+  bodySection: {
+    gap: 12,
+  },
+  memberInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 10,
-    borderRadius: 18,
-    borderWidth: 1,
   },
-  memberAvatarWrap: {
+  avatarWithStatus: {
     position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   onlineDot: {
     position: 'absolute',
-    bottom: -1,
-    right: -1,
+    bottom: 0,
+    right: 0,
     width: 10,
     height: 10,
     borderRadius: 5,
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
-  memberInfoCol: {
+  memberDetailsCol: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
-  nameRow: {
+  memberNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  memberName: {
-    fontSize: 14.5,
+  inlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  memberNameText: {
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: -0.1,
   },
-  relationBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  relationText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
-  telemetryRow: {
+  statusMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
     flexWrap: 'wrap',
   },
-  locationPill: {
+  locationTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
   },
-  telemetryText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  telemetryDot: {
-    fontSize: 9,
-  },
-  batteryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  batteryText: {
-    fontSize: 10.5,
+  locationText: {
+    fontSize: 12,
     fontWeight: '600',
   },
+  verticalDivider: {
+    width: 1,
+    height: 12,
+  },
+  lastActiveText: {
+    fontSize: 11.5,
+    fontWeight: '500',
+  },
 
-  // Map Preview
-  mapPreviewContainer: {
-    height: 130,
+  // Mini Map
+  miniMapWrap: {
+    height: 105,
     borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
@@ -441,78 +340,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapBackgroundImage: {
+  miniMapImage: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.82,
+    opacity: 0.65,
   },
-  radarGridOverlay: {
+  mapOverlay: {
     ...StyleSheet.absoluteFill,
+  },
+  greenPinWrap: {
+    position: 'absolute',
+    top: 18,
+    left: '42%',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radarCrosshairH: {
+  greenPinPulse: {
     position: 'absolute',
-    width: '100%',
-    height: 1,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
   },
-  radarCrosshairV: {
-    position: 'absolute',
-    height: '100%',
-    width: 1,
-  },
-  centerBeaconWrap: {
+  greenPinCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-  },
-  beaconRadarWave: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
-  beaconPinCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  beaconLabelPill: {
+  viewLiveMapBtn: {
     position: 'absolute',
-    top: 28,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
+    bottom: 10,
+    right: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    minHeight: 30,
   },
-  beaconLabelText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
-  viewMapButton: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6.5,
-    borderRadius: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  viewMapText: {
+  viewLiveMapBtnText: {
     fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+    fontWeight: '700',
   },
 });

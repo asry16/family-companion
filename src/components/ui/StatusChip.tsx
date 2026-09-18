@@ -20,6 +20,7 @@ export interface StatusChipProps {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   size?: 'sm' | 'md';
+  colorScheme?: 'green' | 'blue' | 'purple' | 'yellow';
 }
 
 export const StatusChip: React.FC<StatusChipProps> = ({
@@ -29,6 +30,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   onPress,
   style,
   size = 'md',
+  colorScheme,
 }) => {
   const { colors, isDark } = useAppTheme();
 
@@ -44,46 +46,49 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   };
 
   const config = (() => {
-    switch (variant) {
-      case 'Safe':
+    // Determine base scheme from colorScheme override if provided, else variant default
+    const scheme = colorScheme || (
+      variant === 'Safe' ? 'green' :
+      variant === 'All good' ? 'blue' :
+      variant === 'Vault' ? 'purple' :
+      'yellow'
+    );
+
+    const defaultText = variant;
+
+    switch (scheme) {
+      case 'green':
         return {
-          defaultText: 'Safe',
+          defaultText,
           accent: colors.green,
           softBg: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(34, 197, 139, 0.12)',
           border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(34, 197, 139, 0.22)',
           glow: colors.green,
         };
-      case 'All good':
+      case 'blue':
         return {
-          defaultText: 'All good',
+          defaultText,
           accent: colors.blue,
           softBg: isDark ? 'rgba(59, 111, 240, 0.18)' : 'rgba(59, 111, 240, 0.12)',
           border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.22)',
           glow: colors.blue,
         };
-      case 'Vault':
+      case 'purple':
         return {
-          defaultText: 'Vault',
+          defaultText,
           accent: colors.purple,
           softBg: isDark ? 'rgba(124, 92, 224, 0.18)' : 'rgba(124, 92, 224, 0.12)',
           border: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.22)',
           glow: colors.purple,
         };
-      case 'View':
+      case 'yellow':
+      default:
         return {
-          defaultText: 'View',
+          defaultText,
           accent: isDark ? colors.yellow : '#D97706',
           softBg: isDark ? 'rgba(251, 191, 36, 0.18)' : 'rgba(245, 158, 11, 0.12)',
           border: isDark ? 'rgba(251, 191, 36, 0.35)' : 'rgba(245, 158, 11, 0.22)',
           glow: colors.yellow,
-        };
-      default:
-        return {
-          defaultText: 'Safe',
-          accent: colors.green,
-          softBg: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(34, 197, 139, 0.12)',
-          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(34, 197, 139, 0.22)',
-          glow: colors.green,
         };
     }
   })();
