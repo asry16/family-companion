@@ -31,7 +31,17 @@ export interface PresenceInfo {
   isLive: boolean;
 }
 
-export function getMemberPresence(member: FamilyMember, isDark: boolean): PresenceInfo {
+export function getMemberPresence(member?: FamilyMember | null, isDark: boolean = false): PresenceInfo {
+  if (!member) {
+    return {
+      status: 'OFFLINE',
+      label: 'OFFLINE',
+      badgeColor: isDark ? '#94A3B8' : '#64748B',
+      badgeBg: isDark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.12)',
+      isLive: false,
+    };
+  }
+
   if (member.availability === 'offline' || member.isSharingLocation === false) {
     return {
       status: 'OFFLINE',
@@ -182,14 +192,21 @@ export const FamilyCommandCenter: React.FC = () => {
   }, [members, activeUser]);
 
   // Home location coordinates from places
-  const homePlace = useMemo<FamilyPlace | undefined>(() => {
-    return places.find((p) => p.type === 'home' || p.id === 'place_home') || {
-      id: 'place_home',
-      name: 'Home',
+  const homePlace = useMemo<FamilyPlace>(() => {
+    const found = places && Array.isArray(places)
+      ? places.find((p) => p.type === 'home' || p.id === 'place_home')
+      : undefined;
+
+    return {
+      id: found?.id || 'place_home',
+      name: found?.name || 'Home',
       type: 'home',
-      address: 'Family Sanctuary',
-      emoji: '🏡',
-      coords: { x: 50, y: 50 },
+      address: found?.address || 'Family Sanctuary',
+      emoji: found?.emoji || '🏡',
+      coords: {
+        x: typeof found?.coords?.x === 'number' ? found.coords.x : 50,
+        y: typeof found?.coords?.y === 'number' ? found.coords.y : 50,
+      },
     };
   }, [places]);
 
@@ -439,7 +456,7 @@ export const FamilyCommandCenter: React.FC = () => {
                         styles.cardMemberName,
                         { color: colors.text, fontSize: isElderly ? 16 : 14 },
                       ]}>
-                      {member.name.split(' ')[0]} {member.isSelf ? '(You)' : ''}
+                      {(member?.name || 'Member').split(' ')[0]} {member.isSelf ? '(You)' : ''}
                     </Text>
                     {/* Status Badge: HOME / AWAY / MOVING / OFFLINE */}
                     <View
@@ -934,8 +951,8 @@ export const FamilyCommandCenter: React.FC = () => {
               style={[
                 styles.homeMarkerWrap,
                 {
-                  left: `${homePlace.coords.x}%`,
-                  top: `${homePlace.coords.y}%`,
+                  left: `${homePlace?.coords?.x ?? 50}%`,
+                  top: `${homePlace?.coords?.y ?? 50}%`,
                 },
               ]}>
               <View
@@ -1048,7 +1065,7 @@ export const FamilyCommandCenter: React.FC = () => {
                           : colors.text,
                       },
                     ]}>
-                    {member.name.split(' ')[0]}
+                    {(member?.name || 'Member').split(' ')[0]}
                   </Text>
                   <Text
                     style={[
@@ -1245,7 +1262,7 @@ export const FamilyCommandCenter: React.FC = () => {
                     fontWeight: isCurrent ? '700' : '600',
                   },
                 ]}>
-                {member.name.split(' ')[0]}
+                {(member?.name || 'Member').split(' ')[0]}
               </Text>
               <Text
                 style={[
