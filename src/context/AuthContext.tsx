@@ -6,6 +6,7 @@ import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { initialMembers } from '@/data/mockFamilyData';
 import { MemberRelation, FamilyMember, FamilyProfile } from '@/types';
+import { apiClient } from '@/services/apiClient';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -170,6 +171,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
+        // 1. Try Backend API first
+        try {
+          const apiRes = await apiClient.auth.login(cleanEmail, cleanPass);
+          if (apiRes.success && apiRes.data?.user) {
+            delete failedAttemptsMap[cleanEmail];
+            const sUser = apiRes.data.user;
+            const authenticatedUser: AuthUser = {
+              id: sUser.id,
+              name: sUser.name,
+              username: sUser.username || undefined,
+              email: sUser.email,
+              provider: 'email',
+              familyMemberId: sUser.familyMemberId || `member_${sUser.id}`,
+              familyName: sUser.familyName || `${sUser.name}'s Family`,
+              relation: sUser.relation || 'Self',
+              isEmailVerified: !!sUser.isVerified,
+              rememberMe,
+            };
+            await saveUserSession(authenticatedUser, rememberMe);
+            return { success: true };
+          } else if (apiRes.error && (apiRes.error.toLowerCase().includes('password') || apiRes.error.toLowerCase().includes('invalid credentials'))) {
+            // Server reported invalid credentials
+            const currentAttempts = (failedAttemptsMap[cleanEmail]?.count || 0) + 1;
+            if (currentAttempts >= 5) {
+              failedAttemptsMap[cleanEmail] = {
+                count: currentAttempts,
+                lockedUntil: Date.now() + 30000,
+              };
+              return { success: false, error: 'Too many incorrect passwords. Account locked for 30 seconds.' };
+            } else {
+              failedAttemptsMap[cleanEmail] = { count: currentAttempts };
+              return { success: false, error: `Incorrect password. (${5 - currentAttempts} attempts remaining before lockout)` };
+            }
+          }
+        } catch {
+          // Network error or server offline: fall back to local AsyncStorage accounts
+        }
+
         const hashed = await hashPassword(cleanPass);
 
         // Fetch stored accounts
@@ -323,13 +362,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        const memberId = `member_${Date.now()}`;
         const customRole = relation || 'Self';
         const customFamilyName = familyName?.trim() || `${cleanName}'s Family`;
-        const verificationCode = '123456';
+
+        // Try backend registration first
+        let serverUserId: string | null = null;
+        let serverMemberId: string | null = null;
+        let serverVerificationCode: string | undefined = undefined;
+
+        try {
+          const apiRes = await apiClient.auth.register({
+            name: cleanName,
+            email: cleanEmail,
+            password: cleanPass,
+            username: cleanUsername,
+            familyName: customFamilyName,
+            relation: customRole,
+          });
+          if (apiRes.success && apiRes.data?.user) {
+            serverUserId = apiRes.data.user.id;
+            serverMemberId = apiRes.data.user.familyMemberId;
+            serverVerificationCode = apiRes.data.verificationCode;
+          } else if (apiRes.error && apiRes.error.toLowerCase().includes('already exists')) {
+            return { success: false, error: apiRes.error };
+          }
+        } catch {
+          // Server offline: proceed with local secure offline registration
+        }
+
+        const memberId = serverMemberId || `member_${Date.now()}`;
+        const userId = serverUserId || `user_${Date.now()}`;
+        const verificationCode = serverVerificationCode || '123456';
 
         const newAccount: StoredUserAccount = {
-          id: `user_${Date.now()}`,
+          id: userId,
           name: cleanName,
           username: cleanUsername,
           email: cleanEmail,
@@ -452,6 +518,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (cleanCode !== account.verificationCode && cleanCode !== '123456') {
           return { success: false, error: 'Invalid verification code. Please check and try again.' };
         }
+
+        // Attempt server verification
+        try {
+          await apiClient.auth.verifyOtp(cleanEmail, cleanCode);
+        } catch {}
 
         account.isEmailVerified = true;
         await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
@@ -642,6 +713,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = useCallback(async () => {
     setUser(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      await apiClient.auth.logout();
+    } catch {}
   }, []);
 
   return (

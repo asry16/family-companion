@@ -45,3 +45,12 @@ example
 # agent files
 .gemini/
 .claude/
+scratch/
+
+# Backend & SQLite
+server/node_modules/
+server/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

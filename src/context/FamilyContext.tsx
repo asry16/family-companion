@@ -29,6 +29,8 @@ import {
 } from '@/data/mockFamilyData';
 import { generateContextSuggestions } from '@/context/ContextEngine';
 import { processFamilyAIQuery, AIResponse } from '@/services/aiService';
+import { apiClient } from '@/services/apiClient';
+import { websocketClient } from '@/services/websocketClient';
 
 const STORAGE_KEY = '@kinly_family_state_v1';
 
@@ -269,6 +271,201 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [user, currentStorageKey]);
 
+  // Synchronize with Kinly Backend Server & WebSocket
+  useEffect(() => {
+    if (!user) {
+      websocketClient.disconnect();
+      return;
+    }
+
+    let isSubscribed = true;
+
+    // Fetch live family data from SQLite server
+    apiClient.family.getFamily().then((res) => {
+      if (!isSubscribed || !res.success || !res.data) return;
+      const d = res.data;
+      if (d.profile) setProfile(d.profile);
+      if (d.members && d.members.length > 0) setMembers(d.members);
+      if (d.places && d.places.length > 0) setPlaces(d.places);
+      if (d.tasks) setTasks(d.tasks);
+      if (d.events) setEvents(d.events);
+      if (d.reminders) setReminders(d.reminders);
+      if (d.documents) setDocuments(d.documents);
+      if (d.memories) setMemories(d.memories);
+      if (d.notifications) setNotifications(d.notifications);
+    }).catch(() => {
+      // Backend offline: continue with local state seamlessly
+    });
+
+    // Connect WebSocket
+    websocketClient.connect();
+
+    const removeWs = websocketClient.addListener((msg) => {
+      if (!isSubscribed) return;
+
+      switch (msg.type) {
+        case 'LOCATION_UPDATE':
+          setMembers((prev) =>
+            prev.map((m) =>
+              m.id === msg.memberId
+                ? {
+                    ...m,
+                    coords: { x: msg.coordsX ?? m.coords?.x ?? 50, y: msg.coordsY ?? m.coords?.y ?? 50 },
+                    humanLocation: msg.humanLocation || m.humanLocation,
+                    lastUpdated: 'Just now',
+                  }
+                : m
+            )
+          );
+          break;
+
+        case 'DEVICE_TELEMETRY':
+          setMembers((prev) =>
+            prev.map((m) =>
+              m.id === msg.memberId
+                ? {
+                    ...m,
+                    batteryLevel: msg.batteryLevel ?? m.batteryLevel,
+                    isCharging: typeof msg.isCharging === 'boolean' ? msg.isCharging : m.isCharging,
+                    ringerMode: msg.ringerMode || m.ringerMode,
+                    deviceModel: msg.deviceModel || m.deviceModel,
+                  }
+                : m
+            )
+          );
+          break;
+
+        case 'FAMILY_PING':
+          setNotifications((prev) => [
+            {
+              id: `ping_${Date.now()}`,
+              title: `Ping from Family`,
+              body: msg.message || 'Someone sent you a check-in ping.',
+              priority: 'important',
+              timestamp: 'Just now',
+              isRead: false,
+              category: 'ai',
+            },
+            ...prev,
+          ]);
+          break;
+
+        case 'EMERGENCY_SOS':
+          setNotifications((prev) => [
+            {
+              id: `sos_${Date.now()}`,
+              title: `🚨 EMERGENCY SOS ALERT`,
+              body: msg.note || `A family member triggered an emergency SOS alert!`,
+              priority: 'urgent',
+              timestamp: 'Just now',
+              isRead: false,
+              category: 'location',
+            },
+            ...prev,
+          ]);
+          break;
+
+        case 'TASK_CREATED':
+          if (msg.task) {
+            setTasks((prev) => (prev.some((t) => t.id === msg.task.id) ? prev : [msg.task, ...prev]));
+          }
+          break;
+
+        case 'TASK_UPDATED':
+          if (msg.task) {
+            setTasks((prev) => prev.map((t) => (t.id === msg.task.id ? { ...t, ...msg.task } : t)));
+          }
+          break;
+
+        case 'TASK_DELETED':
+          setTasks((prev) => prev.filter((t) => t.id !== msg.taskId));
+          break;
+
+        case 'EVENT_CREATED':
+          if (msg.event) {
+            setEvents((prev) => (prev.some((e) => e.id === msg.event.id) ? prev : [...prev, msg.event]));
+          }
+          break;
+
+        case 'EVENT_DELETED':
+          setEvents((prev) => prev.filter((e) => e.id !== msg.eventId));
+          break;
+
+        case 'REMINDER_CREATED':
+          if (msg.reminder) {
+            setReminders((prev) => (prev.some((r) => r.id === msg.reminder.id) ? prev : [...prev, msg.reminder]));
+          }
+          break;
+
+        case 'REMINDER_UPDATED':
+          if (msg.reminder) {
+            setReminders((prev) => prev.map((r) => (r.id === msg.reminder.id ? { ...r, ...msg.reminder } : r)));
+          }
+          break;
+
+        case 'REMINDER_DELETED':
+          setReminders((prev) => prev.filter((r) => r.id !== msg.reminderId));
+          break;
+
+        case 'DOCUMENT_CREATED':
+          if (msg.document) {
+            setDocuments((prev) => (prev.some((d) => d.id === msg.document.id) ? prev : [msg.document, ...prev]));
+          }
+          break;
+
+        case 'DOCUMENT_STATUS_UPDATED':
+          setDocuments((prev) =>
+            prev.map((d) => (d.id === msg.documentId ? { ...d, status: msg.status } : d))
+          );
+          break;
+
+        case 'DOCUMENT_DELETED':
+          setDocuments((prev) => prev.filter((d) => d.id !== msg.documentId));
+          break;
+
+        case 'MEMORY_CREATED':
+          if (msg.memory) {
+            setMemories((prev) => (prev.some((m) => m.id === msg.memory.id) ? prev : [msg.memory, ...prev]));
+          }
+          break;
+
+        case 'MEMORY_DELETED':
+          setMemories((prev) => prev.filter((m) => m.id !== msg.memoryId));
+          break;
+
+        case 'MEMBER_ADDED':
+          if (msg.member) {
+            setMembers((prev) => (prev.some((m) => m.id === msg.member.id) ? prev : [...prev, msg.member]));
+          }
+          break;
+
+        case 'MEMBER_UPDATED':
+          if (msg.memberId && msg.updates) {
+            setMembers((prev) =>
+              prev.map((m) => (m.id === msg.memberId ? { ...m, ...msg.updates } : m))
+            );
+          }
+          break;
+
+        case 'MEMBER_REMOVED':
+          setMembers((prev) => prev.filter((m) => m.id !== msg.memberId));
+          break;
+
+        case 'PROFILE_UPDATED':
+          if (msg.profile) {
+            setProfile((prev) => ({ ...prev, ...msg.profile }));
+          }
+          break;
+      }
+    });
+
+    return () => {
+      isSubscribed = false;
+      removeWs();
+      websocketClient.disconnect();
+    };
+  }, [user]);
+
   // Save to currentStorageKey whenever state changes
   useEffect(() => {
     if (!isLoaded) return;
@@ -369,9 +566,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const toggleTask = useCallback((taskId: string) => {
+    let nextStatus = false;
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t))
+      prev.map((t) => {
+        if (t.id === taskId) {
+          nextStatus = !t.isCompleted;
+          return { ...t, isCompleted: nextStatus };
+        }
+        return t;
+      })
     );
+    apiClient.planner.updateTask(taskId, { isCompleted: nextStatus }).catch(() => {});
   }, []);
 
   const addTask = useCallback((taskData: Omit<Task, 'id'>) => {
@@ -380,6 +585,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `task_${Date.now()}`,
     };
     setTasks((prev) => [newTask, ...prev]);
+    apiClient.planner.createTask(newTask).catch(() => {});
 
     // Add smart notification
     const assignee = initialMembers.find((m) => m.id === taskData.assignedToMemberId);
@@ -399,6 +605,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const deleteTask = useCallback((taskId: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    apiClient.planner.deleteTask(taskId).catch(() => {});
   }, []);
 
   const addEvent = useCallback((eventData: Omit<CalendarEvent, 'id'>) => {
@@ -407,12 +614,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `event_${Date.now()}`,
     };
     setEvents((prev) => [newEvent, ...prev]);
+    apiClient.planner.createEvent(newEvent).catch(() => {});
   }, []);
 
   const toggleReminder = useCallback((reminderId: string) => {
+    let nextDone = false;
     setReminders((prev) =>
-      prev.map((r) => (r.id === reminderId ? { ...r, isDone: !r.isDone } : r))
+      prev.map((r) => {
+        if (r.id === reminderId) {
+          nextDone = !r.isDone;
+          return { ...r, isDone: nextDone };
+        }
+        return r;
+      })
     );
+    apiClient.planner.updateReminder(reminderId, { isDone: nextDone }).catch(() => {});
   }, []);
 
   const addReminder = useCallback((reminderData: Omit<Reminder, 'id'>) => {
@@ -421,6 +637,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `rem_${Date.now()}`,
     };
     setReminders((prev) => [newRem, ...prev]);
+    apiClient.planner.createReminder(newRem).catch(() => {});
   }, []);
 
   const addMemory = useCallback((memoryData: Omit<MemoryItem, 'id'>) => {
@@ -429,6 +646,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `mem_${Date.now()}`,
     };
     setMemories((prev) => [newMem, ...prev]);
+    apiClient.vault.createMemory(newMem).catch(() => {});
   }, []);
 
   const searchMemories = useCallback(
@@ -452,6 +670,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `doc_${Date.now()}`,
     };
     setDocuments((prev) => [newDoc, ...prev]);
+    apiClient.vault.createDocument(newDoc).catch(() => {});
   }, []);
 
   const executeDocumentAction = useCallback(
@@ -632,6 +851,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const sendFamilyPing = useCallback(
     (memberId: string, message: string) => {
       const member = members.find((m) => m.id === memberId);
+      websocketClient.sendFamilyPing(memberId, message);
+      apiClient.telemetry.sendPing(memberId, message).catch(() => {});
       setNotifications((prev) => [
         {
           id: `notif_${Date.now()}`,
@@ -650,6 +871,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const updateFamilyProfile = useCallback((updates: Partial<FamilyProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));
+    apiClient.family.updateProfile(updates).catch(() => {});
   }, []);
 
   const createOrUpdateFamily = useCallback((name: string, address?: string, homeCity?: string) => {
@@ -661,6 +883,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       address: address?.trim() || prev.address,
       homeCity: homeCity?.trim() || prev.homeCity,
     }));
+    apiClient.family.updateProfile({ name: trimmedName, address, homeCity }).catch(() => {});
     setNotifications((prev) => [
       {
         id: `notif_${Date.now()}`,
@@ -698,6 +921,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setProfile((p) => ({ ...p, membersCount: next.length }));
       return next;
     });
+    apiClient.family.addMember(newMember).catch(() => {});
 
     setNotifications((prev) => [
       {
@@ -719,6 +943,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setMembers((prev) =>
       prev.map((m) => (m.id === memberId ? { ...m, ...updates } : m))
     );
+    apiClient.family.updateMember(memberId, updates).catch(() => {});
   }, []);
 
   const deleteFamilyMember = useCallback((memberId: string) => {
@@ -727,6 +952,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setProfile((p) => ({ ...p, membersCount: filtered.length }));
       return filtered;
     });
+    apiClient.family.deleteMember(memberId).catch(() => {});
   }, []);
 
   const initUserFamily = useCallback((userMember: FamilyMember, userProfile: FamilyProfile) => {
