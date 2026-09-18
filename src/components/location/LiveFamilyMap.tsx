@@ -24,7 +24,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
   onMemberPress,
   showFocusBar = true,
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isElderly, isDark } = useAppTheme();
   const { members, activeUser, sendFamilyPing } = useFamily();
 
   // Selected or focused member on map
@@ -133,14 +133,29 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
             style={[
               styles.filterPill,
               {
-                backgroundColor: !selectedMemberId ? colors.brandAccent : colors.separator,
-                borderColor: !selectedMemberId ? colors.brandAccent : colors.border,
+                backgroundColor: !selectedMemberId
+                  ? isDark
+                    ? '#38BDF8'
+                    : colors.brandAccent
+                  : colors.separator,
+                borderColor: !selectedMemberId
+                  ? isDark
+                    ? '#38BDF8'
+                    : colors.brandAccent
+                  : colors.border,
               },
             ]}>
             <Text
               style={[
                 styles.filterPillText,
-                { color: !selectedMemberId ? '#FFFFFF' : colors.text },
+                {
+                  color: !selectedMemberId
+                    ? isDark
+                      ? '#000000'
+                      : '#FFFFFF'
+                    : colors.text,
+                  fontWeight: !selectedMemberId ? '800' : '600',
+                },
               ]}>
               All ({members.length})
             </Text>
@@ -155,8 +170,16 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                 style={[
                   styles.filterPill,
                   {
-                    backgroundColor: isFocused ? colors.brandAccent : colors.separator,
-                    borderColor: isFocused ? colors.brandAccent : colors.border,
+                    backgroundColor: isFocused
+                      ? isDark
+                        ? '#38BDF8'
+                        : colors.brandAccent
+                      : colors.separator,
+                    borderColor: isFocused
+                      ? isDark
+                        ? '#38BDF8'
+                        : colors.brandAccent
+                      : colors.border,
                   },
                 ]}>
                 <View
@@ -164,7 +187,9 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                     styles.miniBatteryDot,
                     {
                       backgroundColor:
-                        member.batteryLevel > 50 || member.isCharging
+                        isFocused && isDark
+                          ? '#000000'
+                          : member.batteryLevel > 50 || member.isCharging
                           ? colors.green
                           : member.batteryLevel > 20
                           ? colors.yellow
@@ -175,7 +200,14 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                 <Text
                   style={[
                     styles.filterPillText,
-                    { color: isFocused ? '#FFFFFF' : colors.text },
+                    {
+                      color: isFocused
+                        ? isDark
+                          ? '#000000'
+                          : '#FFFFFF'
+                        : colors.text,
+                      fontWeight: isFocused ? '800' : '600',
+                    },
                   ]}>
                   {member.name}
                 </Text>
@@ -183,7 +215,13 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                   <Ionicons
                     name="volume-mute"
                     size={11}
-                    color={isFocused ? '#FFFFFF' : colors.red}
+                    color={
+                      isFocused
+                        ? isDark
+                          ? '#000000'
+                          : '#FFFFFF'
+                        : colors.red
+                    }
                   />
                 )}
               </Pressable>
@@ -262,15 +300,23 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                 style={[
                   styles.pinBadge,
                   {
-                    backgroundColor: isSelected ? colors.brand : colors.cardBackground,
-                    borderColor: isSelected ? colors.brandAccent : colors.border,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? '#38BDF8'
+                        : colors.brand
+                      : colors.cardBackground,
+                    borderColor: isSelected
+                      ? isDark
+                        ? '#38BDF8'
+                        : colors.brandAccent
+                      : colors.border,
                   },
                 ]}>
                 <View style={styles.pinBadgeTopRow}>
                   <Text
                     style={[
                       styles.pinName,
-                      { color: isSelected ? '#FFFFFF' : colors.text },
+                      { color: isSelected ? (isDark ? '#000000' : '#FFFFFF') : colors.text },
                     ]}>
                     {member.name}
                   </Text>
@@ -288,7 +334,9 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                       member.ringerMode === 'silent'
                         ? colors.red
                         : isSelected
-                        ? '#FFFFFF'
+                        ? isDark
+                          ? '#000000'
+                          : '#FFFFFF'
                         : colors.textSecondary
                     }
                   />
@@ -300,7 +348,9 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                     name={member.isCharging ? 'flash' : 'battery-charging'}
                     size={9}
                     color={
-                      member.batteryLevel > 50 || member.isCharging
+                      isSelected && isDark
+                        ? '#000000'
+                        : member.batteryLevel > 50 || member.isCharging
                         ? colors.green
                         : colors.yellow
                     }
@@ -308,7 +358,13 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                   <Text
                     style={[
                       styles.pinBatteryText,
-                      { color: isSelected ? '#FFFFFF' : colors.textSecondary },
+                      {
+                        color: isSelected
+                          ? isDark
+                            ? '#000000'
+                            : '#FFFFFF'
+                          : colors.textSecondary,
+                      },
                     ]}>
                     {member.batteryLevel}%
                   </Text>

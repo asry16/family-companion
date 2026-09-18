@@ -449,27 +449,50 @@ export const FamilyCommandCenter: React.FC = () => {
           return (
             <Pressable
               key={member.id}
-              onPress={() => openMemberSheet(member)}
+              onPress={() => {
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                setSelectedMember(member);
+                const memberX = member.coords?.x ?? 50;
+                const memberY = member.coords?.y ?? 50;
+                setPanOffset({
+                  x: (50 - memberX) * 1.8,
+                  y: (50 - memberY) * 1.8,
+                });
+              }}
               style={({ pressed }) => [
                 styles.memberPresenceCard,
                 {
-                  backgroundColor: isDark ? '#151F33' : '#FFFFFF',
-                  borderColor: presence.isLive
+                  backgroundColor: isSelected
+                    ? isDark
+                      ? '#38BDF8'
+                      : colors.brandAccent
+                    : isDark
+                    ? '#151F33'
+                    : '#FFFFFF',
+                  borderColor: isSelected
+                    ? isDark
+                      ? '#38BDF8'
+                      : colors.brandAccent
+                    : presence.isLive
                     ? isDark
                       ? 'rgba(52, 211, 153, 0.45)'
                       : 'rgba(16, 185, 129, 0.35)'
                     : isDark
                     ? 'rgba(255, 255, 255, 0.08)'
                     : 'rgba(0, 0, 0, 0.06)',
-                  shadowColor: presence.isLive
+                  shadowColor: isSelected
+                    ? isDark
+                      ? '#38BDF8'
+                      : colors.brandAccent
+                    : presence.isLive
                     ? isDark
                       ? '#34D399'
                       : '#10B981'
                     : isDark
                     ? '#000000'
                     : '#64748B',
-                  shadowOpacity: presence.isLive ? (isDark ? 0.3 : 0.15) : 0.06,
-                  shadowRadius: presence.isLive ? 10 : 6,
+                  shadowOpacity: isSelected ? 0.35 : presence.isLive ? (isDark ? 0.3 : 0.15) : 0.06,
+                  shadowRadius: isSelected ? 12 : presence.isLive ? 10 : 6,
                   opacity: pressed ? 0.92 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
                 },
@@ -483,19 +506,42 @@ export const FamilyCommandCenter: React.FC = () => {
               <View style={styles.cardCenterCol}>
                 <Text
                   numberOfLines={1}
-                  style={[styles.cardNameText, { color: colors.text }]}>
+                  style={[
+                    styles.cardNameText,
+                    {
+                      color: isSelected ? (isDark ? '#000000' : '#FFFFFF') : colors.text,
+                      fontWeight: isSelected ? '800' : '700',
+                    },
+                  ]}>
                   {memberName}
                 </Text>
                 <Text
                   style={[
                     styles.cardStatusText,
-                    { color: presence.badgeColor },
+                    {
+                      color: isSelected
+                        ? isDark
+                          ? '#000000'
+                          : '#FFFFFF'
+                        : presence.badgeColor,
+                      fontWeight: '800',
+                    },
                   ]}>
                   {presence.label}
                 </Text>
                 <Text
                   numberOfLines={1}
-                  style={[styles.cardActiveText, { color: colors.textSecondary }]}>
+                  style={[
+                    styles.cardActiveText,
+                    {
+                      color: isSelected
+                        ? isDark
+                          ? '#000000'
+                          : 'rgba(255, 255, 255, 0.9)'
+                        : colors.textSecondary,
+                      fontWeight: isSelected ? '700' : '500',
+                    },
+                  ]}>
                   Active {member.lastUpdated || '2 min ago'}
                 </Text>
               </View>
@@ -503,12 +549,30 @@ export const FamilyCommandCenter: React.FC = () => {
               {/* Right: Top Live Indicator + Bottom Battery */}
               <View style={styles.cardRightCol}>
                 {presence.isLive ? (
-                  <View style={[styles.liveDotRing, { borderColor: isDark ? 'rgba(52, 211, 153, 0.3)' : 'rgba(16, 185, 129, 0.25)' }]}>
+                  <View
+                    style={[
+                      styles.liveDotRing,
+                      {
+                        borderColor: isSelected
+                          ? isDark
+                            ? 'rgba(0, 0, 0, 0.35)'
+                            : 'rgba(255, 255, 255, 0.5)'
+                          : isDark
+                          ? 'rgba(52, 211, 153, 0.3)'
+                          : 'rgba(16, 185, 129, 0.25)',
+                      },
+                    ]}>
                     <Animated.View
                       style={[
                         styles.liveDotCore,
                         {
-                          backgroundColor: isDark ? '#34D399' : '#10B981',
+                          backgroundColor: isSelected
+                            ? isDark
+                              ? '#000000'
+                              : '#FFFFFF'
+                            : isDark
+                            ? '#34D399'
+                            : '#10B981',
                           transform: [
                             {
                               scale: pulseAnim.interpolate({
@@ -522,7 +586,18 @@ export const FamilyCommandCenter: React.FC = () => {
                     />
                   </View>
                 ) : (
-                  <View style={[styles.liveDotCore, { backgroundColor: '#94A3B8' }]} />
+                  <View
+                    style={[
+                      styles.liveDotCore,
+                      {
+                        backgroundColor: isSelected
+                          ? isDark
+                            ? '#000000'
+                            : '#FFFFFF'
+                          : '#94A3B8',
+                      },
+                    ]}
+                  />
                 )}
 
                 <View style={styles.batteryRow}>
@@ -536,7 +611,11 @@ export const FamilyCommandCenter: React.FC = () => {
                     }
                     size={11}
                     color={
-                      member.batteryLevel > 50 || member.isCharging
+                      isSelected
+                        ? isDark
+                          ? '#000000'
+                          : '#FFFFFF'
+                        : member.batteryLevel > 50 || member.isCharging
                         ? '#10B981'
                         : '#F59E0B'
                     }
@@ -545,14 +624,18 @@ export const FamilyCommandCenter: React.FC = () => {
                     style={[
                       styles.batteryNumber,
                       {
-                        color:
-                          member.batteryLevel > 50 || member.isCharging
-                            ? isDark
-                              ? '#34D399'
-                              : '#059669'
-                            : isDark
-                            ? '#FBBF24'
-                            : '#D97706',
+                        color: isSelected
+                          ? isDark
+                            ? '#000000'
+                            : '#FFFFFF'
+                          : member.batteryLevel > 50 || member.isCharging
+                          ? isDark
+                            ? '#34D399'
+                            : '#059669'
+                          : isDark
+                          ? '#FBBF24'
+                          : '#D97706',
+                        fontWeight: isSelected ? '800' : '700',
                       },
                     ]}>
                     {member.batteryLevel}%
@@ -685,12 +768,12 @@ export const FamilyCommandCenter: React.FC = () => {
               style={({ pressed }) => [
                 styles.enableLocationBtn,
                 {
-                  backgroundColor: colors.brandAccent,
+                  backgroundColor: isDark ? '#38BDF8' : colors.brandAccent,
                   opacity: pressed ? 0.88 : 1,
                 },
               ]}>
-              <Ionicons name="navigate" size={14} color={colors.buttonTextOnAccent} />
-              <Text style={[styles.enableLocationBtnText, { color: colors.buttonTextOnAccent }]}>
+              <Ionicons name="navigate" size={14} color={isDark ? '#000000' : '#FFFFFF'} />
+              <Text style={[styles.enableLocationBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
                 Enable Location
               </Text>
             </Pressable>
@@ -823,12 +906,48 @@ export const FamilyCommandCenter: React.FC = () => {
                     style={[
                       styles.markerNameBadge,
                       {
-                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : '#FFFFFF',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                        backgroundColor: isFocused
+                          ? isDark
+                            ? '#38BDF8'
+                            : colors.brandAccent
+                          : isDark
+                          ? 'rgba(15, 23, 42, 0.92)'
+                          : '#FFFFFF',
+                        borderColor: isFocused
+                          ? isDark
+                            ? '#38BDF8'
+                            : colors.brandAccent
+                          : isDark
+                          ? 'rgba(255, 255, 255, 0.2)'
+                          : 'rgba(0, 0, 0, 0.1)',
                       },
                     ]}>
-                    <View style={[styles.markerLiveDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
-                    <Text style={[styles.markerNameText, { color: colors.text }]}>
+                    <View
+                      style={[
+                        styles.markerLiveDot,
+                        {
+                          backgroundColor: isFocused
+                            ? isDark
+                              ? '#000000'
+                              : '#FFFFFF'
+                            : isDark
+                            ? '#34D399'
+                            : '#10B981',
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.markerNameText,
+                        {
+                          color: isFocused
+                            ? isDark
+                              ? '#000000'
+                              : '#FFFFFF'
+                            : colors.text,
+                          fontWeight: isFocused ? '800' : '700',
+                        },
+                      ]}>
                       {memberName}
                     </Text>
                   </View>
@@ -919,12 +1038,16 @@ export const FamilyCommandCenter: React.FC = () => {
             styles.chipPill,
             {
               backgroundColor: !selectedMember
-                ? colors.brandAccent
+                ? isDark
+                  ? '#38BDF8'
+                  : colors.brandAccent
                 : isDark
                 ? '#151F33'
                 : '#F1F5F9',
               borderColor: !selectedMember
-                ? colors.brandAccent
+                ? isDark
+                  ? '#38BDF8'
+                  : colors.brandAccent
                 : isDark
                 ? 'rgba(255, 255, 255, 0.1)'
                 : '#E2E8F0',
@@ -934,8 +1057,12 @@ export const FamilyCommandCenter: React.FC = () => {
             style={[
               styles.chipText,
               {
-                color: !selectedMember ? colors.buttonTextOnAccent : colors.text,
-                fontWeight: !selectedMember ? '700' : '600',
+                color: !selectedMember
+                  ? isDark
+                    ? '#000000'
+                    : '#FFFFFF'
+                  : colors.text,
+                fontWeight: !selectedMember ? '800' : '600',
               },
             ]}>
             All ({displayMembers.length})
@@ -951,17 +1078,34 @@ export const FamilyCommandCenter: React.FC = () => {
           return (
             <Pressable
               key={member.id}
-              onPress={() => openMemberSheet(member)}
+              onPress={() => {
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                if (selectedMember?.id === member.id) {
+                  openMemberSheet(member);
+                } else {
+                  setSelectedMember(member);
+                  const memberX = member.coords?.x ?? 50;
+                  const memberY = member.coords?.y ?? 50;
+                  setPanOffset({
+                    x: (50 - memberX) * 1.8,
+                    y: (50 - memberY) * 1.8,
+                  });
+                }
+              }}
               style={[
                 styles.chipPill,
                 {
                   backgroundColor: isCurrent
-                    ? colors.brandAccent
+                    ? isDark
+                      ? '#38BDF8'
+                      : colors.brandAccent
                     : isDark
                     ? '#151F33'
                     : '#F1F5F9',
                   borderColor: isCurrent
-                    ? colors.brandAccent
+                    ? isDark
+                      ? '#38BDF8'
+                      : colors.brandAccent
                     : isDark
                     ? 'rgba(255, 255, 255, 0.1)'
                     : '#E2E8F0',
@@ -970,15 +1114,27 @@ export const FamilyCommandCenter: React.FC = () => {
               <View
                 style={[
                   styles.chipLiveDot,
-                  { backgroundColor: isDark ? '#34D399' : '#10B981' },
+                  {
+                    backgroundColor: isCurrent
+                      ? isDark
+                        ? '#000000'
+                        : '#FFFFFF'
+                      : isDark
+                      ? '#34D399'
+                      : '#10B981',
+                  },
                 ]}
               />
               <Text
                 style={[
                   styles.chipText,
                   {
-                    color: isCurrent ? colors.buttonTextOnAccent : colors.text,
-                    fontWeight: isCurrent ? '700' : '600',
+                    color: isCurrent
+                      ? isDark
+                        ? '#000000'
+                        : '#FFFFFF'
+                      : colors.text,
+                    fontWeight: isCurrent ? '800' : '600',
                   },
                 ]}>
                 {memberName}
@@ -1078,14 +1234,14 @@ export const FamilyCommandCenter: React.FC = () => {
                   style={({ pressed }) => [
                     styles.sheetPrimaryBtn,
                     {
-                      backgroundColor: colors.brandAccent,
+                      backgroundColor: isDark ? '#38BDF8' : colors.brandAccent,
                       opacity: pressed ? 0.88 : 1,
                     },
                   ]}>
                   <Text
                     style={[
                       styles.sheetPrimaryBtnText,
-                      { color: colors.buttonTextOnAccent },
+                      { color: isDark ? '#000000' : '#FFFFFF' },
                     ]}>
                     View Profile
                   </Text>
