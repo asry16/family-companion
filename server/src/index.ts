@@ -1,3 +1,10 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables (.env in server/ and workspace root)
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
 import http from 'http';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';

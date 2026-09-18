@@ -53,11 +53,11 @@ interface AuthContextValue {
     relation?: MemberRelation
   ) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
   verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
-  resendVerificationCode: (email: string) => Promise<{ success: boolean; code?: string; message: string }>;
+  resendVerificationCode: (email: string) => Promise<{ success: boolean; code?: string; delivered?: boolean; message: string }>;
   requestOtp: (
     email: string,
     purpose?: 'login' | 'register' | 'verification' | 'password_reset'
-  ) => Promise<{ success: boolean; code?: string; devCode?: string; message: string; error?: string }>;
+  ) => Promise<{ success: boolean; code?: string; devCode?: string; delivered?: boolean; message: string; error?: string }>;
   signInWithOtp: (email: string, code: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetEmail: (email: string) => Promise<{ success: boolean; message: string }>;
   signInAsFamilyMember: (memberId: string) => void;
@@ -563,11 +563,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resendVerificationCode = useCallback(
     async (email: string) => {
       const cleanEmail = email.trim().toLowerCase();
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      let dispatchedCode = Math.floor(100000 + Math.random() * 900000).toString();
+      let isDelivered = false;
 
       // Dispatch to server mailer
       try {
-        await apiClient.auth.sendOtp(cleanEmail, 'verification');
+        const apiRes = await apiClient.auth.sendOtp(cleanEmail, 'verification');
+        if (apiRes.success) {
+          const sCode = (apiRes as any).code || apiRes.data?.code;
+          if (sCode) dispatchedCode = sCode;
+          isDelivered = Boolean((apiRes as any).delivered || apiRes.data?.delivered);
+        }
       } catch {}
 
       const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
@@ -575,15 +581,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const accounts: StoredUserAccount[] = JSON.parse(rawAccounts);
         const account = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
         if (account) {
-          account.verificationCode = newCode;
+          account.verificationCode = dispatchedCode;
           await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
         }
       }
 
       return {
         success: true,
-        code: newCode,
-        message: `A new 6-digit verification code has been dispatched to ${cleanEmail}. Check your inbox.`,
+        code: dispatchedCode,
+        delivered: isDelivered,
+        message: isDelivered
+          ? `A new 6-digit verification code has been dispatched to ${cleanEmail}. Check your inbox.`
+          : `Simulated Code: ${dispatchedCode}. (Set Gmail credentials in server/.env for live delivery)`,
       };
     },
     []
@@ -600,11 +609,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const res = await apiClient.auth.sendOtp(cleanEmail, purpose);
         if (res.success) {
           const code = (res as any).code || res.data?.code;
+          const delivered = Boolean((res as any).delivered || res.data?.delivered);
           return {
             success: true,
             code,
             devCode: code,
-            message: (res as any).message || res.data?.message || `A verification code has been sent to ${cleanEmail}.`,
+            delivered,
+            message: (res as any).message || res.data?.message || (delivered ? `A verification code has been dispatched to ${cleanEmail}.` : `Simulated code: ${code}`),
           };
         } else {
           return {
@@ -619,7 +630,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           success: true,
           code: '123456',
           devCode: '123456',
-          message: `A verification code has been sent to ${cleanEmail}. (Code: 123456)`,
+          delivered: false,
+          message: `Dev Fallback Code: 123456`,
         };
       }
     },

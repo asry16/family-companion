@@ -120,8 +120,8 @@ router.post('/register', async (req: Request, res: Response) => {
       { expiresIn: '30d' }
     );
 
-    // Send Real Verification Email via Nodemailer (asynchronous, non-blocking)
-    sendOtpEmail({
+    // Send Verification Email via Nodemailer
+    const mailResult = await sendOtpEmail({
       to: cleanEmail,
       subject: `🔐 Your Kinly Verification Code: ${verificationCode}`,
       title: 'Welcome to Kinly!',
@@ -129,6 +129,7 @@ router.post('/register', async (req: Request, res: Response) => {
       purpose: 'verification',
     }).catch((mailErr) => {
       console.warn('[Register Email Delivery Warning]', mailErr);
+      return { success: false, delivered: false };
     });
 
     const userRecord = usersRepo.findById(userId);
@@ -138,6 +139,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const responseData = {
       token,
       verificationCode,
+      delivered: mailResult.delivered,
       user: {
         id: userRecord?.id,
         name: userRecord?.name,
@@ -289,7 +291,7 @@ router.post('/send-otp', async (req: Request, res: Response) => {
         ? 'Reset Your Password'
         : 'Verify Your Email';
 
-    await sendOtpEmail({
+    const mailResult = await sendOtpEmail({
       to: cleanEmail,
       subject,
       title,
@@ -297,10 +299,16 @@ router.post('/send-otp', async (req: Request, res: Response) => {
       purpose: purpose as any,
     });
 
+    const isDelivered = mailResult.delivered;
+    const message = isDelivered
+      ? `A 6-digit verification code has been dispatched to ${cleanEmail}. Check your inbox!`
+      : `Simulated code: ${code}. (To receive live emails in your inbox, set your Gmail App Password in server/.env)`;
+
     return res.json({
       success: true,
-      code, // Included for test environments
-      message: `A 6-digit verification code has been sent to ${cleanEmail}.`,
+      code,
+      delivered: isDelivered,
+      message,
     });
   } catch (err: any) {
     console.error('Send OTP error:', err);

@@ -48,6 +48,7 @@ export default function LoginScreen() {
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
   const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
+  const [isOtpDelivered, setIsOtpDelivered] = useState(false);
 
   // States
   const [loading, setLoading] = useState(false);
@@ -101,6 +102,7 @@ export default function LoginScreen() {
       if (res.success) {
         setOtpSent(true);
         setOtpCooldown(60);
+        setIsOtpDelivered(Boolean(res.delivered));
         setOtpSuccessMessage(res.message || 'A 6-digit verification code was sent to your email.');
         if (res.devCode) {
           setDevOtpCode(res.devCode);
@@ -640,15 +642,25 @@ export default function LoginScreen() {
                 </View>
               )}
 
-              {/* OTP Success Info Banner */}
+              {/* OTP Success / Delivery Info Banner */}
               {signInMethod === 'otp' && otpSuccessMessage && (
                 <View
                   style={[
                     styles.alertBox,
-                    { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+                    isOtpDelivered
+                      ? { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder }
+                      : { backgroundColor: colors.yellowSoft, borderColor: colors.yellowBorder },
                   ]}>
-                  <Ionicons name="checkmark-circle" size={18} color={colors.green} />
-                  <Text style={[styles.alertText, { color: colors.green }]}>
+                  <Ionicons
+                    name={isOtpDelivered ? "checkmark-circle" : "information-circle"}
+                    size={18}
+                    color={isOtpDelivered ? colors.green : colors.yellow}
+                  />
+                  <Text
+                    style={[
+                      styles.alertText,
+                      { color: isOtpDelivered ? colors.green : colors.yellow },
+                    ]}>
                     {otpSuccessMessage}
                   </Text>
                 </View>
@@ -663,17 +675,20 @@ export default function LoginScreen() {
                   ]}>
                   <Ionicons name="flash-outline" size={18} color={colors.brandAccent} />
                   <Text style={[styles.alertText, { color: colors.brandAccent }]}>
-                    Dev Code: <Text style={{ fontWeight: '800' }}>{devOtpCode}</Text>
+                    Verification Code: <Text style={{ fontWeight: '800' }}>{devOtpCode}</Text>
                   </Text>
                   <Pressable
-                    onPress={() => setOtpCode(devOtpCode)}
+                    onPress={() => {
+                      triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+                      setOtpCode(devOtpCode);
+                    }}
                     style={{
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 6,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 8,
                       backgroundColor: colors.brandAccent,
                     }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Auto-Fill</Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Auto-Fill</Text>
                   </Pressable>
                 </View>
               )}

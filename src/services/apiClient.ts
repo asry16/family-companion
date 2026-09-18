@@ -112,7 +112,7 @@ export const apiClient = {
       email: string,
       purpose: 'login' | 'register' | 'verification' | 'password_reset' = 'login'
     ) => {
-      return request<{ code?: string; message: string }>('/api/auth/send-otp', {
+      return request<{ code?: string; delivered?: boolean; message: string }>('/api/auth/send-otp', {
         method: 'POST',
         body: JSON.stringify({ email, purpose }),
       });

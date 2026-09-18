@@ -828,15 +828,21 @@ export default function RegisterScreen() {
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
                   Enter 6-Digit Code
                 </Text>
-                <View
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+                    setVerificationCode(simulatedOtp);
+                    if (verificationError) setVerificationError(null);
+                  }}
+                  hitSlop={8}
                   style={[
                     styles.demoOtpBadge,
                     { backgroundColor: colors.blueSoft, borderColor: colors.blueBorder },
                   ]}>
                   <Text style={[styles.demoOtpText, { color: colors.blue }]}>
-                    Verification Code: {simulatedOtp}
+                    Code: <Text style={{ fontWeight: '800' }}>{simulatedOtp}</Text> (Tap to Fill)
                   </Text>
-                </View>
+                </Pressable>
               </View>
               <TextInput
                 value={verificationCode}
@@ -857,6 +863,9 @@ export default function RegisterScreen() {
                   },
                 ]}
               />
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+                Tip: Configure your Gmail App Password in <Text style={{ fontWeight: '700' }}>server/.env</Text> to receive emails directly in your inbox.
+              </Text>
             </View>
 
             {/* Verify & Enter Button */}
