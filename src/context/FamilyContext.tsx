@@ -315,15 +315,50 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSuggestions(freshSuggestions);
   }, [members, places, tasks, events, reminders, documents]);
 
-  const activeUser = useMemo(() => {
+  const fallbackActiveUser: FamilyMember = useMemo(() => ({
+    id: user?.familyMemberId || (user?.id ? `member_${user.id}` : 'member_me'),
+    name: user?.name || 'You',
+    relation: (user?.relation as MemberRelation) || 'Self',
+    initials: user?.name
+      ? user.name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase()
+      : 'YOU',
+    avatarColor: '#3B82F6',
+    isSelf: true,
+    statusMessage: 'Family Space Ready',
+    currentPlaceId: 'place_home',
+    humanLocation: 'At Home',
+    batteryLevel: 100,
+    isCharging: false,
+    isSharingLocation: true,
+    sharingDuration: 'always',
+    lastUpdated: 'Just now',
+    availability: 'available',
+    phone: '+1 555-0100',
+    ringerMode: 'sound',
+    deviceModel: 'iPhone 15',
+    coords: { x: 50, y: 50 },
+  }), [user]);
+
+  const activeUser: FamilyMember = useMemo(() => {
     if (simpleMode) {
       return (
         members.find((m) => m.relation === 'Grandmother' || m.id === 'member_dadi') ||
-        members[0]
+        members[0] ||
+        fallbackActiveUser
       );
     }
-    return members.find((m) => m.id === activeMemberId) || members.find((m) => m.isSelf) || members[0];
-  }, [members, simpleMode, activeMemberId]);
+    return (
+      members.find((m) => m.id === activeMemberId) ||
+      members.find((m) => m.isSelf) ||
+      members[0] ||
+      fallbackActiveUser
+    );
+  }, [members, simpleMode, activeMemberId, fallbackActiveUser]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.isRead).length;

@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
+import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/ui/Header';
 import { AIMessage, AIMessageItem } from '@/components/cards/AIMessage';
 import { AIActionCard } from '@/services/aiService';
@@ -24,6 +25,7 @@ export default function AIScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors, isElderly } = useAppTheme();
+  const { isAuthenticated } = useAuth();
   const {
     askFamilyAI,
     addTask,
@@ -39,6 +41,12 @@ export default function AIScreen() {
     transcript,
     speak,
   } = useVoice();
+
+  useEffect(() => {
+    if (!isAuthenticated) router.replace('/login');
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');

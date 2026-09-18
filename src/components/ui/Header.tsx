@@ -29,7 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    const firstName = (user?.name || activeUser.name).split(' ')[0];
+    const rawName = user?.name || activeUser?.name || 'Family';
+    const firstName = rawName.split(' ')[0] || 'Family';
     if (hour < 12) return `Good morning, ${firstName} ☀️`;
     if (hour < 17) return `Good afternoon, ${firstName} 🌤️`;
     return `Good evening, ${firstName} 🌙`;
@@ -242,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
                     { backgroundColor: colors.brandAccent },
                   ]}>
                   <Text style={styles.largeAvatarRoleText}>
-                    {activeUser.relation}
+                    {activeUser?.relation || 'Self'}
                   </Text>
                 </View>
               </View>
@@ -252,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({
                   styles.profileModalName,
                   { color: colors.text, fontSize: isElderly ? 24 : 20 },
                 ]}>
-                {user?.name || activeUser.name}
+                {user?.name || activeUser?.name || 'You'}
               </Text>
 
               <View
@@ -272,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({
                   color={colors.blue}
                 />
                 <Text style={[styles.accountProviderEmail, { color: colors.blue }]}>
-                  {user?.email || `${activeUser.name.toLowerCase().replace(/\s+/g, '')}@family.com`}
+                  {user?.email || (activeUser?.name ? `${activeUser.name.toLowerCase().replace(/\s+/g, '')}@family.com` : 'you@family.com')}
                 </Text>
               </View>
             </View>

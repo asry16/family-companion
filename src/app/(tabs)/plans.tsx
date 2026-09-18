@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
+import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/ui/Header';
 import { TaskCard } from '@/components/cards/TaskCard';
 import { EventCard } from '@/components/cards/EventCard';
@@ -26,6 +27,7 @@ type FilterTab = 'all' | 'tasks' | 'events' | 'reminders';
 export default function PlansScreen() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
+  const { isAuthenticated } = useAuth();
   const {
     members,
     activeUser,
@@ -38,6 +40,12 @@ export default function PlansScreen() {
     addTask,
   } = useFamily();
   const { startListening, speak } = useVoice();
+
+  useEffect(() => {
+    if (!isAuthenticated) router.replace('/login');
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
 
   const [filter, setFilter] = useState<FilterTab>('all');
   const [nlInput, setNlInput] = useState<string>('');

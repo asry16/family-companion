@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -112,6 +112,16 @@ export default function HomeScreen() {
   const safeCount = members.filter((m) => m.availability !== 'offline').length;
   const inTransitCount = members.filter((m) => m.availability === 'in_transit').length;
   const homeCount = members.filter((m) => m.humanLocation?.toLowerCase().includes('home')).length;
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>

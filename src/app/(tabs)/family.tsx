@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
+import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/ui/Header';
 import { FamilyMemberCard } from '@/components/cards/FamilyMemberCard';
 import { StylizedFamilyMap } from '@/components/location/StylizedFamilyMap';
@@ -23,8 +24,15 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 export default function FamilyScreen() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
+  const { isAuthenticated } = useAuth();
   const { profile, members, sendFamilyPing } = useFamily();
   const { speak } = useVoice();
+
+  useEffect(() => {
+    if (!isAuthenticated) router.replace('/login');
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
 
   const [modalState, setModalState] = useState<{
     visible: boolean;
