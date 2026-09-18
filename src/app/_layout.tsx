@@ -33,10 +33,9 @@ function RootNavigator() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
-    const isProtectedModal = segments[0] === 'modal';
 
-    // Gate sensitive modal routes from unauthenticated users
-    if (!isAuthenticated && isProtectedModal) {
+    // Gate unauthenticated users to start on the 1st page (/login)
+    if (!isAuthenticated && !inAuthGroup) {
       router.replace('/login');
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect authenticated users to appropriate Dashboard/Home screen

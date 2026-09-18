@@ -16,8 +16,6 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { initialMembers } from '@/data/mockFamilyData';
-import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,7 +25,6 @@ export default function LoginScreen() {
     signInWithApple,
     signInWithEmail,
     sendPasswordResetEmail,
-    signInAsFamilyMember,
   } = useAuth();
 
   // Screen View Mode: 'gateway' (hero welcome) or 'signIn' (focused sign in form)
@@ -49,8 +46,6 @@ export default function LoginScreen() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotStatus, setForgotStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // Demo members bottom drawer sheet
-  const [demoSheetVisible, setDemoSheetVisible] = useState(false);
 
   // Haptic feedback helper
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
@@ -127,18 +122,7 @@ export default function LoginScreen() {
     }
   };
 
-  const handleMemberSelect = async (memberId: string) => {
-    if (loading) return;
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-    setLoading(true);
-    try {
-      await signInAsFamilyMember(memberId);
-      setDemoSheetVisible(false);
-      router.replace('/(tabs)');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleForgotPasswordSubmit = async () => {
     if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
@@ -280,35 +264,9 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Clear, High-Conviction Action Buttons */}
-            <View style={styles.actionsBlock}>
-              {/* Primary CTA: Create Account */}
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push('/register');
-                }}
-                style={({ pressed }) => [
-                  styles.primaryActionButton,
-                  {
-                    backgroundColor: colors.brandAccent,
-                    shadowColor: colors.brandAccent,
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  },
-                ]}>
-                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-                <Text
-                  style={[
-                    styles.primaryActionText,
-                    { fontSize: isElderly ? 18 : 16 },
-                  ]}>
-                  Create Family Space
-                </Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-              </Pressable>
-
-              {/* Secondary CTA: Sign In */}
+            {/* The 3 Core Actions on 1st Page: Sign In, Sign Up, Create Family */}
+            <View style={styles.gatewayCardsStack}>
+              {/* Option 1: Sign In */}
               <Pressable
                 onPress={() => {
                   triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
@@ -316,21 +274,87 @@ export default function LoginScreen() {
                   setViewMode('signIn');
                 }}
                 style={({ pressed }) => [
-                  styles.secondaryActionButton,
+                  styles.gatewayActionCard,
                   {
                     backgroundColor: colors.cardBackground,
                     borderColor: colors.border,
-                    opacity: pressed ? 0.85 : 1,
+                    opacity: pressed ? 0.88 : 1,
                   },
                 ]}>
-                <Ionicons name="mail-outline" size={18} color={colors.text} />
-                <Text
-                  style={[
-                    styles.secondaryActionText,
-                    { color: colors.text, fontSize: isElderly ? 17 : 15 },
-                  ]}>
-                  Sign In with Email
-                </Text>
+                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.blueSoft }]}>
+                  <Ionicons name="log-in-outline" size={22} color={colors.blue} />
+                </View>
+                <View style={styles.gatewayActionTextWrap}>
+                  <Text style={[styles.gatewayActionTitle, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
+                    Sign In
+                  </Text>
+                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
+                    Access your existing family space or member account
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+
+              {/* Option 2: Sign Up */}
+              <Pressable
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/register?mode=signup');
+                }}
+                style={({ pressed }) => [
+                  styles.gatewayActionCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.88 : 1,
+                  },
+                ]}>
+                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.greenSoft }]}>
+                  <Ionicons name="person-add-outline" size={22} color={colors.green} />
+                </View>
+                <View style={styles.gatewayActionTextWrap}>
+                  <Text style={[styles.gatewayActionTitle, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
+                    Sign Up
+                  </Text>
+                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
+                    Register your personal account to join your family
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+
+              {/* Option 3: Create Family Space */}
+              <Pressable
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push('/register?mode=create_family');
+                }}
+                style={({ pressed }) => [
+                  styles.gatewayActionCardFeatured,
+                  {
+                    backgroundColor: colors.brandAccent + '12',
+                    borderColor: colors.brandAccent + '50',
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.99 : 1 }],
+                  },
+                ]}>
+                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.brandAccent + '25' }]}>
+                  <Ionicons name="home-outline" size={22} color={colors.brandAccent} />
+                </View>
+                <View style={styles.gatewayActionTextWrap}>
+                  <View style={styles.titleBadgeRow}>
+                    <Text style={[styles.gatewayActionTitle, { color: colors.brandAccent, fontSize: isElderly ? 18 : 16 }]}>
+                      Create Family Space
+                    </Text>
+                    <View style={[styles.miniJewelBadge, { backgroundColor: colors.brandAccent }]}>
+                      <Text style={styles.miniJewelBadgeText}>NEW SPACE</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
+                    Establish a brand-new encrypted sanctuary for your whole household
+                  </Text>
+                </View>
+                <Ionicons name="arrow-forward-circle" size={24} color={colors.brandAccent} />
               </Pressable>
             </View>
 
@@ -372,21 +396,6 @@ export default function LoginScreen() {
                 </View>
                 <Text style={[styles.googleButtonText, { color: colors.text }]}>
                   Continue with Google
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Demo Exploration Sheet Trigger */}
-            <View style={styles.demoSheetTriggerRow}>
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  setDemoSheetVisible(true);
-                }}
-                style={styles.demoPillButton}>
-                <Ionicons name="eye-outline" size={15} color={colors.brandAccent} />
-                <Text style={[styles.demoPillText, { color: colors.brandAccent }]}>
-                  Quick Demo: Explore as Sharma Family →
                 </Text>
               </Pressable>
             </View>
@@ -613,18 +622,33 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            {/* Switch to Create Account */}
-            <View style={styles.switchPromptRow}>
-              <Text style={[styles.switchPromptText, { color: colors.textSecondary }]}>
-                Don't have a family space yet?
-              </Text>
-              <Pressable
-                onPress={() => router.push('/register')}
-                hitSlop={8}>
-                <Text style={[styles.switchPromptAction, { color: colors.brandAccent }]}>
-                  Create Account
+            {/* Switch to Sign Up or Create Family */}
+            <View style={styles.switchPromptColumn}>
+              <View style={styles.switchPromptRow}>
+                <Text style={[styles.switchPromptText, { color: colors.textSecondary }]}>
+                  Need a personal member account?
                 </Text>
-              </Pressable>
+                <Pressable
+                  onPress={() => router.push('/register?mode=signup')}
+                  hitSlop={8}>
+                  <Text style={[styles.switchPromptAction, { color: colors.brandAccent }]}>
+                    Sign Up
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={[styles.switchPromptRow, { marginTop: 8 }]}>
+                <Text style={[styles.switchPromptText, { color: colors.textSecondary }]}>
+                  Want to establish a new household?
+                </Text>
+                <Pressable
+                  onPress={() => router.push('/register?mode=create_family')}
+                  hitSlop={8}>
+                  <Text style={[styles.switchPromptAction, { color: colors.green }]}>
+                    Create Family Space →
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         )}
@@ -749,84 +773,7 @@ export default function LoginScreen() {
         </Pressable>
       </Modal>
 
-      {/* ========================================================================= */}
-      {/* MODAL 2: QUICK DEMO FAMILY SELECTOR SHEET                                 */}
-      {/* ========================================================================= */}
-      <Modal
-        visible={demoSheetVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDemoSheetVisible(false)}>
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setDemoSheetVisible(false)}>
-          <Pressable
-            style={[
-              styles.bottomSheetCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={(e) => e.stopPropagation()}>
-            <View style={styles.sheetHandle} />
 
-            <View style={styles.sheetHeader}>
-              <View style={styles.sheetTitleRow}>
-                <Ionicons name="sparkles" size={20} color={colors.brandAccent} />
-                <Text style={[styles.sheetTitle, { color: colors.text }]}>
-                  Explore The Sharma Family
-                </Text>
-              </View>
-              <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>
-                Select any member profile to evaluate Kinly's full feature suite instantly:
-              </Text>
-            </View>
-
-            <ScrollView
-              style={{ maxHeight: 340 }}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
-              {initialMembers.map((member) => (
-                <Pressable
-                  key={member.id}
-                  onPress={() => handleMemberSelect(member.id)}
-                  style={({ pressed }) => [
-                    styles.memberCard,
-                    {
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                      opacity: pressed ? 0.8 : 1,
-                    },
-                  ]}>
-                  <FamilyAvatar member={member} size="sm" showStatus={false} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.memberName, { color: colors.text }]}>
-                      {member.name}
-                    </Text>
-                    <Text style={[styles.memberMeta, { color: colors.textSecondary }]}>
-                      {member.relation} • {member.name.toLowerCase().replace(/\s+/g, '')}@family.com
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="arrow-forward-circle"
-                    size={22}
-                    color={colors.brandAccent}
-                  />
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            <Pressable
-              onPress={() => setDemoSheetVisible(false)}
-              style={styles.sheetCloseButton}>
-              <Text style={[styles.sheetCloseText, { color: colors.textSecondary }]}>
-                Close
-              </Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
 
     </KeyboardAvoidingView>
   );
@@ -937,10 +884,81 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  // Actions
+  // Actions & Gateway 3-Choice Stack
+  gatewayCardsStack: {
+    gap: 12,
+    marginTop: 4,
+  },
+  gatewayActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  gatewayActionCardFeatured: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    gap: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  gatewayActionIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gatewayActionTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  gatewayActionTitle: {
+    fontWeight: '700',
+  },
+  gatewayActionSub: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  titleBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  miniJewelBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  miniJewelBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   actionsBlock: {
     gap: 10,
     marginTop: 6,
+  },
+  switchPromptColumn: {
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
   },
   primaryActionButton: {
     flexDirection: 'row',
@@ -1043,22 +1061,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // Demo Trigger & Security
-  demoSheetTriggerRow: {
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  demoPillButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  demoPillText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  // Security Footer
   securityFooter: {
     flexDirection: 'row',
     alignItems: 'center',

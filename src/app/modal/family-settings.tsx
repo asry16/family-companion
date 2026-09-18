@@ -199,19 +199,7 @@ export default function FamilySettingsModal() {
     setDeleteConfirmMember(null);
   };
 
-  const handleResetDemo = () => {
-    const confirm = Platform.OS === 'web'
-      ? window.confirm('Reset all family members and tasks back to the default Sharma family demo dataset?')
-      : true;
 
-    if (confirm) {
-      resetToDefaults();
-      setFamilyName('The Sharma Family');
-      setAddress('B-42 Palm Grove, Phase 5');
-      setCity('Gurgaon, NCR');
-      router.back();
-    }
-  };
 
   const handleLogout = async () => {
     const confirmed = Platform.OS === 'web'
@@ -534,27 +522,7 @@ export default function FamilySettingsModal() {
           </View>
         </View>
 
-        {/* Demo Reset Tool */}
-        <View style={styles.resetSection}>
-          <Pressable
-            onPress={handleResetDemo}
-            style={({ pressed }) => [
-              styles.resetButton,
-              {
-                backgroundColor: colors.separator,
-                borderColor: colors.border,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons name="refresh-outline" size={16} color={colors.textSecondary} />
-            <Text style={[styles.resetButtonText, { color: colors.textSecondary }]}>
-              Reset to Demo Sharma Family
-            </Text>
-          </Pressable>
-          <Text style={[styles.resetHint, { color: colors.textMuted }]}>
-            Restores the 5-member Sharma family demo data with full sample calendar and tasks.
-          </Text>
-        </View>
+
       </ScrollView>
 
       {/* Add Member Modal */}

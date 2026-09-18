@@ -79,27 +79,29 @@ const FamilyContext = createContext<FamilyContextValue | null>(null);
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<FamilyProfile>(initialFamilyProfile);
-  const [members, setMembers] = useState<FamilyMember[]>(initialMembers);
-  const [places, setPlaces] = useState<FamilyPlace[]>(initialPlaces);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
-  const [memories, setMemories] = useState<MemoryItem[]>(initialMemories);
-  const [documents, setDocuments] = useState<FamilyDocument[]>(initialDocuments);
+  const [profile, setProfile] = useState<FamilyProfile>({
+    id: 'fam_empty',
+    name: 'My Family',
+    code: 'KIN-0000',
+    address: 'Home',
+    homeCity: '',
+    membersCount: 0,
+  });
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [places, setPlaces] = useState<FamilyPlace[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [memories, setMemories] = useState<MemoryItem[]>([]);
+  const [documents, setDocuments] = useState<FamilyDocument[]>([]);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
-  const [notifications, setNotifications] = useState<SmartNotification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<SmartNotification[]>([]);
   const [simpleMode, setSimpleModeState] = useState<boolean>(false);
-  const [activeMemberId, setActiveMemberId] = useState<string>(
-    user?.familyMemberId || (user?.provider === 'demo' ? 'member_ritu' : 'member_user')
-  );
+  const [activeMemberId, setActiveMemberId] = useState<string>(user?.familyMemberId || '');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   const currentStorageKey = useMemo(() => {
     if (user?.id) {
-      if (user.provider === 'demo') {
-        return '@kinly_family_state_demo';
-      }
       return `@kinly_family_state_${user.id}`;
     }
     return STORAGE_KEY;
@@ -116,10 +118,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         if (json) {
           const data = JSON.parse(json);
-          let loadedMembers: FamilyMember[] = data.members || initialMembers;
+          let loadedMembers: FamilyMember[] = data.members || [];
 
-          // If authenticated real user, sync their profile with AuthUser
-          if (user && user.provider !== 'demo') {
+          // If authenticated user, sync their profile with AuthUser
+          if (user) {
             const selfIdx = loadedMembers.findIndex(
               (m) => m.isSelf || m.id === user.familyMemberId
             );
@@ -159,7 +161,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         } else {
           // No saved state found for this user key
-          if (user && user.provider !== 'demo') {
+          if (user) {
             // Initialize fresh user-defined family
             const memberId = user.familyMemberId || `member_${user.id}`;
             const userMember: FamilyMember = {
@@ -185,23 +187,32 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               availability: 'available',
               phone: '+1 555-0100',
               ringerMode: 'sound',
-              deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
-              coords: { x: 50, y: 45, latitude: 28.4595, longitude: 77.0266 },
+              deviceModel: 'iPhone 15',
+              coords: { x: 50, y: 50 },
             };
 
             const userProfile: FamilyProfile = {
-              id: `family_${user.id}`,
-              name: user.familyName || `${user.name}'s Family`,
+              id: `fam_${user.id}`,
+              name: user.familyName || `${user.name.split(' ')[0]}'s Family`,
               code: `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
-              address: 'Home Address',
-              homeCity: 'Family Home',
               membersCount: 1,
+              address: 'Home',
+              homeCity: 'Local',
+            };
+
+            const defaultHomePlace: FamilyPlace = {
+              id: 'place_home',
+              name: 'Home',
+              address: 'Family Sanctuary',
+              type: 'home',
+              emoji: '🏡',
+              coords: { x: 50, y: 50 },
             };
 
             if (!isCancelled) {
               setProfile(userProfile);
               setMembers([userMember]);
-              setPlaces(initialPlaces);
+              setPlaces([defaultHomePlace]);
               setTasks([]);
               setEvents([]);
               setReminders([]);
@@ -221,18 +232,25 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               setActiveMemberId(memberId);
             }
           } else {
-            // Demo user or unauthenticated preview
+            // Unauthenticated: zero demo fallback
             if (!isCancelled) {
-              setProfile(initialFamilyProfile);
-              setMembers(initialMembers);
-              setPlaces(initialPlaces);
-              setTasks(initialTasks);
-              setEvents(initialEvents);
-              setReminders(initialReminders);
-              setMemories(initialMemories);
-              setDocuments(initialDocuments);
-              setNotifications(initialNotifications);
-              setActiveMemberId('member_ritu');
+              setProfile({
+                id: 'fam_empty',
+                name: 'My Family',
+                code: 'KIN-0000',
+                membersCount: 0,
+                address: 'Home',
+                homeCity: '',
+              });
+              setMembers([]);
+              setPlaces([]);
+              setTasks([]);
+              setEvents([]);
+              setReminders([]);
+              setMemories([]);
+              setDocuments([]);
+              setNotifications([]);
+              setActiveMemberId('');
             }
           }
         }

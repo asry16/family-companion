@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -33,6 +33,9 @@ const ROLES_LIST: MemberRelation[] = [
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isCreateFamily = mode === 'create_family';
+
   const { colors, isElderly } = useAppTheme();
   const {
     signUpWithEmail,
@@ -290,7 +293,7 @@ export default function RegisterScreen() {
               { backgroundColor: colors.brandAccent + '15', borderColor: colors.brandAccent + '30' },
             ]}>
             <Text style={[styles.stepBadgeText, { color: colors.brandAccent }]}>
-              SETUP YOUR SPACE
+              {isCreateFamily ? '🏡 NEW FAMILY SPACE' : '👤 MEMBER REGISTRATION'}
             </Text>
           </View>
         </View>
@@ -302,14 +305,16 @@ export default function RegisterScreen() {
               styles.screenTitle,
               { color: colors.text, fontSize: isElderly ? 32 : 28 },
             ]}>
-            Create your family space
+            {isCreateFamily ? 'Create your family space' : 'Create your account'}
           </Text>
           <Text
             style={[
               styles.screenSubtitle,
               { color: colors.textSecondary, fontSize: isElderly ? 16 : 14 },
             ]}>
-            Set up your private companion and start effortlessly coordinating everyday family life.
+            {isCreateFamily
+              ? 'Establish a private, end-to-end encrypted hub for your whole household to coordinate daily life.'
+              : 'Join Kinly to stay synchronized with your family schedules, tasks, and safety presence.'}
           </Text>
         </View>
 
@@ -677,25 +682,40 @@ export default function RegisterScreen() {
               <View style={styles.buttonContentRow}>
                 <Ionicons name="sparkles" size={18} color="#FFFFFF" />
                 <Text style={styles.primaryButtonText}>
-                  Create Family Space
+                  {isCreateFamily ? 'Create Family Space & Continue' : 'Create Account & Continue'}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
               </View>
             )}
           </Pressable>
 
-          {/* Switch to Sign In */}
-          <View style={styles.switchRow}>
-            <Text style={[styles.switchPrompt, { color: colors.textSecondary }]}>
-              Already have a family space?
-            </Text>
-            <Pressable
-              onPress={() => router.replace('/login')}
-              hitSlop={8}>
-              <Text style={[styles.switchAction, { color: colors.brandAccent }]}>
-                Sign In
+          {/* Switch to Sign In & Mode Toggle */}
+          <View style={styles.switchColumn}>
+            <View style={styles.switchRow}>
+              <Text style={[styles.switchPrompt, { color: colors.textSecondary }]}>
+                {isCreateFamily ? 'Just want a personal account?' : 'Want to establish a whole new family?'}
               </Text>
-            </Pressable>
+              <Pressable
+                onPress={() => router.replace(isCreateFamily ? '/register?mode=signup' : '/register?mode=create_family')}
+                hitSlop={8}>
+                <Text style={[styles.switchAction, { color: colors.brandAccent }]}>
+                  {isCreateFamily ? 'Sign Up as Member' : 'Create Family Space'}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.switchRow, { marginTop: 6 }]}>
+              <Text style={[styles.switchPrompt, { color: colors.textSecondary }]}>
+                Already have an account?
+              </Text>
+              <Pressable
+                onPress={() => router.replace('/login')}
+                hitSlop={8}>
+                <Text style={[styles.switchAction, { color: colors.green }]}>
+                  Sign In →
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -814,7 +834,7 @@ export default function RegisterScreen() {
                     { backgroundColor: colors.blueSoft, borderColor: colors.blueBorder },
                   ]}>
                   <Text style={[styles.demoOtpText, { color: colors.blue }]}>
-                    Demo Code: {simulatedOtp}
+                    Verification Code: {simulatedOtp}
                   </Text>
                 </View>
               </View>
@@ -1063,6 +1083,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
     letterSpacing: 0.2,
+  },
+  switchColumn: {
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   switchRow: {
     flexDirection: 'row',
