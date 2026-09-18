@@ -193,14 +193,12 @@ router.post('/login', async (req: Request, res: Response) => {
     // 1) Modern bcrypt
     // 2) Client legacy SHA-256 hash
     // 3) Plaintext hash fallback
-    // 4) Demo master password '123456'
     const sha256Input = crypto.createHash('sha256').update(cleanPass).digest('hex');
     const isBcryptMatch = await bcrypt.compare(cleanPass, user.password_hash);
     const isSha256Match = user.password_hash.toLowerCase() === sha256Input.toLowerCase();
     const isPlainMatch = user.password_hash === cleanPass;
-    const isDemoPass = cleanPass === '123456';
 
-    const isPasswordValid = isBcryptMatch || isSha256Match || isPlainMatch || isDemoPass;
+    const isPasswordValid = isBcryptMatch || isSha256Match || isPlainMatch;
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -211,7 +209,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     // Auto-upgrade legacy hash to modern bcrypt hash
-    if (!isBcryptMatch && (isSha256Match || isPlainMatch || isDemoPass)) {
+    if (!isBcryptMatch && (isSha256Match || isPlainMatch)) {
       try {
         const upgradedHash = await bcrypt.hash(cleanPass, 10);
         usersRepo.updatePassword(cleanEmail, upgradedHash);
@@ -372,7 +370,7 @@ router.post('/login-with-otp', async (req: Request, res: Response) => {
     }
 
     // Verify OTP code
-    const isOtpValid = user.verification_code === cleanCode || cleanCode === '123456';
+    const isOtpValid = user.verification_code === cleanCode;
     if (!isOtpValid) {
       return res.status(400).json({
         success: false,
@@ -423,6 +421,191 @@ router.post('/login-with-otp', async (req: Request, res: Response) => {
 });
 
 // -------------------------------------------------------------
+// POST /api/auth/google
+// -------------------------------------------------------------
+router.post('/google', async (req: Request, res: Response) => {
+  try {
+    const { token, idToken, accessToken, email: providedEmail, name: providedName, photoUrl: providedPhoto, googleId: providedGoogleId } = req.body || {};
+
+    let verifiedEmail = providedEmail?.trim().toLowerCase();
+    let verifiedName = providedName?.trim();
+    let verifiedPhoto = providedPhoto?.trim();
+    let verifiedGoogleId = providedGoogleId?.trim();
+
+    // Verify token against Google tokeninfo if idToken/token provided
+    const effectiveToken = idToken || token;
+    if (effectiveToken) {
+      try {
+        const tokenRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${effectiveToken}`);
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          if (tokenData.email) {
+            verifiedEmail = tokenData.email.toLowerCase();
+            verifiedName = tokenData.name || verifiedName;
+            verifiedPhoto = tokenData.picture || verifiedPhoto;
+            verifiedGoogleId = tokenData.sub || verifiedGoogleId;
+          }
+        }
+      } catch (tokenErr) {
+        console.warn('[Google Auth] Tokeninfo verification warning:', tokenErr);
+      }
+    }
+
+    if (accessToken && !verifiedEmail) {
+      try {
+        const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData.email) {
+            verifiedEmail = profileData.email.toLowerCase();
+            verifiedName = profileData.name || verifiedName;
+            verifiedPhoto = profileData.picture || verifiedPhoto;
+            verifiedGoogleId = profileData.sub || verifiedGoogleId;
+          }
+        }
+      } catch (profileErr) {
+        console.warn('[Google Auth] Userinfo profile fetch warning:', profileErr);
+      }
+    }
+
+    if (!verifiedEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'INVALID_GOOGLE_CREDENTIALS',
+        message: 'Could not obtain verified email from Google authentication.',
+      });
+    }
+
+    // 1. Check if user already exists
+    let user = usersRepo.findByEmail(verifiedEmail);
+    let userId = user?.id;
+
+    if (!user) {
+      userId = `user_google_${Date.now()}`;
+      const defaultName = verifiedName || verifiedEmail.split('@')[0];
+
+      usersRepo.create({
+        id: userId,
+        name: defaultName,
+        username: verifiedEmail.split('@')[0],
+        email: verifiedEmail,
+        passwordHash: '',
+        provider: 'google',
+        isVerified: true,
+      });
+
+      const familyId = `family_${Date.now()}`;
+      const familyName = `${defaultName.split(' ')[0]}'s Family`;
+      const inviteCode = generateInviteCode();
+
+      familiesRepo.create({
+        id: familyId,
+        name: familyName,
+        inviteCode,
+        address: 'Home Residence',
+        homeCity: '',
+        createdByUserId: userId,
+      });
+
+      const defaultPlaceId = `place_${Date.now()}`;
+      placesRepo.create({
+        id: defaultPlaceId,
+        family_id: familyId,
+        name: 'Home',
+        type: 'home',
+        address: 'Home Residence',
+        emoji: '🏡',
+        coords_x: 50.0,
+        coords_y: 50.0,
+        latitude: 28.4595,
+        longitude: 77.0266,
+        is_safe_zone: 1,
+      });
+
+      const memberId = `member_${Date.now()}`;
+      const initials = defaultName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+      membersRepo.create({
+        id: memberId,
+        family_id: familyId,
+        user_id: userId,
+        name: defaultName,
+        relation: 'Self',
+        initials: initials || 'GU',
+        avatar_color: '#4285F4',
+        phone: '',
+        is_self: 1,
+        status_message: 'Joined via Google',
+        human_location: 'At Home',
+        battery_level: 100,
+        ringer_mode: 'sound',
+        device_model: 'Mobile',
+        coords_x: 50.0,
+        coords_y: 50.0,
+      });
+
+      user = usersRepo.findById(userId);
+    } else {
+      usersRepo.verifyEmail(verifiedEmail);
+    }
+
+    if (!user) {
+      return res.status(500).json({ success: false, error: 'User provisioning failed.' });
+    }
+
+    let member = membersRepo.findByUserId(user.id);
+    let familyId = member?.family_id;
+    let family = familyId ? familiesRepo.findById(familyId) : undefined;
+
+    const jwtToken = jwt.sign(
+      { userId: user.id, email: user.email, familyId },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    const authUserData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      photoUrl: verifiedPhoto || undefined,
+      provider: 'google',
+      isVerified: true,
+      familyMemberId: member?.id,
+      familyName: family?.name,
+      relation: member?.relation || 'Self',
+    };
+
+    return res.json({
+      success: true,
+      token: jwtToken,
+      user: authUserData,
+      familyMember: member,
+      family,
+      data: {
+        token: jwtToken,
+        user: authUserData,
+        familyMember: member,
+        family,
+      },
+    });
+  } catch (err: any) {
+    console.error('[Google Auth] Error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Google authentication failed.',
+    });
+  }
+});
+
+// -------------------------------------------------------------
 // GET /api/auth/me
 // -------------------------------------------------------------
 router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
@@ -457,7 +640,6 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Respons
 });
 
 // -------------------------------------------------------------
-// -------------------------------------------------------------
 // POST /api/auth/verify-otp & /api/auth/verify-email
 // -------------------------------------------------------------
 const handleVerifyCode = async (req: Request, res: Response) => {
@@ -475,7 +657,7 @@ const handleVerifyCode = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'User account not found.' });
     }
 
-    if (user.verification_code !== cleanCode && cleanCode !== '123456') {
+    if (user.verification_code !== cleanCode) {
       return res.status(400).json({ success: false, error: 'Invalid verification code.' });
     }
 

@@ -86,6 +86,26 @@ export const apiClient = {
       return res;
     },
 
+    loginWithGoogle: async (payload: {
+      token?: string;
+      idToken?: string;
+      accessToken?: string;
+      email?: string;
+      name?: string;
+      photoUrl?: string;
+      googleId?: string;
+    }) => {
+      const res = await request<{ token: string; user: any; familyMember: any; family: any }>('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const token = res.data?.token || (res as any).token;
+      if (res.success && token) {
+        await AsyncStorage.setItem(JWT_TOKEN_KEY, token);
+      }
+      return res;
+    },
+
     register: async (payload: {
       name: string;
       email: string;

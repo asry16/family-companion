@@ -65,7 +65,6 @@ export default function RegisterScreen() {
   // Email Verification Step State
   const [verificationModalVisible, setVerificationModalVisible] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [simulatedOtp, setSimulatedOtp] = useState('123456');
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -174,9 +173,6 @@ export default function RegisterScreen() {
       );
 
       if (result.success) {
-        if (result.verificationCode) {
-          setSimulatedOtp(result.verificationCode);
-        }
         setResendCooldown(30);
         setVerificationModalVisible(true);
       } else {
@@ -225,8 +221,8 @@ export default function RegisterScreen() {
 
     try {
       const res = await resendVerificationCode(email);
-      if (res.code) {
-        setSimulatedOtp(res.code);
+      if (res.delivered) {
+        triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
       }
       setResendCooldown(30);
       setVerificationError(null);
@@ -242,8 +238,8 @@ export default function RegisterScreen() {
     try {
       await signInWithGoogle();
       router.replace('/(tabs)');
-    } catch (e) {
-      setErrorMessage('Google Sign Up failed. Please try again.');
+    } catch (e: any) {
+      setErrorMessage(e?.message || 'Google Sign Up failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -828,21 +824,6 @@ export default function RegisterScreen() {
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
                   Enter 6-Digit Code
                 </Text>
-                <Pressable
-                  onPress={() => {
-                    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                    setVerificationCode(simulatedOtp);
-                    if (verificationError) setVerificationError(null);
-                  }}
-                  hitSlop={8}
-                  style={[
-                    styles.demoOtpBadge,
-                    { backgroundColor: colors.blueSoft, borderColor: colors.blueBorder },
-                  ]}>
-                  <Text style={[styles.demoOtpText, { color: colors.blue }]}>
-                    Code: <Text style={{ fontWeight: '800' }}>{simulatedOtp}</Text> (Tap to Fill)
-                  </Text>
-                </Pressable>
               </View>
               <TextInput
                 value={verificationCode}
@@ -850,7 +831,7 @@ export default function RegisterScreen() {
                   setVerificationCode(v);
                   if (verificationError) setVerificationError(null);
                 }}
-                placeholder="123456"
+                placeholder="6-digit code"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
                 maxLength={6}

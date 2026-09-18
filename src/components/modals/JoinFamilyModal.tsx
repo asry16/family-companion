@@ -258,17 +258,6 @@ export const JoinFamilyModal: React.FC<JoinFamilyModalProps> = ({
               <Text style={[styles.viewfinderText, { color: colors.textSecondary }]}>
                 Point camera at the Family QR Code shown on another member's screen
               </Text>
-
-              {/* Quick Simulator Buttons for Testing */}
-              <View style={styles.demoScanRow}>
-                <Text style={{ fontSize: 11, color: colors.textMuted }}>Quick Test Scans:</Text>
-                <Pressable
-                  onPress={() => handleSimulateScan('KIN-3043')}
-                  style={[styles.demoScanChip, { backgroundColor: colors.borderSubtle, borderColor: colors.border }]}>
-                  <Ionicons name="flash-outline" size={12} color={colors.brandAccent} />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>Scan Sharma (KIN-3043)</Text>
-                </Pressable>
-              </View>
             </View>
           )}
 

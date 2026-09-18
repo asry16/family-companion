@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   Pressable,
   ScrollView,
@@ -15,7 +16,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { DocumentCard } from '@/components/cards/DocumentCard';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { initialDocuments } from '@/data/mockFamilyData';
+import { FamilyDocument } from '@/types';
 
 export default function ScanDocumentModal() {
   const router = useRouter();
@@ -23,24 +24,46 @@ export default function ScanDocumentModal() {
   const { addDocument, executeDocumentAction } = useFamily();
   const { speak } = useVoice();
 
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState<FamilyDocument['type']>('receipt');
+  const [amount, setAmount] = useState('');
+  const [provider, setProvider] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [notes, setNotes] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const [scannedDoc, setScannedDoc] = useState<any | null>(null);
+  const [scannedDoc, setScannedDoc] = useState<FamilyDocument | null>(null);
 
-  const handleSimulateScan = (docPreset: any) => {
+  const handleSaveDocument = () => {
+    if (!title.trim()) return;
+
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       } catch (e) {}
     }
-    setIsScanning(true);
-    setScannedDoc(null);
 
+    setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
-      setScannedDoc(docPreset);
-      addDocument(docPreset);
-      speak(`Document scanned. Extracted ${docPreset.title} for ${docPreset.currency || '₹'}${docPreset.amount || ''}`);
-    }, 1200);
+      const newDoc: FamilyDocument = {
+        id: `doc_${Date.now()}`,
+        title: title.trim(),
+        type,
+        amount: amount.trim() ? parseFloat(amount.trim()) : undefined,
+        currency: '₹',
+        dueDate: dueDate.trim() || undefined,
+        provider: provider.trim() || undefined,
+        scannedAt: 'Just now',
+        status: 'pending',
+        fields: [],
+        suggestedActions: [],
+        notes: notes.trim() || undefined,
+      };
+
+      addDocument(newDoc);
+      setScannedDoc(newDoc);
+      speak(`Saved ${newDoc.title} to Family Vault.`);
+    }, 600);
   };
 
   const handleAction = (actionId: string) => {
@@ -69,7 +92,7 @@ export default function ScanDocumentModal() {
             styles.navTitle,
             { color: colors.text, fontSize: isElderly ? 22 : 17 },
           ]}>
-          Scan Document or Bill
+          Scan & Add Family Document
         </Text>
         <Pressable
           onPress={() => router.back()}
@@ -101,79 +124,86 @@ export default function ScanDocumentModal() {
             <View style={styles.scanningState}>
               <View style={[styles.scanLine, { backgroundColor: colors.brandAccent }]} />
               <Ionicons name="sparkles" size={32} color={colors.brandAccent} />
-              <Text style={styles.scanningText}>AI Optical Character Recognition...</Text>
-              <Text style={styles.scanningSub}>Extracting amount, due dates & provider</Text>
+              <Text style={styles.scanningText}>AI Document Processing...</Text>
+              <Text style={styles.scanningSub}>Cataloging into encrypted Family Vault</Text>
             </View>
           ) : (
             <View style={styles.viewfinderCenter}>
               <Ionicons name="camera-outline" size={44} color="#94A3B8" />
               <Text style={styles.viewfinderHint}>
-                Align bill, prescription, or receipt within frame
+                Align bill, prescription, policy, or document within frame
               </Text>
             </View>
           )}
         </View>
 
-        {/* Preset Scan Triggers */}
+        {/* Document Details Form */}
         <Text
           style={[
             styles.sectionTitle,
             { color: colors.text, fontSize: isElderly ? 18 : 14 },
           ]}>
-          SIMULATE SAMPLE DOCUMENT OCR
+          DOCUMENT DETAILS
         </Text>
-        <View style={styles.presetButtonsRow}>
-          <Pressable
-            onPress={() => handleSimulateScan(initialDocuments[0])}
-            style={({ pressed }) => [
-              styles.presetBtn,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Text style={{ fontSize: 20 }}>💡</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.presetTitle, { color: colors.text }]}>
-                Electricity Bill
-              </Text>
-              <Text style={[styles.presetSub, { color: colors.textSecondary }]}>
-                ₹2,340 • Due 25 Sep
-              </Text>
-            </View>
-            <Ionicons name="scan" size={16} color={colors.brandAccent} />
-          </Pressable>
 
-          <Pressable
-            onPress={() => handleSimulateScan(initialDocuments[1])}
-            style={({ pressed }) => [
-              styles.presetBtn,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Text style={{ fontSize: 20 }}>🩺</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.presetTitle, { color: colors.text }]}>
-                Doctor Prescription
-              </Text>
-              <Text style={[styles.presetSub, { color: colors.textSecondary }]}>
-                Cardiology • Max Healthcare
-              </Text>
-            </View>
-            <Ionicons name="scan" size={16} color={colors.brandAccent} />
-          </Pressable>
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Title / Name</Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g., Home Electricity Bill, Health Card"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
+          />
         </View>
 
-        {/* Extracted Document Preview with 1-Tap Actions */}
+        <View style={styles.inputRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Provider / Authority</Text>
+            <TextInput
+              value={provider}
+              onChangeText={setProvider}
+              placeholder="e.g. Utility Corp, Clinic"
+              placeholderTextColor={colors.textMuted}
+              style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
+            />
+          </View>
+          <View style={{ width: 120 }}>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Amount (₹)</Text>
+            <TextInput
+              value={amount}
+              onChangeText={setAmount}
+              placeholder="0.00"
+              keyboardType="decimal-pad"
+              placeholderTextColor={colors.textMuted}
+              style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Due Date / Expiry</Text>
+          <TextInput
+            value={dueDate}
+            onChangeText={setDueDate}
+            placeholder="e.g. 25th of every month, Oct 2026"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
+          />
+        </View>
+
+        <PrimaryButton
+          label={isScanning ? "Processing..." : "Save to Family Vault"}
+          onPress={handleSaveDocument}
+          disabled={!title.trim() || isScanning}
+        />
+
+        {/* Extracted Document Preview */}
         {scannedDoc && (
           <View style={styles.extractedSection}>
             <View style={styles.successBanner}>
               <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-              <Text style={styles.successText}>AI Extraction Complete</Text>
+              <Text style={styles.successText}>Document Added to Vault</Text>
             </View>
             <DocumentCard
               document={scannedDoc}
@@ -263,24 +293,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 4,
   },
-  presetButtonsRow: {
-    gap: 10,
+  inputGroup: {
+    gap: 6,
   },
-  presetBtn: {
+  inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: 12,
   },
-  presetTitle: {
-    fontWeight: '700',
-    fontSize: 15,
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  presetSub: {
-    fontSize: 12,
-    marginTop: 2,
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    fontSize: 15,
   },
   extractedSection: {
     gap: 10,

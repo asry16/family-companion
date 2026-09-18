@@ -4,7 +4,6 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
-import { initialMembers } from '@/data/mockFamilyData';
 import { MemberRelation, FamilyMember, FamilyProfile } from '@/types';
 import { apiClient } from '@/services/apiClient';
 
@@ -60,7 +59,6 @@ interface AuthContextValue {
   ) => Promise<{ success: boolean; code?: string; devCode?: string; delivered?: boolean; message: string; error?: string }>;
   signInWithOtp: (email: string, code: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetEmail: (email: string) => Promise<{ success: boolean; message: string }>;
-  signInAsFamilyMember: (memberId: string) => void;
   signOut: () => Promise<void>;
 }
 
@@ -75,24 +73,6 @@ const googleDiscovery: AuthSession.DiscoveryDocument = {
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
-
-// Seed default accounts with securely hashed passwords
-const seedAccounts: StoredUserAccount[] = [
-  {
-    id: 'user_ritu',
-    name: 'Ritu Sharma',
-    email: 'ritu.sharma@gmail.com',
-    passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // hash for '123456'
-    familyMemberId: 'member_ritu',
-  },
-  {
-    id: 'user_dad',
-    name: 'Rajesh Sharma',
-    email: 'rajesh.sharma@gmail.com',
-    passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
-    familyMemberId: 'member_dad',
-  },
-];
 
 // In-memory brute force protection tracking
 const failedAttemptsMap: Record<string, { count: number; lockedUntil?: number }> = {};
@@ -201,15 +181,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Network error or server offline: check local/legacy accounts
         }
 
-        // 2. Check local accounts (AsyncStorage) and seed accounts
+        // 2. Check local accounts (AsyncStorage)
         const hashed = await hashPassword(cleanPass);
         const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
-        let accounts: StoredUserAccount[] = seedAccounts;
+        let accounts: StoredUserAccount[] = [];
         if (rawAccounts) {
           try {
             const parsed = JSON.parse(rawAccounts);
             if (Array.isArray(parsed)) {
-              accounts = [...parsed, ...seedAccounts];
+              accounts = parsed;
             }
           } catch (e) {}
         }
@@ -217,15 +197,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const found = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
 
         if (found) {
-          const isPasswordCorrect =
-            found.passwordHash === hashed ||
-            cleanPass === '123456' ||
-            cleanPass === found.passwordHash;
+          const isPasswordCorrect = found.passwordHash === hashed;
 
           if (isPasswordCorrect) {
             delete failedAttemptsMap[cleanEmail];
 
-            // Automatically sync/migrate this legacy account to SQLite backend
+            // Automatically sync/migrate this local account to SQLite backend
             try {
               await apiClient.auth.register({
                 name: found.name,
@@ -272,26 +249,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               };
             }
           }
-        }
-
-        // Demo quick login fallback for any valid email format
-        if (cleanEmail.includes('@') && cleanPass.length >= 6) {
-          const rawPrefix = cleanEmail.split('@')[0];
-          const cleanName = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
-          const memberId = `member_${Date.now()}`;
-          const fallbackUser: AuthUser = {
-            id: `user_${Date.now()}`,
-            name: cleanName,
-            email: cleanEmail,
-            provider: 'email',
-            familyMemberId: memberId,
-            familyName: `${cleanName}'s Family`,
-            relation: 'Self',
-            rememberMe,
-          };
-          delete failedAttemptsMap[cleanEmail];
-          await saveUserSession(fallbackUser, rememberMe);
-          return { success: true };
         }
 
         return { success: false, error: 'No account found with this email. Please sign up.' };
@@ -351,7 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Fetch stored accounts
         const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
-        const accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : seedAccounts;
+        const accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : [];
 
         // Check duplicate email
         const existsEmail = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
@@ -402,7 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const memberId = serverMemberId || `member_${Date.now()}`;
         const userId = serverUserId || `user_${Date.now()}`;
-        const verificationCode = serverVerificationCode || '123456';
+        const verificationCode = serverVerificationCode || Math.floor(100000 + Math.random() * 900000).toString();
 
         const newAccount: StoredUserAccount = {
           id: userId,
@@ -518,14 +475,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const cleanCode = code.trim();
 
         const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
-        const accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : seedAccounts;
+        const accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : [];
 
         const account = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
         if (!account) {
           return { success: false, error: 'Account not found.' };
         }
 
-        if (cleanCode !== account.verificationCode && cleanCode !== '123456') {
+        if (cleanCode !== account.verificationCode) {
           return { success: false, error: 'Invalid verification code. Please check and try again.' };
         }
 
@@ -625,13 +582,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
         }
       } catch (err: any) {
-        // Fallback in case of server network interruption
         return {
-          success: true,
-          code: '123456',
-          devCode: '123456',
+          success: false,
+          code: undefined,
+          devCode: undefined,
           delivered: false,
-          message: `Dev Fallback Code: 123456`,
+          message: 'Could not contact server to send verification code. Please check connection.',
+          error: err?.message || 'NETWORK_ERROR',
         };
       }
     },
@@ -670,63 +627,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (res.error && res.error.includes('INVALID_OTP')) {
           return { success: false, error: 'Invalid verification code. Please check your inbox or request a new code.' };
         }
-      } catch {}
-
-      // Local fallback for master code
-      if (cleanCode === '123456') {
-        const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
-        let accounts: StoredUserAccount[] = seedAccounts;
-        if (rawAccounts) {
-          try {
-            const parsed = JSON.parse(rawAccounts);
-            if (Array.isArray(parsed)) accounts = [...parsed, ...seedAccounts];
-          } catch {}
-        }
-        const found = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
-        const autoName = cleanEmail.split('@')[0];
-        const authUser: AuthUser = {
-          id: found?.id || `user_${Date.now()}`,
-          name: found?.name || autoName.charAt(0).toUpperCase() + autoName.slice(1),
-          email: cleanEmail,
-          provider: 'email',
-          familyMemberId: found?.familyMemberId || `member_${Date.now()}`,
-          familyName: found?.familyName || `${autoName}'s Family`,
-          relation: found?.relation || 'Self',
-          isEmailVerified: true,
-          rememberMe,
-        };
-        await saveUserSession(authUser, rememberMe);
-        return { success: true };
+      } catch (e: any) {
+        return { success: false, error: e?.message || 'OTP sign-in failed.' };
       }
 
       return { success: false, error: 'Invalid OTP code. Please try again.' };
     },
     []
   );
-
-  // Apple Authentication Simulation
-  const signInWithApple = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const appleId = `apple_${Date.now()}`;
-      const appleUser: AuthUser = {
-        id: appleId,
-        name: 'Apple Family Member',
-        email: 'user@privaterelay.appleid.com',
-        provider: 'apple',
-        familyMemberId: `member_${appleId}`,
-        familyName: 'My Family Space',
-        relation: 'Self',
-        isEmailVerified: true,
-        rememberMe: true,
-      };
-      await saveUserSession(appleUser, true);
-    } catch (e) {
-      console.warn('Apple auth error:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   // Forgot Password / Password Reset Flow
   const sendPasswordResetEmail = useCallback(async (email: string) => {
@@ -741,10 +649,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Google OAuth 2.0 Sign-In Flow via expo-auth-session
+  // Google OAuth 2.0 Sign-In Flow via expo-auth-session & Google API
   const signInWithGoogle = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const googleClientId =
+        process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
+        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+        (Platform.OS === 'ios' ? process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID : undefined) ||
+        (Platform.OS === 'android' ? process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID : undefined);
+
+      if (!googleClientId) {
+        throw new Error(
+          'Google Client ID is not configured. Please set EXPO_PUBLIC_GOOGLE_CLIENT_ID in your .env file to enable Google sign-in.'
+        );
+      }
 
       const redirectUri = AuthSession.makeRedirectUri({
         scheme: 'kinly',
@@ -752,92 +672,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       const request = new AuthSession.AuthRequest({
-        clientId: '388271049281-kinly-demo-client.apps.googleusercontent.com',
+        clientId: googleClientId,
         scopes: ['openid', 'profile', 'email'],
         redirectUri,
         responseType: AuthSession.ResponseType.Token,
       });
 
-      let result;
-      if (Platform.OS === 'web') {
-        const googleId = `google_${Date.now()}`;
-        const demoGoogleUser: AuthUser = {
-          id: googleId,
-          name: 'Google Family User',
-          email: 'google.user@gmail.com',
-          photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          provider: 'google',
-          familyMemberId: `member_${googleId}`,
-          familyName: 'Our Family Circle',
-          relation: 'Self',
-          rememberMe: true,
-        };
-        await saveUserSession(demoGoogleUser, true);
-        return;
-      } else {
-        result = await request.promptAsync(googleDiscovery);
-      }
+      const result = await request.promptAsync(googleDiscovery);
 
       if (result && result.type === 'success') {
-        const googleId = `google_${Date.now()}`;
-        const googleUser: AuthUser = {
-          id: googleId,
-          name: 'Google Family User',
-          email: 'google.user@gmail.com',
-          photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          provider: 'google',
-          familyMemberId: `member_${googleId}`,
-          familyName: 'Our Family Circle',
-          relation: 'Self',
-          rememberMe: true,
-        };
-        await saveUserSession(googleUser, true);
-      } else {
-        const fallbackId = `google_${Date.now()}`;
-        const fallbackUser: AuthUser = {
-          id: fallbackId,
-          name: 'Google Family User',
-          email: 'google.user@gmail.com',
-          provider: 'google',
-          familyMemberId: `member_${fallbackId}`,
-          familyName: 'Our Family Circle',
-          relation: 'Self',
-          rememberMe: true,
-        };
-        await saveUserSession(fallbackUser, true);
+        const accessToken = result.params?.access_token;
+        const idToken = result.params?.id_token;
+        let userInfo: any = null;
+
+        if (accessToken) {
+          try {
+            const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (userinfoRes.ok) {
+              userInfo = await userinfoRes.json();
+            }
+          } catch (e) {
+            console.warn('[Google Auth] Failed to fetch userinfo from Google:', e);
+          }
+        }
+
+        const apiRes = await apiClient.auth.loginWithGoogle({
+          token: idToken || accessToken,
+          idToken,
+          accessToken,
+          email: userInfo?.email,
+          name: userInfo?.name,
+          photoUrl: userInfo?.picture,
+          googleId: userInfo?.sub,
+        });
+
+        if (apiRes.success && apiRes.data?.user) {
+          const sUser = apiRes.data.user;
+          const authenticatedUser: AuthUser = {
+            id: sUser.id,
+            name: sUser.name,
+            email: sUser.email,
+            photoUrl: sUser.photoUrl || userInfo?.picture,
+            provider: 'google',
+            familyMemberId: sUser.familyMemberId || `member_${sUser.id}`,
+            familyName: sUser.familyName || `${sUser.name}'s Family`,
+            relation: sUser.relation || 'Self',
+            isEmailVerified: true,
+            rememberMe: true,
+          };
+          await saveUserSession(authenticatedUser, true);
+        } else {
+          throw new Error(apiRes.error || 'Backend failed to register Google account.');
+        }
+      } else if (result && result.type === 'dismiss') {
+        throw new Error('Google sign-in was dismissed.');
+      } else if (result && result.type === 'cancel') {
+        throw new Error('Google sign-in was cancelled.');
       }
-    } catch (err) {
-      console.warn('Google sign in error:', err);
-      const defaultId = `google_fallback_${Date.now()}`;
-      const defaultUser: AuthUser = {
-        id: defaultId,
-        name: 'Family User',
-        email: 'user@family.internal',
-        provider: 'google',
-        familyMemberId: `member_${defaultId}`,
-        familyName: 'My Family Space',
-        relation: 'Self',
-        rememberMe: true,
-      };
-      await saveUserSession(defaultUser, true);
+    } catch (err: any) {
+      console.warn('Google sign-in error:', err);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Fast switch for family member scenario testing
-  const signInAsFamilyMember = useCallback(async (memberId: string) => {
-    const member = initialMembers.find((m) => m.id === memberId) || initialMembers[0];
-    const emailPrefix = member.name.toLowerCase().replace(/\s+/g, '');
-    const familyUser: AuthUser = {
-      id: `user_${member.id}`,
-      name: `${member.name} Sharma`,
-      email: `${emailPrefix}.sharma@gmail.com`,
-      provider: 'demo',
-      familyMemberId: member.id,
-      rememberMe: true,
-    };
-    await saveUserSession(familyUser, true);
+  const signInWithApple = useCallback(async () => {
+    throw new Error('Apple Sign-In is only available on supported iOS devices.');
   }, []);
 
   const signOut = useCallback(async () => {
@@ -863,7 +766,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         requestOtp,
         signInWithOtp,
         sendPasswordResetEmail,
-        signInAsFamilyMember,
         signOut,
       }}>
       {children}

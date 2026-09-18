@@ -47,7 +47,6 @@ export default function LoginScreen() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
-  const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
   const [isOtpDelivered, setIsOtpDelivered] = useState(false);
 
   // States
@@ -104,9 +103,6 @@ export default function LoginScreen() {
         setOtpCooldown(60);
         setIsOtpDelivered(Boolean(res.delivered));
         setOtpSuccessMessage(res.message || 'A 6-digit verification code was sent to your email.');
-        if (res.devCode) {
-          setDevOtpCode(res.devCode);
-        }
       } else {
         setErrorMessage(res.error || 'Failed to dispatch verification code. Please try again.');
       }
@@ -195,7 +191,7 @@ export default function LoginScreen() {
       await signInWithGoogle();
       router.replace('/(tabs)');
     } catch (err: any) {
-      setErrorMessage('Google authentication could not be completed.');
+      setErrorMessage(err?.message || 'Google authentication could not be completed.');
     } finally {
       setLoading(false);
     }
@@ -666,33 +662,6 @@ export default function LoginScreen() {
                 </View>
               )}
 
-              {/* Dev Code Banner (for quick local testing without active mailbox) */}
-              {signInMethod === 'otp' && devOtpCode && (
-                <View
-                  style={[
-                    styles.alertBox,
-                    { backgroundColor: colors.brandAccent + '15', borderColor: colors.brandAccent + '40' },
-                  ]}>
-                  <Ionicons name="flash-outline" size={18} color={colors.brandAccent} />
-                  <Text style={[styles.alertText, { color: colors.brandAccent }]}>
-                    Verification Code: <Text style={{ fontWeight: '800' }}>{devOtpCode}</Text>
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                      setOtpCode(devOtpCode);
-                    }}
-                    style={{
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 8,
-                      backgroundColor: colors.brandAccent,
-                    }}>
-                    <Text style={{ color: colors.buttonTextOnAccent, fontSize: 12, fontWeight: '700' }}>Auto-Fill</Text>
-                  </Pressable>
-                </View>
-              )}
-
               {/* Email Input (Common to both methods) */}
               <View style={styles.inputGroup}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -704,7 +673,6 @@ export default function LoginScreen() {
                       onPress={() => {
                         setOtpSent(false);
                         setOtpCode('');
-                        setDevOtpCode(null);
                         setOtpSuccessMessage(null);
                       }}>
                       <Text style={{ fontSize: 12, color: colors.brandAccent, fontWeight: '600' }}>
@@ -918,7 +886,7 @@ export default function LoginScreen() {
                               setOtpCode(val);
                               if (errorMessage) setErrorMessage(null);
                             }}
-                            placeholder="123456"
+                            placeholder="6-digit code"
                             placeholderTextColor={colors.textMuted}
                             keyboardType="number-pad"
                             maxLength={6}

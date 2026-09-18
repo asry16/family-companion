@@ -615,7 +615,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     apiClient.planner.createTask(newTask).catch(() => {});
 
     // Add smart notification
-    const assignee = initialMembers.find((m) => m.id === taskData.assignedToMemberId);
+    const assignee = members.find((m) => m.id === taskData.assignedToMemberId);
     setNotifications((prev) => [
       {
         id: `notif_${Date.now()}`,
