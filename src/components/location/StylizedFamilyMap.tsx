@@ -131,6 +131,9 @@ export const StylizedFamilyMap: React.FC = () => {
             (m) => m.currentPlaceId === place.id && m.isSharingLocation
           );
 
+          const posX = place?.coords?.x ?? 50;
+          const posY = place?.coords?.y ?? 50;
+
           return (
             <Pressable
               key={place.id}
@@ -138,8 +141,8 @@ export const StylizedFamilyMap: React.FC = () => {
               style={[
                 styles.placePin,
                 {
-                  left: `${place.coords.x}%`,
-                  top: `${place.coords.y}%`,
+                  left: `${posX}%`,
+                  top: `${posY}%`,
                   backgroundColor: isSelected ? colors.brand : colors.cardBackground,
                   borderColor: isSelected ? colors.brandAccent : colors.border,
                   transform: [{ scale: isSelected ? 1.1 : 1 }],

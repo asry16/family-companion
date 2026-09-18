@@ -33,6 +33,10 @@ export default function AIScreen() {
     sendFamilyPing,
     activeUser,
     members,
+    profile,
+    documents,
+    memories,
+    events,
   } = useFamily();
   const {
     startListening,
@@ -51,15 +55,44 @@ export default function AIScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
 
+  const getTimeGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const familyName = profile?.name || 'your family';
+
   const [messages, setMessages] = useState<AIMessageItem[]>([
     {
       id: 'msg_welcome',
       sender: 'assistant',
-      text: 'Good evening! I am FamilyOS AI, your private family assistant. I can help coordinate schedules, find saved items, and follow up on bills and tasks.',
-      highlight: 'Family system active & synced',
+      text: `${getTimeGreeting()}, ${activeUser?.name || 'there'}! I am FamilyOS AI, the private assistant for ${familyName}. I track live locations, coordinate schedules, and manage family documents and tasks.`,
+      highlight: `${familyName} • Active & Synced`,
       timestamp: 'Just now',
     },
   ]);
+
+  // Keep welcome message synced with loaded user details
+  useEffect(() => {
+    if (activeUser?.name) {
+      setMessages((prev) => {
+        if (prev.length === 1 && prev[0].id === 'msg_welcome') {
+          return [
+            {
+              id: 'msg_welcome',
+              sender: 'assistant',
+              text: `${getTimeGreeting()}, ${activeUser.name}! I am FamilyOS AI, the private assistant for ${familyName}. I track live locations, coordinate schedules, and manage family documents and tasks.`,
+              highlight: `${familyName} • Active & Synced`,
+              timestamp: 'Just now',
+            },
+          ];
+        }
+        return prev;
+      });
+    }
+  }, [activeUser?.name, familyName]);
 
   const [confirmModal, setConfirmModal] = useState<{
     visible: boolean;
@@ -161,11 +194,20 @@ export default function AIScreen() {
           const targetMember = members.find(m => m.id === targetMemberId);
           sendFamilyPing(
             targetMemberId,
-            `Reminder: Please pay pending bill of ₹${action.payload.amount}`
+            `Reminder: Please pay pending bill of ₹${action.payload.amount || ''}`
           );
           speak(`Reminder sent to ${targetMember?.name || 'family member'}.`);
+        } else if (action.type === 'view_doc') {
+          router.push('/(tabs)/memory');
         } else if (action.type === 'navigate') {
-          router.push('/(tabs)/plans');
+          const lowerTitle = (action.title + ' ' + (action.confirmLabel || '')).toLowerCase();
+          if (lowerTitle.includes('map') || lowerTitle.includes('family') || lowerTitle.includes('circle')) {
+            router.push('/(tabs)/family');
+          } else if (lowerTitle.includes('doc') || lowerTitle.includes('bill') || lowerTitle.includes('memor') || lowerTitle.includes('vault')) {
+            router.push('/(tabs)/memory');
+          } else {
+            router.push('/(tabs)/plans');
+          }
         }
 
         setConfirmModal((prev) => ({ ...prev, visible: false }));
@@ -173,15 +215,48 @@ export default function AIScreen() {
     });
   };
 
-  const suggestedQuestions = [
-    'Where is Dad?',
-    'Did we pay the electricity bill?',
-    'Where is Dad\'s passport?',
-    'When is Mom\'s appointment?',
-    'Who can pick Aman up?',
-    'What do I need to do today?',
-    'Remind Dad to buy vegetables tomorrow morning',
-  ];
+  const suggestedQuestions = React.useMemo(() => {
+    const list: string[] = [];
+    const otherMembers = members.filter((m) => !m.isSelf);
+    const firstOther = otherMembers[0];
+
+    if (firstOther) {
+      list.push(`Where is ${firstOther.name}?`);
+      list.push(`How is ${firstOther.name}'s battery?`);
+    } else {
+      list.push('Where is everyone?');
+      list.push('How is everyone\'s battery?');
+    }
+
+    const pendingBill = documents.find((d) => d.status === 'pending');
+    if (pendingBill) {
+      list.push(`Did we pay ${pendingBill.title}?`);
+    } else {
+      list.push('Are all family bills paid?');
+    }
+
+    const firstMemory = memories[0];
+    if (firstMemory) {
+      list.push(`Where is ${firstMemory.title}?`);
+    } else {
+      list.push('What is the home Wi-Fi password?');
+    }
+
+    const nextEvent = events[0];
+    if (nextEvent) {
+      list.push(`When is ${nextEvent.title}?`);
+    } else {
+      list.push('What do I need to do today?');
+    }
+
+    if (firstOther) {
+      list.push(`Remind ${firstOther.name} to buy groceries`);
+    } else {
+      list.push('Remind me to buy groceries');
+    }
+
+    return list;
+  }, [members, documents, memories, events]);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>

@@ -217,7 +217,8 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
         {members.map((member, idx) => {
           const fallbackX = 50 + ((idx * 28 + 15) % 60) - 30;
           const fallbackY = 48 + ((idx * 34 + 10) % 50) - 25;
-          const coords = member.coords || { x: fallbackX, y: fallbackY };
+          const coordsX = member.coords?.x ?? fallbackX;
+          const coordsY = member.coords?.y ?? fallbackY;
           const isSelected = selectedMemberId === member.id;
           const isTransit = member.availability === 'in_transit';
 
@@ -234,8 +235,8 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
               style={[
                 styles.liveMemberPinWrap,
                 {
-                  left: `${coords.x}%`,
-                  top: `${coords.y}%`,
+                  left: `${coordsX}%`,
+                  top: `${coordsY}%`,
                   zIndex: isSelected ? 30 : 10,
                   transform: [
                     { translateX: -24 },

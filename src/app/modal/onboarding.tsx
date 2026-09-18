@@ -19,7 +19,7 @@ export default function OnboardingModal() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
   const [step, setStep] = useState(1);
-  const [familyName, setFamilyName] = useState('The Sharma Family');
+  const [familyName, setFamilyName] = useState('My Family');
   const [locationPref, setLocationPref] = useState<'tonight' | 'always'>('tonight');
 
   const totalSteps = 6;
@@ -109,7 +109,7 @@ export default function OnboardingModal() {
               <TextInput
                 value={familyName}
                 onChangeText={setFamilyName}
-                placeholder="e.g. The Sharma Family"
+                placeholder="e.g. The Anderson Family"
                 placeholderTextColor={colors.textMuted}
                 style={[
                   styles.input,

@@ -616,15 +616,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     (query: string): AIResponse => {
       return processFamilyAIQuery(query, {
         members,
+        places,
         tasks,
         events,
         reminders,
         memories,
         documents,
         activeUser,
+        profile,
       });
     },
-    [members, tasks, events, reminders, memories, documents, activeUser]
+    [members, places, tasks, events, reminders, memories, documents, activeUser, profile]
   );
 
   const sendFamilyPing = useCallback(
