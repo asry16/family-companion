@@ -157,6 +157,48 @@ export default function FamilyScreen() {
           />
         ))}
 
+        {members.length <= 1 && (
+          <View
+            style={[
+              styles.emptyFamilyCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View
+              style={[
+                styles.emptyIconCircle,
+                { backgroundColor: colors.brandAccent + '15' },
+              ]}>
+              <Ionicons name="people" size={26} color={colors.brandAccent} />
+            </View>
+            <Text
+              style={[
+                styles.emptyFamilyTitle,
+                { color: colors.text, fontSize: isElderly ? 20 : 17 },
+              ]}>
+              Build {profile.name}
+            </Text>
+            <Text style={[styles.emptyFamilySub, { color: colors.textSecondary }]}>
+              Add your spouse, children, parents, or companions to coordinate tasks, check phone battery, and view live radar locations.
+            </Text>
+
+            <Pressable
+              onPress={() => router.push('/modal/family-settings')}
+              style={({ pressed }) => [
+                styles.primaryAddBtn,
+                {
+                  backgroundColor: colors.brandAccent,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}>
+              <Ionicons name="person-add" size={16} color="#FFFFFF" />
+              <Text style={styles.primaryAddBtnText}>Add Family Member</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Real-Time Live Family Map Section */}
         <View style={styles.sectionHeader}>
           <Text
@@ -312,5 +354,46 @@ const styles = StyleSheet.create({
   emergencyText: {
     fontWeight: '700',
     fontSize: 14,
+  },
+  emptyFamilyCard: {
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
+    gap: 8,
+  },
+  emptyIconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  emptyFamilyTitle: {
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  emptyFamilySub: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 290,
+  },
+  primaryAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    marginTop: 8,
+  },
+  primaryAddBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });

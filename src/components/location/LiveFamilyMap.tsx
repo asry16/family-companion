@@ -214,8 +214,10 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
         <View style={[styles.parkPatch, { backgroundColor: mapStyle === 'satellite' ? 'rgba(16, 185, 129, 0.08)' : '#DCFCE7' }]} />
 
         {/* Live Pins for ALL Family Members */}
-        {members.map((member) => {
-          const coords = member.coords || { x: 50, y: 50 };
+        {members.map((member, idx) => {
+          const fallbackX = 50 + ((idx * 28 + 15) % 60) - 30;
+          const fallbackY = 48 + ((idx * 34 + 10) % 50) - 25;
+          const coords = member.coords || { x: fallbackX, y: fallbackY };
           const isSelected = selectedMemberId === member.id;
           const isTransit = member.availability === 'in_transit';
 

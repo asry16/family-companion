@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 import {
   FamilyMember,
+  MemberRelation,
   FamilyPlace,
   Task,
   CalendarEvent,
@@ -64,6 +67,7 @@ interface FamilyContextValue {
   askFamilyAI: (query: string) => AIResponse;
   sendFamilyPing: (memberId: string, message: string) => void;
   updateFamilyProfile: (updates: Partial<FamilyProfile>) => void;
+  createOrUpdateFamily: (name: string, address?: string, homeCity?: string) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => FamilyMember;
   updateFamilyMember: (memberId: string, updates: Partial<FamilyMember>) => void;
   deleteFamilyMember: (memberId: string) => void;
@@ -74,6 +78,7 @@ interface FamilyContextValue {
 const FamilyContext = createContext<FamilyContextValue | null>(null);
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<FamilyProfile>(initialFamilyProfile);
   const [members, setMembers] = useState<FamilyMember[]>(initialMembers);
   const [places, setPlaces] = useState<FamilyPlace[]>(initialPlaces);
@@ -85,41 +90,174 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [notifications, setNotifications] = useState<SmartNotification[]>(initialNotifications);
   const [simpleMode, setSimpleModeState] = useState<boolean>(false);
-  const [activeMemberId, setActiveMemberId] = useState<string>('member_ritu');
+  const [activeMemberId, setActiveMemberId] = useState<string>(
+    user?.familyMemberId || (user?.provider === 'demo' ? 'member_ritu' : 'member_user')
+  );
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-  // Load from AsyncStorage on mount
+  const currentStorageKey = useMemo(() => {
+    if (user?.id) {
+      if (user.provider === 'demo') {
+        return '@kinly_family_state_demo';
+      }
+      return `@kinly_family_state_${user.id}`;
+    }
+    return STORAGE_KEY;
+  }, [user]);
+
+  // Load from AsyncStorage whenever user or storage key changes
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadSavedState() {
       try {
-        const json = await AsyncStorage.getItem(STORAGE_KEY);
+        setIsLoaded(false);
+        const json = await AsyncStorage.getItem(currentStorageKey);
+
         if (json) {
           const data = JSON.parse(json);
-          if (data.profile) setProfile(data.profile);
-          if (data.members) setMembers(data.members);
-          if (data.tasks) setTasks(data.tasks);
-          if (data.events) setEvents(data.events);
-          if (data.reminders) setReminders(data.reminders);
-          if (data.memories) setMemories(data.memories);
-          if (data.documents) setDocuments(data.documents);
-          if (data.notifications) setNotifications(data.notifications);
-          if (typeof data.simpleMode === 'boolean') setSimpleModeState(data.simpleMode);
+          let loadedMembers: FamilyMember[] = data.members || initialMembers;
+
+          // If authenticated real user, sync their profile with AuthUser
+          if (user && user.provider !== 'demo') {
+            const selfIdx = loadedMembers.findIndex(
+              (m) => m.isSelf || m.id === user.familyMemberId
+            );
+            if (selfIdx >= 0) {
+              loadedMembers[selfIdx] = {
+                ...loadedMembers[selfIdx],
+                name: user.name,
+                relation: (user.relation as MemberRelation) || loadedMembers[selfIdx].relation || 'Self',
+                isSelf: true,
+                initials: user.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase(),
+              };
+            }
+          }
+
+          if (!isCancelled) {
+            if (data.profile) setProfile(data.profile);
+            setMembers(loadedMembers);
+            if (data.places) setPlaces(data.places);
+            if (data.tasks) setTasks(data.tasks);
+            if (data.events) setEvents(data.events);
+            if (data.reminders) setReminders(data.reminders);
+            if (data.memories) setMemories(data.memories);
+            if (data.documents) setDocuments(data.documents);
+            if (data.notifications) setNotifications(data.notifications);
+            if (typeof data.simpleMode === 'boolean') setSimpleModeState(data.simpleMode);
+            if (user?.familyMemberId) {
+              setActiveMemberId(user.familyMemberId);
+            } else {
+              const selfMember = loadedMembers.find((m) => m.isSelf);
+              if (selfMember) setActiveMemberId(selfMember.id);
+            }
+          }
+        } else {
+          // No saved state found for this user key
+          if (user && user.provider !== 'demo') {
+            // Initialize fresh user-defined family
+            const memberId = user.familyMemberId || `member_${user.id}`;
+            const userMember: FamilyMember = {
+              id: memberId,
+              name: user.name,
+              relation: (user.relation as MemberRelation) || 'Self',
+              initials: user.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase(),
+              avatarColor: '#3B82F6',
+              isSelf: true,
+              statusMessage: 'Just joined Kinly!',
+              currentPlaceId: 'place_home',
+              humanLocation: 'At Home',
+              batteryLevel: 95,
+              isCharging: false,
+              isSharingLocation: true,
+              sharingDuration: 'always',
+              lastUpdated: 'Just now',
+              availability: 'available',
+              phone: '+1 555-0100',
+              ringerMode: 'sound',
+              deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
+              coords: { x: 50, y: 45, latitude: 28.4595, longitude: 77.0266 },
+            };
+
+            const userProfile: FamilyProfile = {
+              id: `family_${user.id}`,
+              name: user.familyName || `${user.name}'s Family`,
+              code: `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
+              address: 'Home Address',
+              homeCity: 'Family Home',
+              membersCount: 1,
+            };
+
+            if (!isCancelled) {
+              setProfile(userProfile);
+              setMembers([userMember]);
+              setPlaces(initialPlaces);
+              setTasks([]);
+              setEvents([]);
+              setReminders([]);
+              setMemories([]);
+              setDocuments([]);
+              setNotifications([
+                {
+                  id: `notif_${Date.now()}`,
+                  title: `Welcome to ${userProfile.name}!`,
+                  body: `Your private family vault is active. Tap Family to invite or add your family members.`,
+                  priority: 'important',
+                  timestamp: 'Just now',
+                  isRead: false,
+                  category: 'ai',
+                },
+              ]);
+              setActiveMemberId(memberId);
+            }
+          } else {
+            // Demo user or unauthenticated preview
+            if (!isCancelled) {
+              setProfile(initialFamilyProfile);
+              setMembers(initialMembers);
+              setPlaces(initialPlaces);
+              setTasks(initialTasks);
+              setEvents(initialEvents);
+              setReminders(initialReminders);
+              setMemories(initialMemories);
+              setDocuments(initialDocuments);
+              setNotifications(initialNotifications);
+              setActiveMemberId('member_ritu');
+            }
+          }
         }
       } catch (err) {
         console.warn('Failed to load state from AsyncStorage:', err);
       } finally {
-        setIsLoaded(true);
+        if (!isCancelled) {
+          setIsLoaded(true);
+        }
       }
     }
-    loadSavedState();
-  }, []);
 
-  // Save to AsyncStorage when state changes
+    loadSavedState();
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, currentStorageKey]);
+
+  // Save to currentStorageKey whenever state changes
   useEffect(() => {
     if (!isLoaded) return;
     const stateToSave = {
       profile,
       members,
+      places,
       tasks,
       events,
       reminders,
@@ -128,10 +266,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       notifications,
       simpleMode,
     };
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave)).catch((err) =>
+    AsyncStorage.setItem(currentStorageKey, JSON.stringify(stateToSave)).catch((err) =>
       console.warn('Failed to persist state:', err)
     );
-  }, [profile, members, tasks, events, reminders, memories, documents, notifications, simpleMode, isLoaded]);
+  }, [
+    profile,
+    members,
+    places,
+    tasks,
+    events,
+    reminders,
+    memories,
+    documents,
+    notifications,
+    simpleMode,
+    isLoaded,
+    currentStorageKey,
+  ]);
 
   // Context Engine: evaluate suggestions whenever relevant data changes
   useEffect(() => {
@@ -148,8 +299,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const activeUser = useMemo(() => {
     if (simpleMode) {
-      // In Elderly Mode, default to Dadi for simple personal context, or Ritu
-      return members.find((m) => m.id === 'member_dadi') || members[0];
+      return (
+        members.find((m) => m.relation === 'Grandmother' || m.id === 'member_dadi') ||
+        members[0]
+      );
     }
     return members.find((m) => m.id === activeMemberId) || members.find((m) => m.isSelf) || members[0];
   }, [members, simpleMode, activeMemberId]);
@@ -257,9 +410,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!action) return;
 
       if (action.actionType === 'add_reminder') {
+        const defaultAssignee = members.find((m) => !m.isSelf)?.id || activeUser.id;
         addReminder({
           title: `${doc.title} Due Payment`,
-          targetMemberId: doc.assignedToMemberId || 'member_dad',
+          targetMemberId: doc.assignedToMemberId || defaultAssignee,
           time: '10:00 AM',
           dueDate: doc.dueDate || 'Tomorrow',
           category: 'bill',
@@ -267,11 +421,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           isDone: false,
         });
       } else if (action.actionType === 'assign_task') {
+        const defaultAssignee = members.find((m) => !m.isSelf)?.id || activeUser.id;
         addTask({
           title: `Clear ${doc.title} (${doc.currency || '₹'}${doc.amount?.toLocaleString() || ''})`,
           category: 'bills',
-          assignedToMemberId: 'member_dad',
-          createdByMemberId: 'member_ritu',
+          assignedToMemberId: defaultAssignee,
+          createdByMemberId: activeUser.id,
           dueDate: doc.dueDate || 'Tomorrow',
           isCompleted: false,
           priority: 'urgent',
@@ -442,16 +597,53 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setProfile((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const createOrUpdateFamily = useCallback((name: string, address?: string, homeCity?: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    setProfile((prev) => ({
+      ...prev,
+      name: trimmedName,
+      address: address?.trim() || prev.address,
+      homeCity: homeCity?.trim() || prev.homeCity,
+    }));
+    setNotifications((prev) => [
+      {
+        id: `notif_${Date.now()}`,
+        title: `Family Space Updated`,
+        body: `Your family space has been updated to "${trimmedName}".`,
+        priority: 'normal',
+        timestamp: 'Just now',
+        isRead: false,
+        category: 'ai',
+      },
+      ...prev,
+    ]);
+  }, []);
+
   const addFamilyMember = useCallback((memberData: Omit<FamilyMember, 'id'>): FamilyMember => {
+    const randomOffset = (min: number, max: number) => Math.floor(Math.random() * (max - min) + min);
+    const coords = memberData.coords || {
+      x: randomOffset(20, 80),
+      y: randomOffset(20, 80),
+      latitude: 28.4595 + (Math.random() - 0.5) * 0.04,
+      longitude: 77.0266 + (Math.random() - 0.5) * 0.04,
+    };
+
     const newMember: FamilyMember = {
       ...memberData,
       id: `member_${Date.now()}`,
+      ringerMode: memberData.ringerMode || 'sound',
+      batteryLevel: memberData.batteryLevel ?? 88,
+      deviceModel: memberData.deviceModel || (Platform.OS === 'ios' ? 'iPhone' : 'Android Device'),
+      coords,
     };
+
     setMembers((prev) => {
       const next = [...prev, newMember];
       setProfile((p) => ({ ...p, membersCount: next.length }));
       return next;
     });
+
     setNotifications((prev) => [
       {
         id: `notif_${Date.now()}`,
@@ -464,6 +656,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
       ...prev,
     ]);
+
     return newMember;
   }, []);
 
@@ -498,8 +691,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setDocuments(initialDocuments);
     setNotifications(initialNotifications);
     setSimpleModeState(false);
+    AsyncStorage.removeItem(currentStorageKey).catch(console.warn);
     AsyncStorage.removeItem(STORAGE_KEY).catch(console.warn);
-  }, []);
+  }, [currentStorageKey]);
 
   return (
     <FamilyContext.Provider
@@ -538,6 +732,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         askFamilyAI,
         sendFamilyPing,
         updateFamilyProfile,
+        createOrUpdateFamily,
         addFamilyMember,
         updateFamilyMember,
         deleteFamilyMember,

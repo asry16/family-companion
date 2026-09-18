@@ -27,6 +27,8 @@ export default function PlansScreen() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
   const {
+    members,
+    activeUser,
     tasks,
     events,
     reminders,
@@ -62,26 +64,35 @@ export default function PlansScreen() {
     }
 
     const text = nlInput.trim();
-    // Parse natural language: extract assignee, priority, category
-    let assignee = 'member_dad';
-    if (text.toLowerCase().includes('mom')) assignee = 'member_mom';
-    if (text.toLowerCase().includes('aman')) assignee = 'member_aman';
-    if (text.toLowerCase().includes('dadi')) assignee = 'member_dadi';
-    if (text.toLowerCase().includes('me') || text.toLowerCase().includes('ritu')) assignee = 'member_ritu';
+    const textLower = text.toLowerCase();
+
+    // Dynamically match assignee from user's current family members
+    let assignee = activeUser.id;
+    for (const m of members) {
+      const firstName = m.name.toLowerCase().split(' ')[0];
+      const relation = m.relation.toLowerCase();
+      if (textLower.includes(firstName) || (relation && textLower.includes(relation))) {
+        assignee = m.id;
+        break;
+      }
+    }
+    if (textLower.includes('me') || textLower.includes('myself')) {
+      assignee = activeUser.id;
+    }
 
     let category: any = 'general';
-    if (text.toLowerCase().includes('vegetable') || text.toLowerCase().includes('grocery') || text.toLowerCase().includes('milk')) category = 'groceries';
-    if (text.toLowerCase().includes('bill') || text.toLowerCase().includes('pay')) category = 'bills';
-    if (text.toLowerCase().includes('medicine') || text.toLowerCase().includes('doctor')) category = 'health';
+    if (textLower.includes('vegetable') || textLower.includes('grocery') || textLower.includes('milk')) category = 'groceries';
+    if (textLower.includes('bill') || textLower.includes('pay')) category = 'bills';
+    if (textLower.includes('medicine') || textLower.includes('doctor')) category = 'health';
 
     let dueDate = 'Tomorrow';
-    if (text.toLowerCase().includes('today') || text.toLowerCase().includes('tonight')) dueDate = 'Today';
+    if (textLower.includes('today') || textLower.includes('tonight')) dueDate = 'Today';
 
     addTask({
       title: text.replace(/^(remind|tell|ask)\s+\w+\s+to\s+/i, '').replace(/^(add|create)\s+task\s+/i, ''),
       category,
       assignedToMemberId: assignee,
-      createdByMemberId: 'member_ritu',
+      createdByMemberId: activeUser.id,
       dueDate,
       dueTime: '10:00 AM',
       isCompleted: false,

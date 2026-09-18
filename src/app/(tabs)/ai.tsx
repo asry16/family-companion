@@ -29,6 +29,8 @@ export default function AIScreen() {
     addTask,
     addReminder,
     sendFamilyPing,
+    activeUser,
+    members,
   } = useFamily();
   const {
     startListening,
@@ -134,11 +136,12 @@ export default function AIScreen() {
             alert(`Calling ${action.payload.phone}...`);
           });
         } else if (action.type === 'create_task' && action.payload) {
+          const fallbackAssignee = members.find(m => !m.isSelf)?.id || activeUser.id;
           addTask({
             title: action.payload.title,
             category: action.payload.category || 'general',
-            assignedToMemberId: action.payload.assignee || 'member_dad',
-            createdByMemberId: 'member_ritu',
+            assignedToMemberId: action.payload.assignee || fallbackAssignee,
+            createdByMemberId: activeUser.id,
             dueDate: action.payload.dueDate || 'Tomorrow',
             dueTime: action.payload.dueTime || '10:00 AM',
             isCompleted: false,
@@ -146,11 +149,13 @@ export default function AIScreen() {
           });
           speak('Task confirmed and added to Family Planner.');
         } else if (action.type === 'remind' && action.payload) {
+          const targetMemberId = action.payload.memberId || members.find(m => !m.isSelf)?.id || activeUser.id;
+          const targetMember = members.find(m => m.id === targetMemberId);
           sendFamilyPing(
-            action.payload.memberId || 'member_dad',
+            targetMemberId,
             `Reminder: Please pay pending bill of ₹${action.payload.amount}`
           );
-          speak('Reminder sent to Dad.');
+          speak(`Reminder sent to ${targetMember?.name || 'family member'}.`);
         } else if (action.type === 'navigate') {
           router.push('/(tabs)/plans');
         }

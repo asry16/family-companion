@@ -21,12 +21,12 @@ import { PriorityLevel } from '@/types';
 export default function NewPlanModal() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
-  const { members, addTask, addEvent, addReminder } = useFamily();
+  const { members, activeUser, addTask, addEvent, addReminder } = useFamily();
   const { speak } = useVoice();
 
   const [type, setType] = useState<'task' | 'event' | 'reminder'>('task');
   const [title, setTitle] = useState('');
-  const [assigneeId, setAssigneeId] = useState(members[1]?.id || 'member_dad');
+  const [assigneeId, setAssigneeId] = useState(members.find(m => !m.isSelf)?.id || members[0]?.id || 'self');
   const [dueDate, setDueDate] = useState('Tomorrow');
   const [time, setTime] = useState('10:00 AM');
   const [priority, setPriority] = useState<PriorityLevel>('urgent');
@@ -45,13 +45,13 @@ export default function NewPlanModal() {
         title: title.trim(),
         category: 'general',
         assignedToMemberId: assigneeId,
-        createdByMemberId: 'member_ritu',
+        createdByMemberId: activeUser.id,
         dueDate,
         dueTime: time,
         isCompleted: false,
         priority,
       });
-      speak(`Task added for ${members.find((m) => m.id === assigneeId)?.name || 'Dad'}`);
+      speak(`Task added for ${members.find((m) => m.id === assigneeId)?.name || 'family'}`);
     } else if (type === 'event') {
       addEvent({
         title: title.trim(),
@@ -60,7 +60,7 @@ export default function NewPlanModal() {
         durationMinutes: 45,
         location: 'Home / Clinic',
         category: 'family',
-        attendeeMemberIds: [assigneeId, 'member_ritu'],
+        attendeeMemberIds: [assigneeId, activeUser.id],
       });
       speak(`Event scheduled: ${title}`);
     } else {

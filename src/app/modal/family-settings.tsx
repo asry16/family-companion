@@ -65,6 +65,9 @@ export default function FamilySettingsModal() {
   const [newMemberRelation, setNewMemberRelation] = useState<MemberRelation>('Daughter');
   const [newMemberPhone, setNewMemberPhone] = useState('');
   const [newMemberColor, setNewMemberColor] = useState('#10B981');
+  const [newMemberRingerMode, setNewMemberRingerMode] = useState<'sound' | 'silent' | 'vibrate' | 'dnd'>('sound');
+  const [newMemberDeviceModel, setNewMemberDeviceModel] = useState('iPhone 15');
+  const [newMemberBattery, setNewMemberBattery] = useState('85');
   const [newMemberError, setNewMemberError] = useState<string | null>(null);
 
   // Edit member modal state
@@ -98,6 +101,9 @@ export default function FamilySettingsModal() {
     setNewMemberRelation('Daughter');
     setNewMemberPhone('');
     setNewMemberColor(AVATAR_COLORS[members.length % AVATAR_COLORS.length]);
+    setNewMemberRingerMode('sound');
+    setNewMemberDeviceModel(Platform.OS === 'ios' ? 'iPhone 15' : 'Android Device');
+    setNewMemberBattery('85');
     setNewMemberError(null);
     setAddModalVisible(true);
   };
@@ -128,16 +134,18 @@ export default function FamilySettingsModal() {
       initials,
       avatarColor: newMemberColor,
       isSelf: false,
-      statusMessage: 'Ready to sync',
+      statusMessage: 'Connected & syncing',
       currentPlaceId: 'place_home',
       humanLocation: 'At Home',
-      batteryLevel: 90,
+      batteryLevel: parseInt(newMemberBattery, 10) || 85,
       isCharging: false,
       isSharingLocation: true,
       sharingDuration: 'always',
       lastUpdated: 'Just now',
       availability: 'available',
       phone: newMemberPhone.trim() || '+1 555-0100',
+      ringerMode: newMemberRingerMode,
+      deviceModel: newMemberDeviceModel.trim() || 'Mobile Device',
     });
 
     setAddModalVisible(false);
@@ -670,6 +678,66 @@ export default function FamilySettingsModal() {
                 placeholder="+1 555-0199"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Phone Ringer Mode */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Phone Ringer Mode
+              </Text>
+              <View style={styles.rolesRow}>
+                {[
+                  { id: 'sound', label: '🔔 Sound' },
+                  { id: 'silent', label: '🔕 Silent' },
+                  { id: 'vibrate', label: '📳 Vibrate' },
+                ].map((mode) => {
+                  const selected = newMemberRingerMode === mode.id;
+                  return (
+                    <Pressable
+                      key={mode.id}
+                      onPress={() => setNewMemberRingerMode(mode.id as any)}
+                      style={[
+                        styles.roleChip,
+                        {
+                          backgroundColor: selected ? colors.brandAccent : colors.separator,
+                          borderColor: selected ? colors.brandAccent : colors.border,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.roleChipText,
+                          {
+                            color: selected ? '#FFFFFF' : colors.text,
+                            fontWeight: selected ? '700' : '500',
+                          },
+                        ]}>
+                        {mode.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Device Model */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Device Model
+              </Text>
+              <TextInput
+                value={newMemberDeviceModel}
+                onChangeText={setNewMemberDeviceModel}
+                placeholder="e.g. iPhone 15, Galaxy S24"
+                placeholderTextColor={colors.textMuted}
                 style={[
                   styles.textInput,
                   {

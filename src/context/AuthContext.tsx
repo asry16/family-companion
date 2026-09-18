@@ -18,7 +18,7 @@ export interface AuthUser {
   provider: 'google' | 'apple' | 'email' | 'demo';
   familyMemberId: string;
   familyName?: string;
-  relation?: string;
+  relation?: MemberRelation;
   isEmailVerified?: boolean;
   rememberMe?: boolean;
 }
@@ -31,7 +31,7 @@ interface StoredUserAccount {
   passwordHash: string; // SHA-256 hashed, NEVER plain text
   familyMemberId: string;
   familyName?: string;
-  relation?: string;
+  relation?: MemberRelation;
   isEmailVerified?: boolean;
   verificationCode?: string;
 }
@@ -188,12 +188,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!found) {
           // Allow demo bypass for test emails
           if (cleanEmail.includes('@') && cleanPass.length >= 6) {
+            const rawPrefix = cleanEmail.split('@')[0];
+            const cleanName = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+            const memberId = `member_${Date.now()}`;
             const fallbackUser: AuthUser = {
               id: `user_${Date.now()}`,
-              name: cleanEmail.split('@')[0],
+              name: cleanName,
               email: cleanEmail,
               provider: 'email',
-              familyMemberId: 'member_ritu',
+              familyMemberId: memberId,
+              familyName: `${cleanName}'s Family`,
+              relation: 'Self',
               rememberMe,
             };
             delete failedAttemptsMap[cleanEmail];
@@ -230,9 +235,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const authenticatedUser: AuthUser = {
           id: found.id,
           name: found.name,
+          username: found.username,
           email: found.email,
           provider: 'email',
-          familyMemberId: found.familyMemberId,
+          familyMemberId: found.familyMemberId || `member_${found.id}`,
+          familyName: found.familyName || `${found.name}'s Family`,
+          relation: found.relation || 'Self',
           rememberMe,
         };
 
@@ -359,6 +367,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastUpdated: 'Just now',
           availability: 'available',
           phone: '+1 555-0100',
+          ringerMode: 'sound',
+          deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
+          coords: {
+            x: 50,
+            y: 45,
+            latitude: 28.4595,
+            longitude: 77.0266,
+          },
         };
 
         const userProfile: FamilyProfile = {
@@ -373,6 +389,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const initialUserState = {
           profile: userProfile,
           members: [userMember],
+          places: [
+            {
+              id: 'place_home',
+              name: 'Home',
+              address: 'Family Residence',
+              type: 'home',
+              isSafeZone: true,
+              coordinates: { latitude: 28.4595, longitude: 77.0266 },
+              iconName: 'home',
+              color: '#3B82F6',
+            },
+          ],
           tasks: [],
           events: [],
           reminders: [],
@@ -392,6 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           simpleMode: false,
         };
 
+        await AsyncStorage.setItem(`@kinly_family_state_${newAccount.id}`, JSON.stringify(initialUserState));
         await AsyncStorage.setItem('@kinly_family_state_v1', JSON.stringify(initialUserState));
 
         return {
@@ -478,12 +507,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithApple = useCallback(async () => {
     setIsLoading(true);
     try {
+      const appleId = `apple_${Date.now()}`;
       const appleUser: AuthUser = {
-        id: `apple_${Date.now()}`,
-        name: 'Apple Family User',
+        id: appleId,
+        name: 'Apple Family Member',
         email: 'user@privaterelay.appleid.com',
         provider: 'apple',
-        familyMemberId: 'member_ritu',
+        familyMemberId: `member_${appleId}`,
+        familyName: 'My Family Space',
+        relation: 'Self',
         isEmailVerified: true,
         rememberMe: true,
       };
@@ -527,13 +559,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       let result;
       if (Platform.OS === 'web') {
+        const googleId = `google_${Date.now()}`;
         const demoGoogleUser: AuthUser = {
-          id: `google_${Date.now()}`,
-          name: 'Ritu Sharma',
-          email: 'ritu.sharma@gmail.com',
+          id: googleId,
+          name: 'Google Family User',
+          email: 'google.user@gmail.com',
           photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
           provider: 'google',
-          familyMemberId: 'member_ritu',
+          familyMemberId: `member_${googleId}`,
+          familyName: 'Our Family Circle',
+          relation: 'Self',
           rememberMe: true,
         };
         await saveUserSession(demoGoogleUser, true);
@@ -543,35 +578,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (result && result.type === 'success') {
+        const googleId = `google_${Date.now()}`;
         const googleUser: AuthUser = {
-          id: `google_${Date.now()}`,
-          name: 'Ritu Sharma',
-          email: 'ritu.sharma@gmail.com',
+          id: googleId,
+          name: 'Google Family User',
+          email: 'google.user@gmail.com',
           photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
           provider: 'google',
-          familyMemberId: 'member_ritu',
+          familyMemberId: `member_${googleId}`,
+          familyName: 'Our Family Circle',
+          relation: 'Self',
           rememberMe: true,
         };
         await saveUserSession(googleUser, true);
       } else {
+        const fallbackId = `google_${Date.now()}`;
         const fallbackUser: AuthUser = {
-          id: `google_${Date.now()}`,
-          name: 'Ritu Sharma',
-          email: 'ritu.sharma@gmail.com',
+          id: fallbackId,
+          name: 'Google Family User',
+          email: 'google.user@gmail.com',
           provider: 'google',
-          familyMemberId: 'member_ritu',
+          familyMemberId: `member_${fallbackId}`,
+          familyName: 'Our Family Circle',
+          relation: 'Self',
           rememberMe: true,
         };
         await saveUserSession(fallbackUser, true);
       }
     } catch (err) {
       console.warn('Google sign in error:', err);
+      const defaultId = `google_fallback_${Date.now()}`;
       const defaultUser: AuthUser = {
-        id: `google_fallback_${Date.now()}`,
-        name: 'Ritu Sharma',
-        email: 'ritu.sharma@gmail.com',
+        id: defaultId,
+        name: 'Family User',
+        email: 'user@family.internal',
         provider: 'google',
-        familyMemberId: 'member_ritu',
+        familyMemberId: `member_${defaultId}`,
+        familyName: 'My Family Space',
+        relation: 'Self',
         rememberMe: true,
       };
       await saveUserSession(defaultUser, true);

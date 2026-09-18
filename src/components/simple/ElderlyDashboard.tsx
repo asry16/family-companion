@@ -65,8 +65,9 @@ export const ElderlyDashboard: React.FC = () => {
     (r) => r.category === 'medicine' && !r.isDone
   ) || reminders[0];
 
-  const son = members.find((m) => m.id === 'member_dad');
-  const daughter = members.find((m) => m.id === 'member_ritu');
+  const callContacts = members.length > 1
+    ? members.filter((m) => !m.isSelf).slice(0, 2)
+    : members.slice(0, 1);
 
   return (
     <ScrollView
@@ -156,33 +157,20 @@ export const ElderlyDashboard: React.FC = () => {
       {/* Quick Contact Buttons */}
       <Text style={styles.sectionHeader}>CALL FAMILY</Text>
       <View style={styles.contactsGrid}>
-        {son && (
+        {callContacts.map((contact, idx) => (
           <Pressable
-            onPress={() => handleCall(son.name, son.phone)}
+            key={contact.id}
+            onPress={() => handleCall(contact.name, contact.phone)}
             style={styles.callCard}>
-            <View style={styles.callIconWrapper}>
+            <View style={[styles.callIconWrapper, { backgroundColor: contact.avatarColor || (idx === 0 ? '#3B82F6' : '#6366F1') }]}>
               <Ionicons name="call" size={26} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.callName}>Call Son ({son.name})</Text>
-              <Text style={styles.callSub}>{son.humanLocation}</Text>
+              <Text style={styles.callName}>Call {contact.relation || 'Family'} ({contact.name})</Text>
+              <Text style={styles.callSub}>{contact.humanLocation}</Text>
             </View>
           </Pressable>
-        )}
-
-        {daughter && (
-          <Pressable
-            onPress={() => handleCall(daughter.name, daughter.phone)}
-            style={styles.callCard}>
-            <View style={[styles.callIconWrapper, { backgroundColor: '#6366F1' }]}>
-              <Ionicons name="call" size={26} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.callName}>Call Daughter ({daughter.name})</Text>
-              <Text style={styles.callSub}>{daughter.humanLocation}</Text>
-            </View>
-          </Pressable>
-        )}
+        ))}
       </View>
 
       {/* Giant Voice Button */}

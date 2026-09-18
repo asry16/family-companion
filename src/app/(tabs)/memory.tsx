@@ -21,7 +21,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function MemoryScreen() {
   const { colors, isElderly } = useAppTheme();
-  const { memories, searchMemories, addMemory } = useFamily();
+  const { memories, searchMemories, addMemory, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
 
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -72,7 +72,7 @@ export default function MemoryScreen() {
       lastVerified: 'Just now',
       notes: newNotes.trim() || 'Saved to family vault',
       tags: ['saved', 'location'],
-      relatedMemberIds: ['member_ritu'],
+      relatedMemberIds: [activeUser.id],
       emoji: '📦',
     });
 

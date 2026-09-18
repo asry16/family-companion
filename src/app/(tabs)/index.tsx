@@ -302,160 +302,236 @@ export default function HomeScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.presenceScroll}>
-          {otherMembers.map((member) => {
-            const isTransit = member.availability === 'in_transit';
-            const ringColor = isTransit ? colors.yellow : member.availability === 'available' ? colors.green : colors.blue;
-            return (
-              <Pressable
-                key={member.id}
-                onPress={() => handlePingMember(member)}
-                style={({ pressed }) => [
-                  styles.presenceCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.88 : 1,
-                  },
-                ]}>
-                {/* Avatar with Status Ring */}
-                <View style={[styles.avatarRing, { borderColor: ringColor }]}>
-                  <FamilyAvatar member={member} size="md" />
-                  {isTransit && (
-                    <View style={[styles.transitMiniBadge, { backgroundColor: colors.yellow }]}>
-                      <Ionicons name="car" size={10} color="#000000" />
-                    </View>
-                  )}
-                </View>
-
-                {/* Name & Relation */}
-                <Text
-                  numberOfLines={1}
-                  style={[styles.presenceName, { color: colors.text, fontSize: isElderly ? 16 : 14 }]}>
-                  {member.name}
-                </Text>
-                <Text style={[styles.presenceRelation, { color: colors.textSecondary }]}>
-                  {member.relation}
-                </Text>
-
-                {/* Location Badge */}
-                <View style={styles.presenceLocationWrap}>
-                  <StatusBadge
-                    label={member.humanLocation}
-                    variant={isTransit ? 'yellow' : member.availability === 'available' ? 'green' : 'blue'}
-                    size="sm"
-                  />
-                </View>
-
-                {/* Phone Status Strip: Sound Status & Battery % */}
-                <View style={styles.presencePhoneRow}>
-                  <View
-                    style={[
-                      styles.presencePhoneBadge,
-                      {
-                        backgroundColor:
-                          member.ringerMode === 'silent'
-                            ? colors.redSoft
-                            : member.ringerMode === 'vibrate'
-                            ? colors.yellowSoft
-                            : colors.blueSoft,
-                        borderColor:
-                          member.ringerMode === 'silent'
-                            ? colors.redBorder
-                            : member.ringerMode === 'vibrate'
-                            ? colors.yellowBorder
-                            : colors.blueBorder,
-                      },
-                    ]}>
-                    <Ionicons
-                      name={
-                        member.ringerMode === 'silent'
-                          ? 'volume-mute'
-                          : member.ringerMode === 'vibrate'
-                          ? 'radio'
-                          : 'volume-high'
-                      }
-                      size={9}
-                      color={
-                        member.ringerMode === 'silent'
-                          ? colors.red
-                          : member.ringerMode === 'vibrate'
-                          ? colors.yellow
-                          : colors.blue
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.presencePhoneText,
-                        {
-                          color:
-                            member.ringerMode === 'silent'
-                              ? colors.red
-                              : member.ringerMode === 'vibrate'
-                              ? colors.yellow
-                              : colors.blue,
-                        },
-                      ]}>
-                      {member.ringerMode === 'silent'
-                        ? 'Silent'
-                        : member.ringerMode === 'vibrate'
-                        ? 'Vibrate'
-                        : 'Sound'}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.presencePhoneBadge,
-                      {
-                        backgroundColor:
-                          member.batteryLevel > 50 || member.isCharging
-                            ? colors.greenSoft
-                            : colors.yellowSoft,
-                        borderColor:
-                          member.batteryLevel > 50 || member.isCharging
-                            ? colors.greenBorder
-                            : colors.yellowBorder,
-                      },
-                    ]}>
-                    <Ionicons
-                      name={member.isCharging ? 'flash' : 'battery-charging'}
-                      size={9}
-                      color={
-                        member.batteryLevel > 50 || member.isCharging
-                          ? colors.green
-                          : colors.yellow
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.presencePhoneText,
-                        {
-                          color:
-                            member.batteryLevel > 50 || member.isCharging
-                              ? colors.green
-                              : colors.yellow,
-                        },
-                      ]}>
-                      {member.batteryLevel}%
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Ping Button */}
-                <View
-                  style={[
-                    styles.quickPingPill,
-                    { backgroundColor: colors.background, borderColor: colors.border },
+          {otherMembers.length > 0 ? (
+            otherMembers.map((member) => {
+              const isTransit = member.availability === 'in_transit';
+              const ringColor = isTransit ? colors.yellow : member.availability === 'available' ? colors.green : colors.blue;
+              return (
+                <Pressable
+                  key={member.id}
+                  onPress={() => handlePingMember(member)}
+                  style={({ pressed }) => [
+                    styles.presenceCard,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                      opacity: pressed ? 0.88 : 1,
+                    },
                   ]}>
-                  <Ionicons name="paper-plane-outline" size={11} color={colors.brandAccent} />
-                  <Text style={[styles.quickPingText, { color: colors.brandAccent }]}>
-                    Ping
+                  {/* Avatar with Status Ring */}
+                  <View style={styles.presenceAvatarWrap}>
+                    <View style={[styles.presenceStatusRing, { borderColor: ringColor }]}>
+                      <FamilyAvatar member={member} size="md" />
+                    </View>
+                    <View style={[styles.presenceDot, { backgroundColor: ringColor }]} />
+                  </View>
+
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.presenceName,
+                      { color: colors.text, fontSize: isElderly ? 16 : 13 },
+                    ]}>
+                    {member.name.split(' ')[0]}
                   </Text>
-                </View>
-              </Pressable>
-            );
-          })}
+
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.presenceLocation,
+                      { color: colors.textSecondary, fontSize: isElderly ? 13 : 11 },
+                    ]}>
+                    {member.humanLocation}
+                  </Text>
+
+                  {/* Real-time Phone Details: Ringer Mode & Battery */}
+                  <View style={styles.presencePhoneRow}>
+                    <View
+                      style={[
+                        styles.presencePhoneBadge,
+                        {
+                          backgroundColor:
+                            member.ringerMode === 'silent'
+                              ? colors.redSoft
+                              : member.ringerMode === 'vibrate'
+                              ? colors.yellowSoft
+                              : colors.blueSoft,
+                          borderColor:
+                            member.ringerMode === 'silent'
+                              ? colors.redBorder
+                              : member.ringerMode === 'vibrate'
+                              ? colors.yellowBorder
+                              : colors.blueBorder,
+                        },
+                      ]}>
+                      <Ionicons
+                        name={
+                          member.ringerMode === 'silent'
+                            ? 'volume-mute'
+                            : member.ringerMode === 'vibrate'
+                            ? 'radio'
+                            : 'volume-high'
+                        }
+                        size={9}
+                        color={
+                          member.ringerMode === 'silent'
+                            ? colors.red
+                            : member.ringerMode === 'vibrate'
+                            ? colors.yellow
+                            : colors.blue
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.presencePhoneText,
+                          {
+                            color:
+                              member.ringerMode === 'silent'
+                                ? colors.red
+                                : member.ringerMode === 'vibrate'
+                                ? colors.yellow
+                                : colors.blue,
+                          },
+                        ]}>
+                        {member.ringerMode === 'silent'
+                          ? 'Silent'
+                          : member.ringerMode === 'vibrate'
+                          ? 'Vibrate'
+                          : 'Sound'}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.presencePhoneBadge,
+                        {
+                          backgroundColor:
+                            member.batteryLevel > 50 || member.isCharging
+                              ? colors.greenSoft
+                              : colors.yellowSoft,
+                          borderColor:
+                            member.batteryLevel > 50 || member.isCharging
+                              ? colors.greenBorder
+                              : colors.yellowBorder,
+                        },
+                      ]}>
+                      <Ionicons
+                        name={
+                          member.isCharging
+                            ? 'battery-charging'
+                            : member.batteryLevel > 20
+                            ? 'battery-half'
+                            : 'battery-dead'
+                        }
+                        size={9}
+                        color={
+                          member.batteryLevel > 50 || member.isCharging
+                            ? colors.green
+                            : colors.yellow
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.presencePhoneText,
+                          {
+                            color:
+                              member.batteryLevel > 50 || member.isCharging
+                                ? colors.green
+                                : colors.yellow,
+                          },
+                        ]}>
+                        {member.batteryLevel}%
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Ping Button */}
+                  <View
+                    style={[
+                      styles.quickPingPill,
+                      { backgroundColor: colors.background, borderColor: colors.border },
+                    ]}>
+                    <Ionicons name="paper-plane-outline" size={11} color={colors.brandAccent} />
+                    <Text style={[styles.quickPingText, { color: colors.brandAccent }]}>
+                      Ping
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })
+          ) : (
+            <Pressable
+              onPress={() => router.push('/modal/family-settings')}
+              style={({ pressed }) => [
+                styles.addMemberPresenceCard,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}>
+              <View
+                style={[
+                  styles.addMemberIconWrap,
+                  { backgroundColor: colors.brandAccent + '15' },
+                ]}>
+                <Ionicons name="person-add" size={22} color={colors.brandAccent} />
+              </View>
+              <Text
+                style={[
+                  styles.addMemberTitle,
+                  { color: colors.text, fontSize: isElderly ? 16 : 13 },
+                ]}>
+                + Add Member
+              </Text>
+              <Text
+                style={[
+                  styles.addMemberSub,
+                  { color: colors.textSecondary, fontSize: isElderly ? 13 : 11 },
+                ]}>
+                Invite family to live status
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
+
+        {/* Welcome Setup Banner for New/Single-Member Families */}
+        {members.length <= 1 && (
+          <View
+            style={[
+              styles.familySetupBanner,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View style={styles.familySetupHeader}>
+              <View style={[styles.familySetupIconWrap, { backgroundColor: colors.brandAccent + '15' }]}>
+                <Ionicons name="home" size={20} color={colors.brandAccent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.familySetupTitle, { color: colors.text, fontSize: isElderly ? 18 : 15 }]}>
+                  {profile.name} is Ready
+                </Text>
+                <Text style={[styles.familySetupSub, { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 }]}>
+                  Add family members to see their real-time location pins, battery level, and coordinate plans.
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => router.push('/modal/family-settings')}
+              style={({ pressed }) => [
+                styles.familySetupBtn,
+                {
+                  backgroundColor: colors.brandAccent,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}>
+              <Ionicons name="person-add" size={14} color="#FFFFFF" />
+              <Text style={styles.familySetupBtnText}>Add People to Family</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* ========================================================================= */}
         {/* SECTION 2: REAL-TIME FAMILY LIVE MAP                                      */}
@@ -752,10 +828,34 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
+  presenceAvatarWrap: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  presenceStatusRing: {
+    padding: 3,
+    borderRadius: 32,
+    borderWidth: 2,
+  },
+  presenceDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
   presenceName: {
     fontWeight: '700',
     textAlign: 'center',
     marginTop: 2,
+  },
+  presenceLocation: {
+    textAlign: 'center',
+    fontWeight: '500',
   },
   presenceRelation: {
     fontSize: 11,
@@ -807,5 +907,71 @@ const styles = StyleSheet.create({
   // Voice Dock
   bottomVoiceDock: {
     marginTop: 8,
+  },
+  addMemberPresenceCard: {
+    width: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 6,
+  },
+  addMemberIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  addMemberTitle: {
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  addMemberSub: {
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+  familySetupBanner: {
+    padding: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginTop: 10,
+    marginBottom: 4,
+    gap: 12,
+  },
+  familySetupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  familySetupIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  familySetupTitle: {
+    fontWeight: '800',
+  },
+  familySetupSub: {
+    marginTop: 2,
+    lineHeight: 18,
+  },
+  familySetupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  familySetupBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
