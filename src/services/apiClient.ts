@@ -108,6 +108,28 @@ export const apiClient = {
       return request<{ user: any; familyMember: any }>('/api/auth/me');
     },
 
+    sendOtp: async (
+      email: string,
+      purpose: 'login' | 'register' | 'verification' | 'password_reset' = 'login'
+    ) => {
+      return request<{ code?: string; message: string }>('/api/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email, purpose }),
+      });
+    },
+
+    loginWithOtp: async (email: string, code: string) => {
+      const res = await request<{ token: string; user: any }>('/api/auth/login-with-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
+      });
+      const token = res.data?.token || (res as any).token;
+      if (res.success && token) {
+        await AsyncStorage.setItem(JWT_TOKEN_KEY, token);
+      }
+      return res;
+    },
+
     verifyOtp: async (email: string, code: string) => {
       return request('/api/auth/verify-otp', {
         method: 'POST',

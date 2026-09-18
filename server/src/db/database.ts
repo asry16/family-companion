@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 const DB_DIR = path.join(__dirname, '../../data');
 if (!fs.existsSync(DB_DIR)) {
@@ -75,6 +76,11 @@ export const usersRepo = {
   verifyEmail: (email: string) => {
     const stmt = db.prepare('UPDATE users SET is_verified = 1, verification_code = NULL WHERE LOWER(email) = LOWER(?)');
     stmt.run(email);
+  },
+
+  setVerificationCode: (email: string, code: string) => {
+    const stmt = db.prepare('UPDATE users SET verification_code = ? WHERE LOWER(email) = LOWER(?)');
+    stmt.run(code, email);
   },
 
   updatePassword: (email: string, passwordHash: string) => {
@@ -534,3 +540,88 @@ export const notificationsRepo = {
     stmt.run(id);
   },
 };
+
+// -------------------------------------------------------------
+// SEED DEFAULT / DEMO ACCOUNTS
+// -------------------------------------------------------------
+export function seedInitialData() {
+  try {
+    const ritu = usersRepo.findByEmail('ritu.sharma@gmail.com');
+    if (!ritu) {
+      const familyId = 'family_sharma_seed';
+      familiesRepo.create({
+        id: familyId,
+        name: 'Sharma Family',
+        inviteCode: 'KIN-8820',
+        address: 'Sector 45, Gurgaon',
+        homeCity: 'Gurgaon',
+      });
+
+      const hash123456 = bcrypt.hashSync('123456', 10);
+
+      // Seed Ritu
+      usersRepo.create({
+        id: 'user_ritu',
+        name: 'Ritu Sharma',
+        username: 'ritu_sharma',
+        email: 'ritu.sharma@gmail.com',
+        passwordHash: hash123456,
+        isVerified: true,
+      });
+
+      membersRepo.create({
+        id: 'member_ritu',
+        family_id: familyId,
+        user_id: 'user_ritu',
+        name: 'Ritu Sharma',
+        relation: 'Mother',
+        initials: 'RS',
+        avatar_color: '#EC4899',
+        phone: '+91 98100 12345',
+        is_self: 1,
+        status_message: 'Working from home today',
+        human_location: 'At Home',
+        battery_level: 92,
+        ringer_mode: 'sound',
+        device_model: 'iPhone 15 Pro',
+        coords_x: 50.0,
+        coords_y: 50.0,
+      });
+
+      // Seed Rajesh
+      usersRepo.create({
+        id: 'user_dad',
+        name: 'Rajesh Sharma',
+        username: 'rajesh_sharma',
+        email: 'rajesh.sharma@gmail.com',
+        passwordHash: hash123456,
+        isVerified: true,
+      });
+
+      membersRepo.create({
+        id: 'member_dad',
+        family_id: familyId,
+        user_id: 'user_dad',
+        name: 'Rajesh Sharma',
+        relation: 'Father',
+        initials: 'RS',
+        avatar_color: '#3B82F6',
+        phone: '+91 98110 54321',
+        is_self: 0,
+        status_message: 'In office meeting',
+        human_location: 'Cyber Hub Office',
+        battery_level: 68,
+        ringer_mode: 'vibrate',
+        device_model: 'Samsung Galaxy S24',
+        coords_x: 75.0,
+        coords_y: 35.0,
+      });
+
+      console.log('[Database] Seeded initial accounts (ritu.sharma@gmail.com, rajesh.sharma@gmail.com)');
+    }
+  } catch (err) {
+    console.warn('[Database] Seed initialization warning:', err);
+  }
+}
+
+seedInitialData();

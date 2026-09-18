@@ -24,17 +24,30 @@ export default function LoginScreen() {
     signInWithGoogle,
     signInWithApple,
     signInWithEmail,
+    requestOtp,
+    signInWithOtp,
     sendPasswordResetEmail,
   } = useAuth();
 
   // Screen View Mode: 'gateway' (hero welcome) or 'signIn' (focused sign in form)
   const [viewMode, setViewMode] = useState<'gateway' | 'signIn'>('gateway');
 
+  // Sign In Method: 'password' | 'otp'
+  const [signInMethod, setSignInMethod] = useState<'password' | 'otp'>('password');
+
   // Sign In Form Fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  // OTP Login States
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
+  const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
 
   // States
   const [loading, setLoading] = useState(false);
@@ -46,6 +59,14 @@ export default function LoginScreen() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotStatus, setForgotStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
+  // OTP Cooldown countdown
+  React.useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
 
   // Haptic feedback helper
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
@@ -53,6 +74,77 @@ export default function LoginScreen() {
       try {
         Haptics.impactAsync(style);
       } catch (e) {}
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (otpLoading || otpCooldown > 0) return;
+    setErrorMessage(null);
+    setOtpSuccessMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setErrorMessage('Please enter your email address to receive an OTP code.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid email address (e.g. name@domain.com).');
+      return;
+    }
+
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    setOtpLoading(true);
+
+    try {
+      const res = await requestOtp(cleanEmail, 'login');
+      if (res.success) {
+        setOtpSent(true);
+        setOtpCooldown(60);
+        setOtpSuccessMessage(res.message || 'A 6-digit verification code was sent to your email.');
+        if (res.devCode) {
+          setDevOtpCode(res.devCode);
+        }
+      } else {
+        setErrorMessage(res.error || 'Failed to dispatch verification code. Please try again.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not send verification code.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtpAndLogin = async () => {
+    if (loading) return;
+    setErrorMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = otpCode.trim();
+
+    if (!cleanEmail) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+    if (!cleanCode || cleanCode.length < 6) {
+      setErrorMessage('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    setLoading(true);
+
+    try {
+      const result = await signInWithOtp(cleanEmail, cleanCode);
+      if (result.success) {
+        router.replace('/(tabs)');
+      } else {
+        setErrorMessage(result.error || 'Invalid or expired verification code.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Verification failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -449,8 +541,80 @@ export default function LoginScreen() {
                   styles.formSubtitle,
                   { color: colors.textSecondary, fontSize: isElderly ? 16 : 14 },
                 ]}>
-                Sign in with your email and password to access your family's vault.
+                {signInMethod === 'password'
+                  ? "Sign in with your email and password to access your family's vault."
+                  : "Sign in instantly with a secure 6-digit one-time code sent to your email."}
               </Text>
+            </View>
+
+            {/* Authentication Method Segmented Switcher */}
+            <View
+              style={[
+                styles.methodTabsRow,
+                { backgroundColor: colors.borderSubtle, borderColor: colors.border },
+              ]}>
+              <Pressable
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+                  setSignInMethod('password');
+                  setErrorMessage(null);
+                }}
+                style={[
+                  styles.methodTab,
+                  signInMethod === 'password' && [
+                    styles.methodTabActive,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  ],
+                ]}>
+                <Ionicons
+                  name="key-outline"
+                  size={16}
+                  color={signInMethod === 'password' ? colors.brandAccent : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.methodTabText,
+                    {
+                      color: signInMethod === 'password' ? colors.text : colors.textSecondary,
+                      fontWeight: signInMethod === 'password' ? '700' : '500',
+                    },
+                  ]}>
+                  Password
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+                  setSignInMethod('otp');
+                  setErrorMessage(null);
+                }}
+                style={[
+                  styles.methodTab,
+                  signInMethod === 'otp' && [
+                    styles.methodTabActive,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  ],
+                ]}>
+                <Ionicons
+                  name="mail-unread-outline"
+                  size={16}
+                  color={signInMethod === 'otp' ? colors.brandAccent : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.methodTabText,
+                    {
+                      color: signInMethod === 'otp' ? colors.text : colors.textSecondary,
+                      fontWeight: signInMethod === 'otp' ? '700' : '500',
+                    },
+                  ]}>
+                  Email OTP Code
+                </Text>
+                <View style={[styles.methodJewel, { backgroundColor: colors.brandAccent + '1E' }]}>
+                  <Text style={[styles.methodJewelText, { color: colors.brandAccent }]}>Instant</Text>
+                </View>
+              </Pressable>
             </View>
 
             {/* Form Card */}
@@ -476,11 +640,64 @@ export default function LoginScreen() {
                 </View>
               )}
 
-              {/* Email Input */}
+              {/* OTP Success Info Banner */}
+              {signInMethod === 'otp' && otpSuccessMessage && (
+                <View
+                  style={[
+                    styles.alertBox,
+                    { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+                  ]}>
+                  <Ionicons name="checkmark-circle" size={18} color={colors.green} />
+                  <Text style={[styles.alertText, { color: colors.green }]}>
+                    {otpSuccessMessage}
+                  </Text>
+                </View>
+              )}
+
+              {/* Dev Code Banner (for quick local testing without active mailbox) */}
+              {signInMethod === 'otp' && devOtpCode && (
+                <View
+                  style={[
+                    styles.alertBox,
+                    { backgroundColor: colors.brandAccent + '15', borderColor: colors.brandAccent + '40' },
+                  ]}>
+                  <Ionicons name="flash-outline" size={18} color={colors.brandAccent} />
+                  <Text style={[styles.alertText, { color: colors.brandAccent }]}>
+                    Dev Code: <Text style={{ fontWeight: '800' }}>{devOtpCode}</Text>
+                  </Text>
+                  <Pressable
+                    onPress={() => setOtpCode(devOtpCode)}
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                      backgroundColor: colors.brandAccent,
+                    }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Auto-Fill</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Email Input (Common to both methods) */}
               <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  Email Address
-                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 0 }]}>
+                    Email Address
+                  </Text>
+                  {signInMethod === 'otp' && otpSent && (
+                    <Pressable
+                      onPress={() => {
+                        setOtpSent(false);
+                        setOtpCode('');
+                        setDevOtpCode(null);
+                        setOtpSuccessMessage(null);
+                      }}>
+                      <Text style={{ fontSize: 12, color: colors.brandAccent, fontWeight: '600' }}>
+                        Change email
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
                 <View
                   style={[
                     styles.inputFieldContainer,
@@ -494,6 +711,7 @@ export default function LoginScreen() {
                   />
                   <TextInput
                     value={email}
+                    editable={signInMethod !== 'otp' || !otpSent}
                     onChangeText={(val) => {
                       setEmail(val);
                       if (errorMessage) setErrorMessage(null);
@@ -503,123 +721,255 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={[styles.textInput, { color: colors.text }]}
-                  />
-                </View>
-              </View>
-
-              {/* Password Input */}
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  Password
-                </Text>
-                <View
-                  style={[
-                    styles.inputFieldContainer,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}>
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={18}
-                    color={colors.textSecondary}
-                    style={styles.inputLeadingIcon}
-                  />
-                  <TextInput
-                    value={password}
-                    onChangeText={(val) => {
-                      setPassword(val);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    placeholder="Enter your password"
-                    placeholderTextColor={colors.textMuted}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[styles.textInput, { color: colors.text }]}
-                  />
-                  <Pressable
-                    onPress={() => setShowPassword(!showPassword)}
-                    hitSlop={10}
-                    style={styles.trailingAction}>
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={18}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Remember Me & Forgot Password */}
-              <View style={styles.optionsRow}>
-                <Pressable
-                  onPress={() => setRememberMe(!rememberMe)}
-                  style={styles.rememberMeRow}>
-                  <View
                     style={[
-                      styles.checkbox,
+                      styles.textInput,
+                      { color: colors.text },
+                      signInMethod === 'otp' && otpSent && { opacity: 0.7 },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {/* METHOD 1: PASSWORD FORM */}
+              {signInMethod === 'password' && (
+                <>
+                  {/* Password Input */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>
+                      Password
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputFieldContainer,
+                        { backgroundColor: colors.background, borderColor: colors.border },
+                      ]}>
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={18}
+                        color={colors.textSecondary}
+                        style={styles.inputLeadingIcon}
+                      />
+                      <TextInput
+                        value={password}
+                        onChangeText={(val) => {
+                          setPassword(val);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        placeholder="Enter your password"
+                        placeholderTextColor={colors.textMuted}
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        style={[styles.textInput, { color: colors.text }]}
+                      />
+                      <Pressable
+                        onPress={() => setShowPassword(!showPassword)}
+                        hitSlop={10}
+                        style={styles.trailingAction}>
+                        <Ionicons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={18}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  {/* Remember Me & Forgot Password */}
+                  <View style={styles.optionsRow}>
+                    <Pressable
+                      onPress={() => setRememberMe(!rememberMe)}
+                      style={styles.rememberMeRow}>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          {
+                            borderColor: rememberMe ? colors.brandAccent : colors.border,
+                            backgroundColor: rememberMe ? colors.brandAccent : 'transparent',
+                          },
+                        ]}>
+                        {rememberMe && (
+                          <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.rememberMeText,
+                          { color: colors.text, fontSize: isElderly ? 15 : 13 },
+                        ]}>
+                        Remember me
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => {
+                        setForgotEmail(email);
+                        setForgotStatus(null);
+                        setForgotModalVisible(true);
+                      }}
+                      hitSlop={8}>
+                      <Text
+                        style={[
+                          styles.forgotText,
+                          { color: colors.brandAccent, fontSize: isElderly ? 15 : 13 },
+                        ]}>
+                        Forgot Password?
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Submit Button */}
+                  <Pressable
+                    onPress={handleSignIn}
+                    disabled={loading}
+                    style={({ pressed }) => [
+                      styles.primaryActionButton,
                       {
-                        borderColor: rememberMe ? colors.brandAccent : colors.border,
-                        backgroundColor: rememberMe ? colors.brandAccent : 'transparent',
+                        backgroundColor: colors.brandAccent,
+                        shadowColor: colors.brandAccent,
+                        opacity: loading ? 0.7 : pressed ? 0.9 : 1,
                       },
                     ]}>
-                    {rememberMe && (
-                      <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                    {loading ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <View style={styles.buttonContentRow}>
+                        <Text
+                          style={[
+                            styles.primaryActionText,
+                            { fontSize: isElderly ? 18 : 16 },
+                          ]}>
+                          Sign In with Password
+                        </Text>
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                      </View>
                     )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.rememberMeText,
-                      { color: colors.text, fontSize: isElderly ? 15 : 13 },
-                    ]}>
-                    Remember me
-                  </Text>
-                </Pressable>
+                  </Pressable>
+                </>
+              )}
 
-                <Pressable
-                  onPress={() => {
-                    setForgotEmail(email);
-                    setForgotStatus(null);
-                    setForgotModalVisible(true);
-                  }}
-                  hitSlop={8}>
-                  <Text
-                    style={[
-                      styles.forgotText,
-                      { color: colors.brandAccent, fontSize: isElderly ? 15 : 13 },
-                    ]}>
-                    Forgot Password?
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Submit Button */}
-              <Pressable
-                onPress={handleSignIn}
-                disabled={loading}
-                style={({ pressed }) => [
-                  styles.primaryActionButton,
-                  {
-                    backgroundColor: colors.brandAccent,
-                    shadowColor: colors.brandAccent,
-                    opacity: loading ? 0.7 : pressed ? 0.9 : 1,
-                  },
-                ]}>
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <View style={styles.buttonContentRow}>
-                    <Text
-                      style={[
-                        styles.primaryActionText,
-                        { fontSize: isElderly ? 18 : 16 },
+              {/* METHOD 2: OTP / CODE SECTION */}
+              {signInMethod === 'otp' && (
+                <>
+                  {!otpSent ? (
+                    <Pressable
+                      onPress={handleSendOtp}
+                      disabled={otpLoading}
+                      style={({ pressed }) => [
+                        styles.primaryActionButton,
+                        {
+                          backgroundColor: colors.brandAccent,
+                          shadowColor: colors.brandAccent,
+                          marginTop: 8,
+                          opacity: otpLoading ? 0.7 : pressed ? 0.9 : 1,
+                        },
                       ]}>
-                      Sign In to Kinly
-                    </Text>
-                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-                  </View>
-                )}
-              </Pressable>
+                      {otpLoading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <View style={styles.buttonContentRow}>
+                          <Ionicons name="paper-plane-outline" size={18} color="#FFFFFF" />
+                          <Text
+                            style={[
+                              styles.primaryActionText,
+                              { fontSize: isElderly ? 18 : 16 },
+                            ]}>
+                            Send Verification Code
+                          </Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  ) : (
+                    <>
+                      {/* OTP Code Input */}
+                      <View style={styles.inputGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                          6-Digit Verification Code
+                        </Text>
+                        <View
+                          style={[
+                            styles.inputFieldContainer,
+                            { backgroundColor: colors.background, borderColor: colors.border },
+                          ]}>
+                          <Ionicons
+                            name="shield-checkmark-outline"
+                            size={18}
+                            color={colors.textSecondary}
+                            style={styles.inputLeadingIcon}
+                          />
+                          <TextInput
+                            value={otpCode}
+                            onChangeText={(val) => {
+                              setOtpCode(val);
+                              if (errorMessage) setErrorMessage(null);
+                            }}
+                            placeholder="123456"
+                            placeholderTextColor={colors.textMuted}
+                            keyboardType="number-pad"
+                            maxLength={6}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            style={[
+                              styles.textInput,
+                              styles.otpTextInput,
+                              { color: colors.text },
+                            ]}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Resend OTP Row */}
+                      <View style={styles.otpResendRow}>
+                        <Text style={[styles.otpResendText, { color: colors.textSecondary }]}>
+                          Didn't receive email code?
+                        </Text>
+                        {otpCooldown > 0 ? (
+                          <Text style={[styles.otpCooldownBadge, { color: colors.textMuted }]}>
+                            Resend in {otpCooldown}s
+                          </Text>
+                        ) : (
+                          <Pressable
+                            onPress={handleSendOtp}
+                            disabled={otpLoading}
+                            hitSlop={8}>
+                            <Text style={[styles.otpResendAction, { color: colors.brandAccent }]}>
+                              {otpLoading ? 'Sending...' : 'Resend Code'}
+                            </Text>
+                          </Pressable>
+                        )}
+                      </View>
+
+                      {/* Verify & Sign In Button */}
+                      <Pressable
+                        onPress={handleVerifyOtpAndLogin}
+                        disabled={loading}
+                        style={({ pressed }) => [
+                          styles.primaryActionButton,
+                          {
+                            backgroundColor: colors.brandAccent,
+                            shadowColor: colors.brandAccent,
+                            opacity: loading ? 0.7 : pressed ? 0.9 : 1,
+                          },
+                        ]}>
+                        {loading ? (
+                          <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                          <View style={styles.buttonContentRow}>
+                            <Text
+                              style={[
+                                styles.primaryActionText,
+                                { fontSize: isElderly ? 18 : 16 },
+                              ]}>
+                              Verify & Sign In
+                            </Text>
+                            <Ionicons name="checkmark-done" size={18} color="#FFFFFF" />
+                          </View>
+                        )}
+                      </Pressable>
+                    </>
+                  )}
+                </>
+              )}
             </View>
 
             {/* Switch to Sign Up or Create Family */}
@@ -1322,5 +1672,68 @@ const styles = StyleSheet.create({
   sheetCloseText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Segmented Method Tabs
+  methodTabsRow: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 4,
+    gap: 6,
+  },
+  methodTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  methodTabActive: {
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  methodTabText: {
+    fontSize: 13,
+  },
+  methodJewel: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  methodJewelText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  otpTextInput: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 6,
+    textAlign: 'center',
+  },
+  otpResendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginVertical: 4,
+  },
+  otpResendText: {
+    fontSize: 13,
+  },
+  otpCooldownBadge: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  otpResendAction: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
