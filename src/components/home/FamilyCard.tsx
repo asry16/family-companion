@@ -6,6 +6,9 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { StatusChip } from '@/components/ui/StatusChip';
+import { PillButton } from '@/components/ui/PillButton';
 
 interface FamilyCardProps {
   onViewLiveMap: () => void;
@@ -70,21 +73,11 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
       </View>
 
       {/* Main Glassmorphic Card */}
-      <LinearGradient
-        colors={
-          isDark
-            ? ['rgba(17, 24, 39, 0.92)', 'rgba(15, 23, 42, 0.88)']
-            : ['rgba(255, 255, 255, 0.98)', 'rgba(248, 250, 252, 0.95)']
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[
-          styles.card,
-          {
-            borderColor: isDark ? 'rgba(56, 189, 248, 0.22)' : 'rgba(37, 99, 235, 0.12)',
-            shadowColor: isDark ? '#38BDF8' : '#1E293B',
-          },
-        ]}>
+      <GlassCard
+        borderRadius={26}
+        glowColor={isDark ? colors.blue : undefined}
+        style={styles.card}
+        contentStyle={styles.cardContent}>
         {/* Top Header Row: 🛡️ Glowing Shield • "Family" */}
         <View style={styles.cardTopRow}>
           <View style={styles.titleWithShield}>
@@ -94,7 +87,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                 style={[
                   styles.shieldHalo,
                   {
-                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.15)',
+                    backgroundColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(59, 111, 240, 0.15)',
                     transform: [
                       {
                         scale: pulseAnim.interpolate({
@@ -111,7 +104,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                 ]}
               />
               <LinearGradient
-                colors={isDark ? ['#38BDF8', '#2563EB'] : ['#2563EB', '#1D4ED8']}
+                colors={isDark ? [colors.blue, '#2563EB'] : ['#2563EB', '#1D4ED8']}
                 style={styles.shieldCoreCircle}>
                 <Ionicons name="shield-checkmark" size={17} color="#FFFFFF" />
               </LinearGradient>
@@ -125,26 +118,14 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                 ]}>
                 Family
               </Text>
-              <Text style={[styles.cardSubHeading, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+              <Text style={[styles.cardSubHeading, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                 Live Presence Active • Vault Synced
               </Text>
             </View>
           </View>
 
-          {/* Quick live indicator tag */}
-          <View
-            style={[
-              styles.liveTag,
-              {
-                backgroundColor: isDark ? 'rgba(52, 211, 153, 0.14)' : 'rgba(16, 185, 129, 0.12)',
-                borderColor: isDark ? 'rgba(52, 211, 153, 0.3)' : 'rgba(16, 185, 129, 0.2)',
-              },
-            ]}>
-            <View style={[styles.liveMiniDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
-            <Text style={[styles.liveTagText, { color: isDark ? '#34D399' : '#059669' }]}>
-              LIVE
-            </Text>
-          </View>
+          {/* Quick live indicator tag via StatusChip */}
+          <StatusChip variant="Safe" label="LIVE" size="sm" />
         </View>
 
         {/* Member Profile Details Strip */}
@@ -273,26 +254,19 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             </View>
           </View>
 
-          {/* Prominent "View Live Map →" Button */}
-          <Pressable
+          {/* Prominent "View Live Map →" Button via PillButton */}
+          <PillButton
+            title="View Live Map →"
+            variant="primary"
+            size="sm"
             onPress={() => {
               triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
               onViewLiveMap();
             }}
-            style={({ pressed }) => [
-              styles.viewMapButton,
-              {
-                backgroundColor: isDark ? '#38BDF8' : '#2563EB',
-                opacity: pressed ? 0.88 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}>
-            <Text style={[styles.viewMapText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
-              View Live Map →
-            </Text>
-          </Pressable>
+            style={styles.viewMapButton}
+          />
         </View>
-      </LinearGradient>
+      </GlassCard>
     </View>
   );
 };
@@ -310,14 +284,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   card: {
-    borderRadius: 26,
-    borderWidth: 1.2,
-    padding: 18,
+    padding: 0,
+  },
+  cardContent: {
     gap: 14,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
   },
   cardTopRow: {
     flexDirection: 'row',

@@ -67,7 +67,7 @@ export default function HomeScreen() {
       style={[
         styles.screen,
         {
-          backgroundColor: isDark ? '#080C15' : '#F8FAFC',
+          backgroundColor: colors.background,
         },
       ]}>
       {/* 1. Personalized Header (Deco greeting, User avatar, Safety status, Action icons) */}

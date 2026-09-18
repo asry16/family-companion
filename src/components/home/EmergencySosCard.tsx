@@ -133,7 +133,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
     <LinearGradient
       colors={
         isDark
-          ? ['rgba(239, 68, 68, 0.16)', 'rgba(136, 19, 55, 0.22)', 'rgba(15, 23, 42, 0.85)']
+          ? ['rgba(240, 82, 77, 0.18)', 'rgba(120, 20, 30, 0.22)', 'rgba(15, 26, 58, 0.85)']
           : ['#FFF1F2', '#FFE4E6', '#FFF5F5']
       }
       start={{ x: 0, y: 0 }}
@@ -141,8 +141,8 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
       style={[
         styles.cardContainer,
         {
-          borderColor: isDark ? 'rgba(244, 63, 94, 0.32)' : '#FECDD3',
-          shadowColor: isDark ? '#EF4444' : '#E11D48',
+          borderColor: isDark ? 'rgba(240, 82, 77, 0.35)' : 'rgba(240, 82, 77, 0.20)',
+          shadowColor: isDark ? colors.red : '#F0524D',
         },
       ]}>
       {/* Top Header Row */}
@@ -318,7 +318,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     borderRadius: 26,
-    borderWidth: 1.2,
+    borderWidth: 1,
     padding: 18,
     gap: 16,
     shadowOffset: { width: 0, height: 6 },

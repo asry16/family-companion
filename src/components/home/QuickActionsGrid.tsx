@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 
 interface QuickActionsGridProps {
   onSeeAll?: () => void;
@@ -58,60 +59,54 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
       title: 'Add Plan',
       subtitle: 'Schedule event or task',
       icon: 'calendar-outline' as const,
-      accent: isDark ? '#38BDF8' : '#2563EB',
-      glowBg: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(37, 99, 235, 0.1)',
-      borderAccent: isDark ? 'rgba(56, 189, 248, 0.28)' : 'rgba(37, 99, 235, 0.18)',
+      accent: colors.blue,
+      glowBg: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)',
+      borderAccent: isDark ? 'rgba(59, 111, 240, 0.32)' : 'rgba(59, 111, 240, 0.16)',
     },
     {
       id: 'scan',
       title: 'Scan Document',
       subtitle: 'Prescriptions & vault',
       icon: 'scan-outline' as const,
-      accent: isDark ? '#34D399' : '#059669',
-      glowBg: isDark ? 'rgba(52, 211, 153, 0.16)' : 'rgba(16, 185, 129, 0.1)',
-      borderAccent: isDark ? 'rgba(52, 211, 153, 0.28)' : 'rgba(16, 185, 129, 0.18)',
+      accent: colors.green,
+      glowBg: isDark ? 'rgba(34, 197, 139, 0.20)' : 'rgba(34, 197, 139, 0.10)',
+      borderAccent: isDark ? 'rgba(34, 197, 139, 0.32)' : 'rgba(34, 197, 139, 0.16)',
     },
     {
       id: 'checkin',
       title: 'Check In',
       subtitle: 'Broadcast safe status',
       icon: 'navigate-outline' as const,
-      accent: isDark ? '#FBBF24' : '#D97706',
-      glowBg: isDark ? 'rgba(251, 191, 36, 0.16)' : 'rgba(245, 158, 11, 0.1)',
-      borderAccent: isDark ? 'rgba(251, 191, 36, 0.28)' : 'rgba(245, 158, 11, 0.18)',
+      accent: colors.purple,
+      glowBg: isDark ? 'rgba(124, 92, 224, 0.20)' : 'rgba(124, 92, 224, 0.10)',
+      borderAccent: isDark ? 'rgba(124, 92, 224, 0.32)' : 'rgba(124, 92, 224, 0.16)',
     },
     {
       id: 'brief',
       title: 'AI Brief',
       subtitle: 'Voice morning brief',
       icon: 'sparkles' as const,
-      accent: isDark ? '#C084FC' : '#7C3AED',
-      glowBg: isDark ? 'rgba(192, 132, 252, 0.16)' : 'rgba(124, 58, 237, 0.1)',
-      borderAccent: isDark ? 'rgba(192, 132, 252, 0.28)' : 'rgba(124, 58, 237, 0.18)',
+      accent: colors.pink,
+      glowBg: isDark ? 'rgba(236, 72, 153, 0.20)' : 'rgba(236, 72, 153, 0.10)',
+      borderAccent: isDark ? 'rgba(236, 72, 153, 0.32)' : 'rgba(236, 72, 153, 0.16)',
     },
   ];
 
   return (
     <View style={styles.container}>
-      {/* Section Header */}
-      <View style={styles.headerRow}>
-        <Text style={[styles.sectionTitle, { color: colors.text, fontSize: isElderly ? 18 : 15 }]}>
-          QUICK ACTIONS
-        </Text>
-        <Pressable
-          onPress={() => {
-            if (onSeeAll) {
-              onSeeAll();
-            } else {
-              router.push('/(tabs)/plans');
-            }
-          }}
-          hitSlop={8}>
-          <Text style={[styles.seeAllText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
-            See all →
-          </Text>
-        </Pressable>
-      </View>
+      {/* Reusable Section Header */}
+      <SectionHeader
+        title="Quick Actions"
+        categoryTag="ACTIONS"
+        actionText="See all →"
+        onActionPress={() => {
+          if (onSeeAll) {
+            onSeeAll();
+          } else {
+            router.push('/(tabs)/plans');
+          }
+        }}
+      />
 
       {/* 2×2 Rounded Action Cards Grid */}
       <View style={styles.gridRow}>
@@ -122,11 +117,11 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
             style={({ pressed }) => [
               styles.actionCard,
               {
-                backgroundColor: isDark ? '#111827' : '#FFFFFF',
+                backgroundColor: colors.cardBackground,
                 borderColor: act.borderAccent,
                 opacity: pressed ? 0.88 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
-                shadowColor: isDark ? act.accent : '#64748B',
+                shadowColor: isDark ? act.accent : '#14203A',
               },
             ]}>
             {/* Glowing circular icon backdrop */}
@@ -134,12 +129,12 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
               <Ionicons name={act.icon} size={20} color={act.accent} />
             </View>
 
-            {/* Title & Short Subtitle */}
+            {/* Title & Short Subtitle in clean geometric sans */}
             <View style={styles.textStack}>
               <Text
                 style={[
                   styles.cardTitle,
-                  { color: colors.text, fontSize: isElderly ? 16 : 14 },
+                  { color: colors.text, fontSize: isElderly ? 16 : 14.5 },
                 ]}>
                 {act.title}
               </Text>
@@ -147,7 +142,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
                 numberOfLines={1}
                 style={[
                   styles.cardSubtitle,
-                  { color: isDark ? '#94A3B8' : '#64748B' },
+                  { color: isDark ? colors.textMuted : colors.textSecondary },
                 ]}>
                 {act.subtitle}
               </Text>

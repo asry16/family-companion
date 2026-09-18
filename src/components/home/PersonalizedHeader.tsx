@@ -7,6 +7,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
+import { IconCircleButton } from '@/components/ui/IconCircleButton';
 
 interface PersonalizedHeaderProps {
   onOpenSettings?: () => void;
@@ -78,10 +79,10 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 style={[
                   styles.decoGreeting,
                   {
-                    color: isDark ? '#94A3B8' : '#64748B',
+                    color: isDark ? colors.textMuted : colors.textSecondary,
                   },
                 ]}>
-                {greetingText.toUpperCase()}
+                {greetingText}
               </Text>
               <Text style={styles.timeEmoji}>{timeIcon}</Text>
             </View>
@@ -92,7 +93,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 styles.userNameText,
                 {
                   color: colors.text,
-                  fontSize: isElderly ? 26 : 22,
+                  fontSize: isElderly ? 24 : 21,
                 },
               ]}>
               {firstName}
@@ -103,11 +104,11 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               <View
                 style={[
                   styles.statusBeaconOuter,
-                  { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.2)' : 'rgba(16, 185, 129, 0.15)' },
+                  { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(34, 197, 139, 0.15)' },
                 ]}>
                 <View style={[styles.statusBeaconInner, { backgroundColor: colors.green }]} />
               </View>
-              <Text style={[styles.safetyStatusText, { color: isDark ? '#34D399' : '#059669' }]}>
+              <Text style={[styles.safetyStatusText, { color: isDark ? colors.green : '#059669' }]}>
                 {allSafe ? `All ${totalCount} members safe` : `${safeCount} of ${totalCount} safe`}
               </Text>
               <Text style={[styles.safetyDotSeparator, { color: colors.textMuted }]}>•</Text>
@@ -120,53 +121,33 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
           {/* Right: Frosted Circular Actions */}
           <View style={styles.actionsCluster}>
             {/* Theme Toggle Button */}
-            <Pressable
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  try {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  } catch (e) {}
-                }
-                toggleTheme();
-              }}
+            <IconCircleButton
+              name={isDark ? 'sunny' : 'moon'}
+              size={38}
+              iconSize={17}
+              color={isDark ? '#FBBF24' : colors.blue}
+              glowColor={isDark ? '#FBBF24' : undefined}
+              onPress={toggleTheme}
               accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-              style={({ pressed }) => [
-                styles.circleBtn,
-                {
-                  backgroundColor: isDark ? 'rgba(21, 31, 51, 0.85)' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(0, 0, 0, 0.08)',
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Ionicons
-                name={isDark ? 'sunny' : 'moon'}
-                size={17}
-                color={isDark ? '#FBBF24' : '#2563EB'}
-              />
-            </Pressable>
+            />
 
             {/* Notifications Button */}
-            <Pressable
+            <IconCircleButton
+              name="notifications-outline"
+              size={38}
+              iconSize={17}
+              color={colors.text}
+              badgeCount={unreadCount}
               onPress={() => router.push('/modal/notifications')}
               accessibilityLabel="Notifications"
-              style={({ pressed }) => [
-                styles.circleBtn,
-                {
-                  backgroundColor: isDark ? 'rgba(21, 31, 51, 0.85)' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Ionicons name="notifications-outline" size={17} color={colors.text} />
-              {unreadCount > 0 && (
-                <View style={[styles.unreadDot, { backgroundColor: colors.red }]}>
-                  <Text style={styles.unreadDotText}>{unreadCount}</Text>
-                </View>
-              )}
-            </Pressable>
+            />
 
             {/* Settings Gear */}
-            <Pressable
+            <IconCircleButton
+              name="settings-outline"
+              size={38}
+              iconSize={17}
+              color={colors.text}
               onPress={() => {
                 if (onOpenSettings) {
                   onOpenSettings();
@@ -175,16 +156,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 }
               }}
               accessibilityLabel="Settings"
-              style={({ pressed }) => [
-                styles.circleBtn,
-                {
-                  backgroundColor: isDark ? 'rgba(21, 31, 51, 0.85)' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Ionicons name="settings-outline" size={17} color={colors.text} />
-            </Pressable>
+            />
           </View>
         </View>
 
@@ -483,19 +455,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  // Art Deco styled typographic treatment
+  // Art Deco styled typographic treatment - italic serif/script
   decoGreeting: {
-    fontFamily: Platform.select({ ios: 'Didot', android: 'serif', default: 'Didot, Georgia, serif' }),
-    fontSize: 11,
-    letterSpacing: 1.8,
-    fontWeight: '700',
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' }),
+    fontStyle: 'italic',
+    fontSize: 13.5,
+    letterSpacing: 0.3,
+    fontWeight: '500',
   },
   timeEmoji: {
     fontSize: 12,
   },
   userNameText: {
-    fontWeight: '800',
-    letterSpacing: -0.4,
+    fontFamily: Platform.select({ ios: 'System', android: 'Roboto', default: 'Inter, system-ui, -apple-system, sans-serif' }),
+    fontWeight: '600',
+    letterSpacing: -0.2,
     marginTop: -1,
   },
   safetyStatusRow: {

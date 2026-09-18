@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { StatusChip, StatusChipVariant } from '@/components/ui/StatusChip';
 
 export const CircleTimelineCard: React.FC = () => {
   const router = useRouter();
@@ -17,16 +19,22 @@ export const CircleTimelineCard: React.FC = () => {
     }
   };
 
-  const timelineEvents = [
+  const timelineEvents: Array<{
+    id: string;
+    time: string;
+    title: string;
+    details: string;
+    nodeColor: string;
+    variant: StatusChipVariant;
+    route: string;
+  }> = [
     {
       id: 'evt_1',
       time: '09:42 AM',
       title: 'Asmita arrived at Home',
       details: 'Geofence Sanctuary verified',
-      nodeColor: '#10B981',
-      pillText: 'Safe',
-      pillBg: isDark ? 'rgba(52, 211, 153, 0.16)' : '#ECFDF5',
-      pillColor: isDark ? '#34D399' : '#059669',
+      nodeColor: colors.green,
+      variant: 'Safe',
       route: '/(tabs)/family',
     },
     {
@@ -34,10 +42,8 @@ export const CircleTimelineCard: React.FC = () => {
       time: '11:15 AM',
       title: 'Pediatric checkup confirmed',
       details: 'Dr. Sharma • Clinic Downtown',
-      nodeColor: isDark ? '#38BDF8' : '#2563EB',
-      pillText: 'All good',
-      pillBg: isDark ? 'rgba(56, 189, 248, 0.16)' : '#EFF6FF',
-      pillColor: isDark ? '#38BDF8' : '#2563EB',
+      nodeColor: colors.blue,
+      variant: 'All good',
       route: '/(tabs)/plans',
     },
     {
@@ -45,10 +51,8 @@ export const CircleTimelineCard: React.FC = () => {
       time: '01:30 PM',
       title: 'Health card document synced',
       details: 'Updated to Private Family Vault',
-      nodeColor: isDark ? '#C084FC' : '#7C3AED',
-      pillText: 'Vault',
-      pillBg: isDark ? 'rgba(192, 132, 252, 0.16)' : '#F5F3FF',
-      pillColor: isDark ? '#C084FC' : '#7C3AED',
+      nodeColor: colors.purple,
+      variant: 'Vault',
       route: '/(tabs)/memory',
     },
     {
@@ -56,32 +60,26 @@ export const CircleTimelineCard: React.FC = () => {
       time: '04:05 PM',
       title: 'School pickup & grocery route',
       details: 'Whole Foods • 3 items pending',
-      nodeColor: isDark ? '#FBBF24' : '#D97706',
-      pillText: 'View',
-      pillBg: isDark ? 'rgba(251, 191, 36, 0.16)' : '#FFFBEB',
-      pillColor: isDark ? '#FBBF24' : '#D97706',
+      nodeColor: isDark ? colors.yellow : '#D97706',
+      variant: 'View',
       route: '/(tabs)/plans',
     },
   ];
 
   return (
-    <View
-      style={[
-        styles.cardContainer,
-        {
-          backgroundColor: isDark ? '#111827' : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.09)' : 'rgba(0, 0, 0, 0.06)',
-          shadowColor: isDark ? '#000000' : '#64748B',
-        },
-      ]}>
+    <GlassCard
+      borderRadius={26}
+      glowColor={isDark ? colors.blue : undefined}
+      style={styles.cardContainer}
+      contentStyle={styles.cardContent}>
       {/* Header */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <Text style={[styles.mainHeading, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
             Today in your Circle
           </Text>
-          <View style={[styles.eventCountTag, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' }]}>
-            <Text style={[styles.eventCountText, { color: isDark ? '#38BDF8' : '#2563EB' }]}>
+          <View style={[styles.eventCountTag, { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.15)' : 'rgba(59, 111, 240, 0.10)' }]}>
+            <Text style={[styles.eventCountText, { color: colors.blue }]}>
               {timelineEvents.length} events
             </Text>
           </View>
@@ -90,7 +88,7 @@ export const CircleTimelineCard: React.FC = () => {
         <Pressable
           onPress={() => router.push('/(tabs)/plans')}
           hitSlop={8}>
-          <Text style={[styles.timelineAllText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+          <Text style={[styles.timelineAllText, { color: colors.blue }]}>
             History →
           </Text>
         </Pressable>
@@ -114,7 +112,7 @@ export const CircleTimelineCard: React.FC = () => {
               ]}>
               {/* Left: Timestamp Column */}
               <View style={styles.timeColumn}>
-                <Text style={[styles.timeText, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+                <Text style={[styles.timeText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                   {item.time}
                 </Text>
               </View>
@@ -128,13 +126,13 @@ export const CircleTimelineCard: React.FC = () => {
                   <View
                     style={[
                       styles.trackLine,
-                      { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0' },
+                      { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(20, 32, 58, 0.08)' },
                     ]}
                   />
                 )}
               </View>
 
-              {/* Right: Content Stack & Status Pill */}
+              {/* Right: Content Stack & Status Pill via StatusChip */}
               <View style={styles.contentColumn}>
                 <View style={styles.eventTextStack}>
                   <Text
@@ -149,23 +147,19 @@ export const CircleTimelineCard: React.FC = () => {
                     numberOfLines={1}
                     style={[
                       styles.eventDetails,
-                      { color: isDark ? '#94A3B8' : '#64748B' },
+                      { color: isDark ? colors.textMuted : colors.textSecondary },
                     ]}>
                     {item.details}
                   </Text>
                 </View>
 
-                {/* Status Pill & Navigation Chevron */}
+                {/* StatusChip & Navigation Chevron */}
                 <View style={styles.pillWithChevron}>
-                  <View style={[styles.statusPill, { backgroundColor: item.pillBg }]}>
-                    <Text style={[styles.statusPillText, { color: item.pillColor }]}>
-                      {item.pillText}
-                    </Text>
-                  </View>
+                  <StatusChip variant={item.variant} size="sm" />
                   <Ionicons
                     name="chevron-forward"
                     size={14}
-                    color={isDark ? '#64748B' : '#94A3B8'}
+                    color={isDark ? colors.textMuted : colors.textSecondary}
                   />
                 </View>
               </View>
@@ -173,20 +167,16 @@ export const CircleTimelineCard: React.FC = () => {
           );
         })}
       </View>
-    </View>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 24,
-    borderWidth: 1.2,
-    padding: 18,
+    padding: 0,
+  },
+  cardContent: {
     gap: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
