@@ -43,8 +43,6 @@ export default function MemoryScreen() {
     if (!isAuthenticated) router.replace('/login');
   }, [isAuthenticated]);
 
-  if (!isAuthenticated) return null;
-
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -107,6 +105,8 @@ export default function MemoryScreen() {
     setNewLocation('');
     setAddModalVisible(false);
   };
+
+  if (!isAuthenticated) return null;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
