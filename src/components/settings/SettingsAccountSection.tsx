@@ -19,8 +19,8 @@ export interface SettingsAccountSectionProps {
 }
 
 export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
-  userName = 'Asmita Roy',
-  userEmail = 'asmita@kinly.family',
+  userName = 'Family Member',
+  userEmail = '',
   signInMethod = 'Email',
   onLogout,
 }) => {

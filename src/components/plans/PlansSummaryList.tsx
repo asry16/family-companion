@@ -49,19 +49,19 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
   const resolvedScheduleStatus =
     scheduleStatus ||
     (isPopulated
-      ? '2 events • Next: Doctor 10:30 AM'
+      ? 'Upcoming events scheduled for today'
       : 'No scheduled calendar events for today.');
 
   const resolvedTasksStatus =
     tasksStatus ||
     (isPopulated
-      ? '1 task • Next: Electricity bill 2:00 PM'
+      ? 'Active family tasks in progress'
       : 'All family tasks have been completed.');
 
   const resolvedRemindersStatus =
     remindersStatus ||
     (isPopulated
-      ? '1 reminder • Next: BP Check 8:00 PM'
+      ? 'Active care and household reminders'
       : 'Stay on top of important care, birthdays and more.');
 
   const dividerColor = isDark

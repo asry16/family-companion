@@ -19,7 +19,6 @@ import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
-import { initialMemories } from '@/data/mockFamilyData';
 import { MemoryItem } from '@/types';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
@@ -36,7 +35,7 @@ export default function MemoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { memories, searchMemories, addMemory, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
 
@@ -49,9 +48,6 @@ export default function MemoryScreen() {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
-  // State preview toggle: true = preview Empty state, false = preview Populated state
-  const [isPreviewEmpty, setIsPreviewEmpty] = useState<boolean>(false);
 
   // Add Location Modal State
   const [addModalVisible, setAddModalVisible] = useState<boolean>(false);
@@ -60,8 +56,8 @@ export default function MemoryScreen() {
   const [newCategory, setNewCategory] = useState<'documents' | 'household' | 'health'>('household');
   const [selectedDetailItem, setSelectedDetailItem] = useState<MemoryItem | null>(null);
 
-  // Use live memories if available, otherwise fallback to initialMemories for demonstration
-  const baseMemories = memories && memories.length > 0 ? memories : initialMemories;
+  // Use live memories if available
+  const baseMemories = memories || [];
 
   // Filter items by category and query
   const filteredMemories = baseMemories.filter((m) => {
@@ -100,7 +96,7 @@ export default function MemoryScreen() {
       category: newCategory,
       savedLocation: newLocation.trim(),
       lastVerified: 'Just now',
-      notes: `Saved by ${activeUser?.name || 'Asmita'} to family vault`,
+      notes: `Saved by ${activeUser?.name || user?.name || 'You'} to family vault`,
       tags: ['saved', newCategory],
       relatedMemberIds: [activeUser?.id || 'self'],
       emoji: newCategory === 'documents' ? '📄' : newCategory === 'health' ? '🩺' : '📦',
@@ -110,13 +106,12 @@ export default function MemoryScreen() {
     setNewTitle('');
     setNewLocation('');
     setAddModalVisible(false);
-    setIsPreviewEmpty(false);
   };
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <LightBackdrop />
-      {/* 1. Header: Avatar "A" with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
+      {/* 1. Header: Avatar with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
       <VaultHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'vault' } })}
       />
@@ -136,29 +131,22 @@ export default function MemoryScreen() {
           onVoicePress={handleVoiceSearch}
         />
 
-        {/* 3. Suggestion Chips: Single Horizontally Scrollable Row ("Dad's Passport", "Wi-Fi Password", "Dadi's Glasses") */}
+        {/* 3. Suggestion Chips: Single Horizontally Scrollable Row */}
         <VaultSuggestionChips
           activeQuery={searchQuery}
           onSelectSuggestion={(term) => setSearchQuery(term)}
         />
 
-        {/* 4. Category Filter Chips: "All Saved" (filled blue gradient), "Documents", "Household", "+ Save Location", State Preview Toggle */}
+        {/* 4. Category Filter Chips: "All Saved", "Documents", "Household", "+ Save Location" */}
         <VaultCategoryFilters
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           onSaveLocationPress={() => setAddModalVisible(true)}
-          isPreviewEmpty={isPreviewEmpty}
-          onTogglePreview={() => setIsPreviewEmpty(!isPreviewEmpty)}
         />
 
         {/* 5 & 6. Empty State Card / Populated State Items List */}
-        {isPreviewEmpty ? (
-          /* Empty State Card matching reference */
-          <VaultEmptyStateCard
-            onSaveFirstLocation={() => setAddModalVisible(true)}
-          />
-        ) : filteredMemories.length === 0 ? (
-          /* Search yielded no matches */
+        {filteredMemories.length === 0 ? (
+          /* Search yielded no matches or empty vault */
           <VaultEmptyStateCard
             title={searchQuery ? `No matches for "${searchQuery}"` : 'No Saved Memories'}
             body={

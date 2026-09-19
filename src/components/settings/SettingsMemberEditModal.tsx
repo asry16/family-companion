@@ -136,7 +136,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g. Asmita Roy"
+                placeholder="e.g. Alex Morgan"
                 placeholderTextColor={colors.textMuted}
                 style={[
                   styles.textInput,

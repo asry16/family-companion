@@ -223,27 +223,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (e) {}
         }
 
-        // Seed demo account if no accounts exist or if logging in as demo
-        if (accounts.length === 0 || rawId.toLowerCase() === 'demo@kinly.app') {
-          const demoHashed = await hashPassword('password123');
-          const demoAccount: StoredUserAccount = {
-            id: 'user_demo_chen',
-            name: 'Sarah Chen',
-            username: 'sarah_chen',
-            email: 'demo@kinly.app',
-            phone: '+1 555-0100',
-            passwordHash: demoHashed,
-            familyMemberId: 'member_demo_sarah',
-            familyName: "Chen Family",
-            relation: 'Mother',
-            isEmailVerified: true,
-          };
-          if (!accounts.some((a) => a.email.toLowerCase() === 'demo@kinly.app')) {
-            accounts.push(demoAccount);
-            await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
-          }
-        }
-
         // Match by email, phone, or username
         const found = accounts.find((a) => {
           if (cleanEmail && a.email && a.email.toLowerCase() === cleanEmail) return true;

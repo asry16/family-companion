@@ -133,7 +133,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
               : 'rgba(124, 92, 224, 0.14)',
           },
         ]}>
-        {/* Top Pill: "The A Family • Active & Synced" */}
+        {/* Top Pill: Family Active & Synced */}
         {message.highlight && (
           <View
             style={[

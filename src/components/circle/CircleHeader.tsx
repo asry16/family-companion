@@ -31,9 +31,9 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
   const { profile, members, unreadCount } = useFamily();
   const { user } = useAuth();
 
-  const familyName = profile?.name || "The A Family";
+  const familyName = profile?.name || user?.familyName || 'My Family';
   const memberCount = members?.length || 1;
-  const initial = (user?.name?.charAt(0) || profile?.name?.charAt(0) || 'A').toUpperCase();
+  const initial = (user?.name?.trim().charAt(0) || profile?.name?.trim().charAt(0) || 'K').toUpperCase();
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -80,7 +80,7 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
               Family Circle
             </Text>
 
-            {/* Tappable Pill: green dot, "The A Family • 1 member connected", chevron */}
+            {/* Tappable Pill: green dot, family name & member count, chevron */}
             <Pressable
               onPress={() => {
                 triggerHaptic();

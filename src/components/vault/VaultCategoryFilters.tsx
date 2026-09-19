@@ -16,16 +16,12 @@ interface VaultCategoryFiltersProps {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
   onSaveLocationPress: () => void;
-  isPreviewEmpty: boolean;
-  onTogglePreview: () => void;
 }
 
 export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
   selectedCategory,
   onSelectCategory,
   onSaveLocationPress,
-  isPreviewEmpty,
-  onTogglePreview,
 }) => {
   const { colors, isDark } = useAppTheme();
 
@@ -125,30 +121,6 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
             + Save Location
           </Text>
         </Pressable>
-
-        {/* State Preview Toggle Pill (Populated ⇋ Empty) */}
-        <Pressable
-          onPress={() => {
-            triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-            onTogglePreview();
-          }}
-          style={({ pressed }) => [
-            styles.previewTogglePill,
-            {
-              backgroundColor: isDark ? 'rgba(124, 92, 224, 0.16)' : 'rgba(124, 92, 224, 0.10)',
-              borderColor: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.22)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons
-            name={isPreviewEmpty ? 'folder-open-outline' : 'sparkles-outline'}
-            size={12}
-            color={isDark ? colors.purple : '#7C5CE0'}
-          />
-          <Text style={[styles.previewToggleText, { color: isDark ? colors.purple : '#7C5CE0' }]}>
-            {isPreviewEmpty ? 'State: Empty' : 'State: Populated'}
-          </Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
@@ -169,31 +141,28 @@ const styles = StyleSheet.create({
   },
   gradientPill: {
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowRadius: 4,
     elevation: 3,
   },
   selectedText: {
     fontSize: 12.5,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.1,
   },
   unselectedPill: {
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   unselectedText: {
     fontSize: 12.5,
     fontWeight: '600',
+    letterSpacing: -0.1,
   },
   saveLocationPill: {
     flexDirection: 'row',
@@ -206,19 +175,6 @@ const styles = StyleSheet.create({
   },
   saveLocationText: {
     fontSize: 12.5,
-    fontWeight: '700',
-  },
-  previewTogglePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  previewToggleText: {
-    fontSize: 11.5,
     fontWeight: '700',
   },
 });

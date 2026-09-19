@@ -21,8 +21,8 @@ export interface SettingsInviteCardProps {
 }
 
 export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
-  inviteCode = 'KIN-2041',
-  familyName = 'The A Family',
+  inviteCode = 'KIN-0000',
+  familyName = 'My Family',
   onViewQR,
   onShareInvite,
   onJoinOtherFamily,

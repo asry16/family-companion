@@ -52,32 +52,11 @@ export class MockKinlyChatService implements IChatService {
     await new Promise((resolve) => setTimeout(resolve, 600));
 
     const normalized = text.trim().toLowerCase();
-    const familyName = context?.familyName || 'The A Family';
-    const activeUserName = context?.activeUser?.name || 'Asmita';
-    const rawMembers = context?.members && context.members.length > 0 ? context.members : [
-      {
-        id: '1',
-        name: 'Dad (Rajesh)',
-        relation: 'Father',
-        initials: 'R',
-        avatarColor: '#3B6FF0',
-        humanLocation: 'Home Office',
-        batteryLevel: 82,
-        isCharging: false,
-        statusMessage: 'At desk',
-      } as FamilyMember,
-      {
-        id: '2',
-        name: 'Dadi (Kamla)',
-        relation: 'Grandmother',
-        initials: 'K',
-        avatarColor: '#7C5CE0',
-        humanLocation: 'Living Room',
-        batteryLevel: 94,
-        isCharging: true,
-        statusMessage: 'Reading morning newspaper',
-      } as FamilyMember,
-    ];
+    const familyName = context?.familyName || 'Your Family';
+    const activeUserName = context?.activeUser?.name || 'You';
+    const rawMembers = context?.members && context.members.length > 0
+      ? context.members
+      : (context?.activeUser ? [context.activeUser] : []);
 
     const mappedMembers: ChatMemberStatusItem[] = rawMembers.map((m) => ({
       id: m.id,

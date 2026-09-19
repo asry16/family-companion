@@ -26,7 +26,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
   const { profile, unreadCount, simpleMode, setSimpleMode } = useFamily();
   const { user } = useAuth();
 
-  const initial = (user?.name?.charAt(0) || profile?.name?.charAt(0) || 'A').toUpperCase();
+  const initial = (user?.name?.trim().charAt(0) || profile?.name?.trim().charAt(0) || 'K').toUpperCase();
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {

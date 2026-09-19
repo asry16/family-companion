@@ -21,7 +21,7 @@ export interface SettingsTopBarProps {
 
 export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
   title = 'Family Settings',
-  familyName = 'The A Family',
+  familyName = 'My Family',
   memberCount = 1,
   onBack,
 }) => {

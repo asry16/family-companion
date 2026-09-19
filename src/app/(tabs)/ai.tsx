@@ -81,8 +81,8 @@ export default function AIScreen({
     return 'Good evening';
   };
 
-  const familyName = profile?.name || 'The A Family';
-  const userName = user?.name?.split(' ')[0] || activeUser?.name?.split(' ')[0] || 'Asmita';
+  const familyName = profile?.name || user?.familyName || 'Your Family';
+  const userName = user?.name?.split(' ')[0] || activeUser?.name?.split(' ')[0] || 'there';
 
   // Initial welcome message from assistant
   const [messages, setMessages] = useState<ChatMessageItem[]>([

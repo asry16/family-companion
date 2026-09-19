@@ -31,27 +31,6 @@ import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
-const DEFAULT_MOCK_MEMBERS: FamilyMember[] = [
-  {
-    id: 'mem-1',
-    name: 'Asmita Roy',
-    relation: 'Self',
-    initials: 'A',
-    avatarColor: '#3B6FF0',
-    isSelf: true,
-    humanLocation: 'At Home',
-    statusMessage: 'Online and safe',
-    batteryLevel: 88,
-    isCharging: false,
-    phone: '+1 555-0100',
-    currentPlaceId: 'home',
-    isSharingLocation: true,
-    sharingDuration: 'always',
-    lastUpdated: 'Just now',
-    availability: 'available',
-  },
-];
-
 export interface FamilySettingsScreenProps {
   initialFamilyName?: string;
   initialInviteCode?: string;
@@ -91,14 +70,41 @@ export default function FamilySettingsScreen({
   );
 
   // Dynamic Family Data
-  const familyName = initialFamilyName || profile?.name || 'The A Family';
-  const inviteCode = initialInviteCode || profile?.code || 'KIN-2041';
+  const familyName = initialFamilyName || profile?.name || user?.familyName || 'My Family';
+  const inviteCode = initialInviteCode || profile?.code || 'KIN-0000';
 
   // State
   const [memberList, setMemberList] = useState<FamilyMember[]>(() => {
     if (initialMembers && initialMembers.length > 0) return initialMembers;
     if (contextMembers && contextMembers.length > 0) return contextMembers;
-    return DEFAULT_MOCK_MEMBERS;
+    if (user) {
+      return [
+        {
+          id: user.familyMemberId || `mem-${user.id}`,
+          name: user.name,
+          relation: ((user.relation as MemberRelation) || 'Self'),
+          initials: user.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          avatarColor: '#3B6FF0',
+          isSelf: true,
+          humanLocation: 'At Home',
+          statusMessage: 'Online and safe',
+          batteryLevel: 95,
+          isCharging: false,
+          phone: user.phone || '',
+          currentPlaceId: 'home',
+          isSharingLocation: true,
+          sharingDuration: 'always',
+          lastUpdated: 'Just now',
+          availability: 'available',
+        },
+      ];
+    }
+    return [];
   });
 
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -110,12 +116,12 @@ export default function FamilySettingsScreen({
 
   // Current user's member object
   const selfMember = memberList.find((m) => m.isSelf || m.id === user?.familyMemberId) || memberList[0];
-  const userName = user?.name || selfMember?.name || 'Asmita Roy';
-  const userEmail = user?.email || 'asmita@kinly.family';
+  const userName = user?.name || selfMember?.name || 'Family Member';
+  const userEmail = user?.email || '';
   const userPhotoUrl = user?.photoUrl || selfMember?.photoUrl;
-  const userPhone = user?.phone || selfMember?.phone || '+1 555-0100';
+  const userPhone = user?.phone || selfMember?.phone || '';
   const userRelation = (user?.relation || selfMember?.relation || 'Self') as MemberRelation;
-  const userStatus = selfMember?.statusMessage || 'Online and safe';
+  const userStatus = selfMember?.statusMessage || 'Active on Kinly';
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {

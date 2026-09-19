@@ -1162,7 +1162,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
       </View>
 
       {/* ========================================================================= */}
-      {/* 4. MEMBER FILTER CHIPS BELOW MAP: [ All (1) ] [ 🟢 Asmita ]               */}
+      {/* 4. MEMBER FILTER CHIPS BELOW MAP: [ All (1) ] [ 🟢 Member ]               */}
       {/* ========================================================================= */}
       <ScrollView
         horizontal
@@ -1313,7 +1313,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                 ]}
               />
 
-              {/* Member Title: Asmita \n 🟢 Live · Home */}
+              {/* Member Title: Name \n 🟢 Live · Home */}
               <View style={styles.sheetTopRow}>
                 <View style={{ flex: 1 }}>
                   <Text

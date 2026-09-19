@@ -50,7 +50,7 @@ const RELATION_OPTIONS: MemberRelation[] = [
 export const PRESET_AVATARS = [
   {
     id: 'p1',
-    name: 'Asmita (Warm)',
+    name: 'Warm Portrait',
     url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
   },
   {
@@ -451,7 +451,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g. Asmita Roy"
+                placeholder="e.g. Alex Morgan"
                 placeholderTextColor={isDark ? colors.textMuted : colors.textSecondary}
                 style={[
                   styles.textInput,

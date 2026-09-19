@@ -24,8 +24,11 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
   const { user, isAuthenticated, signOut } = useAuth();
   const [profileModalVisible, setProfileModalVisible] = useState(false);
 
-  const rawName = user?.name || activeUser?.name || 'Asmita';
-  const firstName = rawName.split(' ')[0] || 'Asmita';
+  const rawName = user?.name || activeUser?.name || 'Friend';
+  const firstName = rawName.split(' ')[0] || 'Friend';
+
+  const currentHour = new Date().getHours();
+  const timeGreeting = currentHour < 12 ? 'Good morning,' : currentHour < 17 ? 'Good afternoon,' : 'Good evening,';
 
   const handleSignOut = async () => {
     setProfileModalVisible(false);
@@ -52,7 +55,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                   color: isDark ? colors.textMuted : colors.textSecondary,
                 },
               ]}>
-              Good evening,
+              {timeGreeting}
             </Text>
 
             <View style={styles.nameRow}>

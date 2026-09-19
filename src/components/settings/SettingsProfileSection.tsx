@@ -24,12 +24,12 @@ export interface SettingsProfileSectionProps {
 }
 
 export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
-  name = 'Asmita Roy',
-  email = 'asmita@kinly.family',
+  name = 'Family Member',
+  email = '',
   photoUrl,
-  phone = '+1 555-0100',
-  relation = 'Self (Family Organizer)',
-  statusMessage = 'Online and safe',
+  phone = '',
+  relation = 'Self',
+  statusMessage = 'Active on Kinly',
   onEditProfile,
 }) => {
   const { colors, isDark } = useAppTheme();

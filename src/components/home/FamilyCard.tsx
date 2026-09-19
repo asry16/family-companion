@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
+import { useAuth } from '@/context/AuthContext';
 import { HomeCardTokens } from '@/constants/theme';
 
 interface FamilyCardProps {
@@ -25,16 +26,17 @@ interface FamilyCardProps {
 export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
   const { colors, isDark, isElderly } = useAppTheme();
   const { members, activeUser } = useFamily();
+  const { user } = useAuth();
 
   const primaryMember = activeUser || members[0] || {
     id: 'self',
-    name: 'Asmita',
+    name: user?.name || 'You',
     relation: 'Self',
     availability: 'available',
     isSharingLocation: true,
     humanLocation: 'Home',
     photoUrl: undefined,
-    lastUpdated: '2 min ago',
+    lastUpdated: 'Just now',
   };
 
   // Accessibility: reduced motion
@@ -293,7 +295,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                 <View style={styles.dotCore} />
               </View>
               <Text numberOfLines={1} style={[styles.memberName, { color: colors.text }]}>
-                {primaryMember.name || 'Asmita'}
+                {primaryMember.name || user?.name || 'Family Member'}
               </Text>
             </View>
 
