@@ -50,7 +50,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "server": "npx tsx server/src/index.ts"
+    "server": "npm --prefix server start"
   },
   "private": true
 }
