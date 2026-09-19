@@ -10,6 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
@@ -155,12 +156,23 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           />
         </View>
 
+        {/* Light Mode Soft Lavender Map Overlay */}
+        {!isDark && (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: 'rgba(238, 235, 252, 0.35)' },
+            ]}
+          />
+        )}
+
         {/* HOME MARKER: Blue circle with house icon */}
         <View style={[styles.homeMarkerWrap, { left: '32%', top: '48%' }]}>
           <View
             style={[
               styles.homeGlowHalo,
-              { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.20)' },
+              { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)' },
             ]}
           />
           <View style={[styles.homeCirclePin, { backgroundColor: colors.blue }]}>
@@ -171,7 +183,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
               styles.homeLabelTag,
               {
                 backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(0, 0, 0, 0.1)',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
               },
             ]}>
             <Text style={[styles.homeLabelText, { color: colors.text }]}>Home</Text>
@@ -206,7 +218,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
                 style={[
                   styles.markerPulseHalo,
                   {
-                    backgroundColor: isDark ? 'rgba(34, 197, 139, 0.30)' : 'rgba(34, 197, 139, 0.20)',
+                    backgroundColor: isDark ? 'rgba(34, 197, 139, 0.30)' : 'rgba(46, 191, 142, 0.20)',
                     transform: [
                       {
                         scale: pulseAnim.interpolate({
@@ -245,7 +257,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
                       ? colors.blue
                       : isDark
                       ? 'rgba(34, 197, 139, 0.40)'
-                      : 'rgba(0, 0, 0, 0.1)',
+                      : 'rgba(124, 92, 224, 0.18)',
                   },
                 ]}>
                 <View style={[styles.inlineGreenDot, { backgroundColor: colors.green }]} />
@@ -270,8 +282,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           style={[
             styles.liveStatusPill,
             {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.90)',
-              borderColor: isDark ? 'rgba(34, 197, 139, 0.45)' : 'rgba(34, 197, 139, 0.30)',
+              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.92)',
+              borderColor: isDark ? 'rgba(34, 197, 139, 0.45)' : 'rgba(46, 191, 142, 0.35)',
             },
           ]}>
           <View style={styles.liveBadgeTag}>
@@ -292,8 +304,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           style={[
             styles.updatedPill,
             {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.90)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.92)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.14)',
             },
           ]}>
           <Ionicons name="time-outline" size={11} color={isDark ? colors.textMuted : colors.textSecondary} />
@@ -314,7 +326,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
               styles.controlCircleBtn,
               {
                 backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.10)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.15)',
               },
             ]}>
             <Ionicons name="add" size={16} color={colors.text} />
@@ -326,7 +338,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
               styles.controlCircleBtn,
               {
                 backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.10)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.15)',
               },
             ]}>
             <Ionicons name="remove" size={16} color={colors.text} />
@@ -341,10 +353,10 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
               styles.controlCircleBtn,
               {
                 backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.10)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.15)',
               },
             ]}>
-            <Ionicons name="locate" size={14} color={colors.blue} />
+            <Ionicons name="locate" size={14} color={isDark ? colors.blue : '#7C5CE0'} />
           </Pressable>
         </View>
 
@@ -354,12 +366,12 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           style={[
             styles.recenterPill,
             {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : 'rgba(255, 255, 255, 0.92)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(20, 32, 58, 0.12)',
+              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : 'rgba(255, 255, 255, 0.94)',
+              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
             },
           ]}>
-          <Ionicons name="compass-outline" size={13} color={colors.blue} />
-          <Text style={[styles.recenterText, { color: colors.blue }]}>Recenter</Text>
+          <Ionicons name="compass-outline" size={13} color={isDark ? colors.blue : '#7C5CE0'} />
+          <Text style={[styles.recenterText, { color: isDark ? colors.blue : '#7C5CE0' }]}>Recenter</Text>
         </Pressable>
       </View>
 
@@ -378,26 +390,36 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
             styles.filterChip,
             {
               backgroundColor: !selectedMemberId
-                ? colors.blue
+                ? isDark
+                  ? colors.blue
+                  : undefined
                 : isDark
                 ? 'rgba(255, 255, 255, 0.06)'
-                : 'rgba(20, 32, 58, 0.05)',
+                : 'rgba(124, 92, 224, 0.08)',
               borderColor: !selectedMemberId
-                ? colors.blue
+                ? isDark
+                  ? colors.blue
+                  : 'transparent'
                 : isDark
                 ? 'rgba(255, 255, 255, 0.12)'
-                : 'rgba(20, 32, 58, 0.08)',
-              shadowColor: !selectedMemberId ? colors.blue : undefined,
+                : 'rgba(124, 92, 224, 0.15)',
+              overflow: 'hidden',
             },
           ]}>
+          {!isDark && !selectedMemberId && (
+            <LinearGradient
+              colors={['#4F8EF7', '#8A6BF2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           <Text
             style={[
               styles.filterChipText,
               {
                 color: !selectedMemberId
-                  ? isDark
-                    ? '#000000'
-                    : '#FFFFFF'
+                  ? '#FFFFFF'
                   : colors.text,
                 fontWeight: !selectedMemberId ? '800' : '600',
               },
@@ -420,25 +442,36 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
                 styles.filterChip,
                 {
                   backgroundColor: isSelected
-                    ? colors.blue
+                    ? isDark
+                      ? colors.blue
+                      : undefined
                     : isDark
                     ? 'rgba(255, 255, 255, 0.06)'
-                    : 'rgba(20, 32, 58, 0.05)',
+                    : 'rgba(124, 92, 224, 0.08)',
                   borderColor: isSelected
-                    ? colors.blue
+                    ? isDark
+                      ? colors.blue
+                      : 'transparent'
                     : isDark
                     ? 'rgba(255, 255, 255, 0.12)'
-                    : 'rgba(20, 32, 58, 0.08)',
+                    : 'rgba(124, 92, 224, 0.15)',
+                  overflow: 'hidden',
                 },
               ]}>
+              {!isDark && isSelected && (
+                <LinearGradient
+                  colors={['#4F8EF7', '#8A6BF2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
               <View
                 style={[
                   styles.filterDot,
                   {
                     backgroundColor: isSelected
-                      ? isDark
-                        ? '#000000'
-                        : '#FFFFFF'
+                      ? '#FFFFFF'
                       : colors.green,
                   },
                 ]}
@@ -448,9 +481,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
                   styles.filterChipText,
                   {
                     color: isSelected
-                      ? isDark
-                        ? '#000000'
-                        : '#FFFFFF'
+                      ? '#FFFFFF'
                       : colors.text,
                     fontWeight: isSelected ? '800' : '600',
                   },

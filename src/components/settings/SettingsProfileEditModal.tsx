@@ -108,7 +108,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                 : 'rgba(255, 255, 255, 0.98)',
               borderColor: isDark
                 ? 'rgba(59, 111, 240, 0.35)'
-                : 'rgba(20, 32, 58, 0.12)',
+                : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
           {/* Header */}
@@ -117,7 +117,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Ionicons
                 name="person-circle-outline"
                 size={22}
-                color={isDark ? '#38BDF8' : colors.blue}
+                color={isDark ? '#38BDF8' : '#7C5CE0'}
               />
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 Edit Profile Details
@@ -147,17 +147,17 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g. Asmita Roy"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={isDark ? colors.textMuted : colors.textSecondary}
                 style={[
                   styles.textInput,
                   {
                     color: colors.text,
                     backgroundColor: isDark
                       ? 'rgba(255, 255, 255, 0.06)'
-                      : 'rgba(20, 32, 58, 0.04)',
+                      : 'rgba(124, 92, 224, 0.04)',
                     borderColor: isDark
                       ? 'rgba(255, 255, 255, 0.12)'
-                      : 'rgba(20, 32, 58, 0.10)',
+                      : 'rgba(124, 92, 224, 0.14)',
                   },
                 ]}
               />

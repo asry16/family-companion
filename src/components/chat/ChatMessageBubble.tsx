@@ -38,12 +38,17 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   if (isUser) {
     return (
       <View style={styles.userContainer}>
-        {/* User Right-Aligned Blue Gradient Bubble */}
+        {/* User Right-Aligned Blue/Violet Gradient Bubble */}
         <LinearGradient
-          colors={['#3B6FF0', '#2563EB']}
+          colors={isDark ? ['#3B6FF0', '#2563EB'] : ['#4F8EF7', '#8A6BF2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.userBubble}>
+          style={[
+            styles.userBubble,
+            {
+              shadowColor: isDark ? '#3B6FF0' : '#6E5ADC',
+            },
+          ]}>
           <Text
             style={[
               styles.userText,
@@ -70,19 +75,19 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
       {/* Assistant Message Header: Sparkle Avatar + "Kinly AI" + Speaker Button */}
       <View style={styles.assistantHeader}>
         <View style={styles.assistantLeftHeader}>
-          {/* Blue Sparkle Avatar */}
+          {/* Violet/Blue Sparkle Avatar */}
           <View
             style={[
               styles.sparkleAvatar,
               {
-                backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(59, 111, 240, 0.25)',
+                backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
               },
             ]}>
             <Ionicons
               name="sparkles"
               size={12}
-              color={isDark ? '#38BDF8' : colors.blue}
+              color={isDark ? '#38BDF8' : '#7C5CE0'}
             />
           </View>
           <Text style={[styles.assistantName, { color: colors.text }]}>
@@ -102,14 +107,14 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
             style={({ pressed }) => [
               styles.speakerButton,
               {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(20, 32, 58, 0.05)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.08)',
                 opacity: pressed ? 0.7 : 1,
               },
             ]}>
             <Ionicons
               name="volume-high-outline"
               size={14}
-              color={isDark ? colors.textMuted : colors.textSecondary}
+              color={isDark ? colors.textMuted : '#6D5BD0'}
             />
           </Pressable>
         )}
@@ -122,10 +127,10 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
           {
             backgroundColor: isDark
               ? 'rgba(15, 26, 58, 0.85)'
-              : 'rgba(255, 255, 255, 0.90)',
+              : 'rgba(255, 255, 255, 0.75)',
             borderColor: isDark
               ? 'rgba(59, 111, 240, 0.25)'
-              : 'rgba(20, 32, 58, 0.08)',
+              : 'rgba(124, 92, 224, 0.14)',
           },
         ]}>
         {/* Top Pill: "The A Family • Active & Synced" */}
@@ -136,16 +141,16 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
               {
                 backgroundColor: isDark
                   ? 'rgba(59, 111, 240, 0.20)'
-                  : 'rgba(59, 111, 240, 0.10)',
+                  : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
                   ? 'rgba(59, 111, 240, 0.40)'
-                  : 'rgba(59, 111, 240, 0.22)',
+                  : 'rgba(124, 92, 224, 0.16)',
               },
             ]}>
             <Text
               style={[
                 styles.highlightText,
-                { color: isDark ? '#38BDF8' : colors.blue },
+                { color: isDark ? '#38BDF8' : '#7C5CE0' },
               ]}>
               {message.highlight}
             </Text>

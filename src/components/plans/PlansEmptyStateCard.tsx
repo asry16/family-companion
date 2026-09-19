@@ -211,19 +211,19 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
             },
           ]}>
           <LinearGradient
-            colors={['#3B6FF0', '#7C5CE0']}
+            colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
               styles.gradientButtonInner,
               {
-                shadowColor: isDark ? colors.purple : colors.blue,
+                shadowColor: isDark ? colors.purple : '#6E5ADC',
               },
             ]}>
             <Text
               style={[
                 styles.gradientButtonText,
-                { color: isDark ? '#000000' : '#FFFFFF' },
+                { color: '#FFFFFF' },
               ]}>
               {buttonLabel}
             </Text>

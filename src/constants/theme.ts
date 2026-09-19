@@ -3,59 +3,76 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     // Primary & background tokens
-    background: '#FBF8F6',            // warm off-white with a faint pastel gradient
-    cardBackground: 'rgba(255, 255, 255, 0.78)', // white at 70-80% opacity
+    background: '#F8F7FF',            // soft lavender gradient start
+    backgroundBottom: '#EFEDFB',      // soft lavender gradient end
+    backgroundBlobs: 'rgba(228, 224, 250, 0.40)', // large blurred pale-violet blobs
+    cardBackground: 'rgba(255, 255, 255, 0.72)', // white at 70-75% opacity
     cardSolid: '#FFFFFF',
-    elevatedBackground: 'rgba(255, 255, 255, 0.90)',
-    border: 'rgba(20, 32, 58, 0.08)', // 1px translucent border
-    borderSubtle: 'rgba(20, 32, 58, 0.04)',
-    separator: 'rgba(20, 32, 58, 0.06)',
+    elevatedBackground: 'rgba(255, 255, 255, 0.85)',
+    border: 'rgba(124, 92, 224, 0.14)', // 1px lavender border rgba(124,92,224,0.14)
+    borderSubtle: 'rgba(124, 92, 224, 0.08)',
+    separator: 'rgba(124, 92, 224, 0.10)',
 
     // Typography
-    text: '#14203A',
-    textSecondary: '#6B7690',
-    textMuted: '#6B7690',
+    text: '#1F1B6D',                  // deep indigo
+    textSecondary: '#7A7DB0',         // muted lavender-gray
+    textMuted: '#7A7DB0',
     textInverse: '#FFFFFF',
 
-    // Exact user accents
-    blue: '#3B6FF0',
-    blueSoft: 'rgba(59, 111, 240, 0.12)',
-    blueBorder: 'rgba(59, 111, 240, 0.25)',
+    // Exact reference accents
+    accentViolet: '#7C5CE0',          // Accent violet
+    accentVioletLinks: '#6D5BD0',     // Links, "See all", section eyebrow labels, inactive icon tints
 
-    green: '#22C58B',
-    greenSoft: 'rgba(34, 197, 139, 0.12)',
-    greenBorder: 'rgba(34, 197, 139, 0.25)',
+    // Primary gradient tokens
+    primaryGradientStart: '#4F8EF7',
+    primaryGradientEnd: '#8A6BF2',
+    primaryGradient: ['#4F8EF7', '#8A6BF2'] as const,
 
-    red: '#F0524D',
-    redSoft: 'rgba(240, 82, 77, 0.12)',
-    redBorder: 'rgba(240, 82, 77, 0.25)',
+    blue: '#4F8EF7',
+    blueSoft: 'rgba(124, 92, 224, 0.10)', // violet-tinted fill
+    blueBorder: 'rgba(124, 92, 224, 0.20)',
+
+    green: '#2EBF8E',                 // safe green #2EBF8E
+    greenSoft: 'rgba(46, 191, 142, 0.12)',
+    greenBorder: 'rgba(46, 191, 142, 0.25)',
+    greenGlow: 'rgba(46, 191, 142, 0.35)',
+
+    red: '#E11D48',                   // SOS/alert rose
+    redSoft: 'rgba(255, 77, 122, 0.12)',
+    redBorder: '#F9CFE0',
+    sosCardBg: ['#FFEFF4', '#FFE6F0'] as const,
+    sosBorder: '#F9CFE0',
+    sosGradient: ['#FF4D7A', '#E11D48'] as const,
 
     purple: '#7C5CE0',
-    purpleSoft: 'rgba(124, 92, 224, 0.12)',
-    purpleBorder: 'rgba(124, 92, 224, 0.25)',
+    purpleSoft: 'rgba(124, 92, 224, 0.10)',
+    purpleBorder: 'rgba(124, 92, 224, 0.20)',
 
     pink: '#EC4899',
     pinkSoft: 'rgba(236, 72, 153, 0.12)',
     pinkBorder: 'rgba(236, 72, 153, 0.25)',
 
-    yellow: '#F59E0B',
+    yellow: '#F59E0B',                // amber for warnings
     yellowSoft: 'rgba(245, 158, 11, 0.12)',
     yellowBorder: 'rgba(245, 158, 11, 0.25)',
 
     // Brand accent
-    brand: '#14203A',
-    brandAccent: '#3B6FF0',
+    brand: '#1F1B6D',
+    brandAccent: '#7C5CE0',
     brandWarm: '#F97316',
-    brandSoft: '#F1F5F9',
+    brandSoft: '#F3F1FD',
 
     // Interactive states
-    activeTab: '#3B6FF0',
-    inactiveTab: '#6B7690',
-    ripple: 'rgba(20, 32, 58, 0.05)',
+    activeTab: '#7C5CE0',
+    inactiveTab: '#6D5BD0',
+    tabBarBackground: 'rgba(255, 255, 255, 0.78)',
+    tabBarBorder: 'rgba(124, 92, 224, 0.14)',
+    tabBarShadow: 'rgba(110, 90, 220, 0.12)',
+    ripple: 'rgba(124, 92, 224, 0.08)',
 
     // High-contrast button typography tokens
     buttonTextOnAccent: '#FFFFFF',
-    buttonTextOnBright: '#14203A',
+    buttonTextOnBright: '#1F1B6D',
     buttonTextOnDanger: '#FFFFFF',
   },
   dark: {
@@ -288,10 +305,10 @@ export const TouchTargets = {
 export const getAccentGlow = (accentColor: string, isDark: boolean) => {
   if (!isDark) {
     return {
-      shadowColor: '#14203A',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 6,
+      shadowColor: '#6E5ADC',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.10,
+      shadowRadius: 10,
       elevation: 2,
     };
   }
@@ -307,22 +324,22 @@ export const getAccentGlow = (accentColor: string, isDark: boolean) => {
 export const Shadows = Platform.select({
   ios: {
     card: {
-      shadowColor: '#0F172A',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 8,
+      shadowColor: '#6E5ADC',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.10,
+      shadowRadius: 24,
     },
     hover: {
-      shadowColor: '#0F172A',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.08,
-      shadowRadius: 14,
+      shadowColor: '#6E5ADC',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.14,
+      shadowRadius: 26,
     },
     floating: {
-      shadowColor: '#0F172A',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.12,
-      shadowRadius: 20,
+      shadowColor: '#6E5ADC',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.16,
+      shadowRadius: 28,
     }
   },
   default: {

@@ -40,25 +40,25 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.blue,
-        tabBarInactiveTintColor: isDark ? colors.textMuted : colors.textSecondary,
+        tabBarActiveTintColor: isDark ? colors.blue : '#7C5CE0',
+        tabBarInactiveTintColor: isDark ? colors.textMuted : '#7A7DB0',
         tabBarStyle: {
           display: isKeyboardVisible ? 'none' : 'flex',
           position: 'absolute',
           bottom: Platform.select({ ios: 20, default: 14 }),
           left: 14,
           right: 14,
-          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.88)' : 'rgba(255, 255, 255, 0.88)',
-          borderColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(20, 32, 58, 0.08)',
+          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.88)' : 'rgba(255, 255, 255, 0.78)',
+          borderColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(124, 92, 224, 0.14)',
           borderWidth: 1,
           borderRadius: 28,
           height: Platform.select({ ios: 68, default: 64 }),
           paddingBottom: Platform.select({ ios: 10, default: 8 }),
           paddingTop: 6,
-          shadowColor: isDark ? colors.blue : '#14203A',
+          shadowColor: isDark ? colors.blue : '#6E5ADC',
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: isDark ? 0.35 : 0.08,
-          shadowRadius: 18,
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 24,
           elevation: 12,
         },
         tabBarLabelStyle: {
@@ -68,7 +68,7 @@ export default function TabsLayout() {
           marginTop: 2,
         },
       }}>
-      {/* 1. Home Tab (Active Blue) */}
+      {/* 1. Home Tab (Active Blue/Violet) */}
       <Tabs.Screen
         name="index"
         listeners={{
@@ -82,13 +82,13 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.12)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
                 size={20}
-                color={focused ? colors.blue : color}
+                color={focused ? (isDark ? colors.blue : '#7C5CE0') : color}
               />
             </View>
           ),
@@ -109,20 +109,20 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.12)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'people' : 'people-outline'}
                 size={20}
-                color={focused ? colors.blue : color}
+                color={focused ? (isDark ? colors.blue : '#7C5CE0') : color}
               />
             </View>
           ),
         }}
       />
 
-      {/* 3. Center Assistant Tab (Raised Gradient Orb Blue-to-Purple with Sparkle Icon and Soft Glow) */}
+      {/* 3. Center Assistant Tab (Raised Primary Gradient Orb with Sparkle Icon and Soft Violet Glow) */}
       <Tabs.Screen
         name="ai"
         listeners={{
@@ -146,10 +146,10 @@ export default function TabsLayout() {
                 fontSize: 10,
                 fontWeight: '700',
                 color: focused
-                  ? colors.blue
+                  ? (isDark ? colors.blue : '#7C5CE0')
                   : isDark
                   ? colors.textMuted
-                  : colors.textSecondary,
+                  : '#7A7DB0',
                 marginTop: 2,
               }}>
               Assistant
@@ -158,17 +158,19 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <View style={styles.centerAssistantWrap}>
               <LinearGradient
-                colors={['#3B6FF0', '#7C5CE0']}
+                colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[
                   styles.centerAssistantCircle,
-                  focused && {
-                    borderColor: '#FFFFFF',
-                    shadowColor: colors.blue,
-                    shadowOpacity: 0.65,
+                  {
+                    shadowColor: isDark ? colors.blue : '#8A6BF2',
+                    shadowOpacity: focused ? 0.65 : 0.40,
                     shadowRadius: 16,
                     elevation: 10,
+                  },
+                  focused && {
+                    borderColor: '#FFFFFF',
                   },
                 ]}>
                 <Ionicons
@@ -196,13 +198,13 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(37, 99, 235, 0.1)' },
+                  { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(124, 92, 224, 0.12)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'shield-checkmark' : 'shield-checkmark-outline'}
                 size={20}
-                color={focused ? (isDark ? '#38BDF8' : colors.brandAccent) : color}
+                color={focused ? (isDark ? '#38BDF8' : '#7C5CE0') : color}
               />
             </View>
           ),
@@ -234,13 +236,13 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.12)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'calendar' : 'calendar-outline'}
                 size={20}
-                color={focused ? colors.blue : color}
+                color={focused ? (isDark ? colors.blue : '#7C5CE0') : color}
               />
             </View>
           ),

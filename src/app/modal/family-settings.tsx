@@ -29,6 +29,7 @@ import {
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
 const DEFAULT_MOCK_MEMBERS: FamilyMember[] = [
   {
@@ -264,6 +265,7 @@ export default function FamilySettingsScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <LightBackdrop />
       {/* 1. Top Bar: Back Arrow, Centered "Family Settings" and Subtitle */}
       <SettingsTopBar
         title="Family Settings"

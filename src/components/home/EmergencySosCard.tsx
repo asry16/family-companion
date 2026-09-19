@@ -134,15 +134,15 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
       colors={
         isDark
           ? ['rgba(240, 82, 77, 0.18)', 'rgba(120, 20, 30, 0.22)', 'rgba(15, 26, 58, 0.85)']
-          : ['#FFF1F2', '#FFE4E6', '#FFF5F5']
+          : ['#FFEFF4', '#FFE6F0']
       }
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[
         styles.cardContainer,
         {
-          borderColor: isDark ? 'rgba(240, 82, 77, 0.35)' : 'rgba(240, 82, 77, 0.20)',
-          shadowColor: isDark ? colors.red : '#F0524D',
+          borderColor: isDark ? 'rgba(240, 82, 77, 0.35)' : '#F9CFE0',
+          shadowColor: isDark ? colors.red : '#FF4D7A',
         },
       ]}>
       <View style={styles.cardInnerRow}>
@@ -153,13 +153,13 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             <View style={[styles.triangleBadge, { backgroundColor: isDark ? 'rgba(240, 82, 77, 0.22)' : '#FFE4E6' }]}>
               <Ionicons name="warning" size={15} color={colors.red} />
             </View>
-            <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#881337', fontSize: isElderly ? 20 : 17.5 }]}>
+            <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#9F1239', fontSize: isElderly ? 20 : 17.5 }]}>
               Need Help?
             </Text>
           </View>
 
           {/* Subtitle */}
-          <Text style={[styles.subtitleText, { color: isDark ? 'rgba(255, 255, 255, 0.75)' : '#9F1239' }]}>
+          <Text style={[styles.subtitleText, { color: isDark ? 'rgba(255, 255, 255, 0.75)' : '#E11D48' }]}>
             Hold for 2 seconds to alert your circle
           </Text>
 
@@ -167,25 +167,25 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           <View style={styles.bottomChipsRow}>
             <View style={styles.chipItem}>
               <Ionicons name="navigate" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
                 GPS
               </Text>
             </View>
 
-            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#FDA4AF' }]}>•</Text>
+            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#F472B6' }]}>•</Text>
 
             <View style={styles.chipItem}>
               <Ionicons name="locate" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
                 1m accuracy
               </Text>
             </View>
 
-            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#FDA4AF' }]}>•</Text>
+            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#F472B6' }]}>•</Text>
 
             <View style={styles.chipItem}>
               <Ionicons name="people" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#881337' }]}>
+              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
                 Circle notified
               </Text>
             </View>
@@ -199,7 +199,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             style={[
               styles.outerGlowRing,
               {
-                backgroundColor: 'rgba(240, 82, 77, 0.16)',
+                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.16)' : 'rgba(255, 77, 122, 0.16)',
                 transform: [
                   {
                     scale: pulseAnim.interpolate({
@@ -221,7 +221,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             style={[
               styles.innerGlowRing,
               {
-                backgroundColor: 'rgba(240, 82, 77, 0.26)',
+                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.26)' : 'rgba(255, 77, 122, 0.26)',
                 transform: [
                   {
                     scale: pulseAnim.interpolate({
@@ -243,7 +243,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             style={[
               styles.progressRing,
               {
-                borderColor: holdSuccess ? '#22C58B' : '#FFFFFF',
+                borderColor: holdSuccess ? '#2EBF8E' : '#FFFFFF',
                 opacity: holdProgress.interpolate({
                   inputRange: [0, 0.05, 1],
                   outputRange: [0, 0.85, 1],
@@ -273,15 +273,17 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             style={({ pressed }) => [
               styles.sosCoreButton,
               {
-                backgroundColor: holdSuccess ? '#22C58B' : colors.red,
+                backgroundColor: holdSuccess ? '#2EBF8E' : colors.red,
                 transform: [{ scale: pressed || isHolding ? 0.94 : 1 }],
               },
             ]}>
             <LinearGradient
               colors={
                 holdSuccess
-                  ? ['#22C58B', '#10B981']
-                  : [colors.red, '#DC2626']
+                  ? ['#2EBF8E', '#22C58B']
+                  : isDark
+                  ? [colors.red, '#DC2626']
+                  : ['#FF4D7A', '#E11D48']
               }
               style={styles.sosButtonGradient}>
               {holdSuccess ? (

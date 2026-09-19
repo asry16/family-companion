@@ -43,12 +43,12 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
           <Ionicons
             name="people-outline"
             size={16}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#38BDF8' : '#6D5BD0'}
           />
           <Text
             style={[
               styles.sectionHeaderText,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+              { color: isDark ? colors.textMuted : '#6D5BD0' },
             ]}>
             FAMILY MEMBERS ({members.length})
           </Text>
@@ -67,22 +67,22 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
             {
               backgroundColor: isDark
                 ? 'rgba(59, 111, 240, 0.20)'
-                : 'rgba(59, 111, 240, 0.10)',
+                : 'rgba(124, 92, 224, 0.08)',
               borderColor: isDark
                 ? 'rgba(59, 111, 240, 0.40)'
-                : 'rgba(59, 111, 240, 0.25)',
+                : 'rgba(124, 92, 224, 0.22)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name="person-add-outline"
             size={13}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#38BDF8' : '#7C5CE0'}
           />
           <Text
             style={[
               styles.addMemberText,
-              { color: isDark ? '#38BDF8' : colors.blue },
+              { color: isDark ? '#38BDF8' : '#7C5CE0' },
             ]}>
             Add Member
           </Text>
@@ -111,8 +111,8 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   style={[
                     styles.avatarCircle,
                     {
-                      backgroundColor: member.avatarColor || (isDark ? '#1E293B' : '#EFF6FF'),
-                      borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.20)',
+                      backgroundColor: member.avatarColor || (isDark ? '#1E293B' : '#7C5CE0'),
+                      borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
                     },
                   ]}>
                   <Text style={styles.avatarText}>{initial}</Text>
@@ -137,16 +137,16 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                         {
                           backgroundColor: isDark
                             ? 'rgba(59, 111, 240, 0.25)'
-                            : 'rgba(59, 111, 240, 0.12)',
+                            : 'rgba(124, 92, 224, 0.12)',
                           borderColor: isDark
                             ? 'rgba(59, 111, 240, 0.45)'
-                            : 'rgba(59, 111, 240, 0.25)',
+                            : 'rgba(124, 92, 224, 0.25)',
                         },
                       ]}>
                       <Text
                         style={[
                           styles.youBadgeText,
-                          { color: isDark ? '#38BDF8' : colors.blue },
+                          { color: isDark ? '#38BDF8' : '#7C5CE0' },
                         ]}>
                         You
                       </Text>
@@ -186,17 +186,17 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   {
                     backgroundColor: isDark
                       ? 'rgba(255, 255, 255, 0.08)'
-                      : 'rgba(20, 32, 58, 0.05)',
+                      : 'rgba(124, 92, 224, 0.08)',
                     borderColor: isDark
                       ? 'rgba(255, 255, 255, 0.12)'
-                      : 'rgba(20, 32, 58, 0.08)',
+                      : 'rgba(124, 92, 224, 0.15)',
                     opacity: pressed ? 0.75 : 1,
                   },
                 ]}>
                 <Ionicons
                   name="pencil-outline"
                   size={16}
-                  color={isDark ? colors.textMuted : colors.textSecondary}
+                  color={isDark ? colors.textMuted : '#6D5BD0'}
                 />
               </Pressable>
             </GlassCard>

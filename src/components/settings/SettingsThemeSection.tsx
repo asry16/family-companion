@@ -70,12 +70,12 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
         <Ionicons
           name="color-palette-outline"
           size={16}
-          color={isDark ? '#38BDF8' : colors.blue}
+          color={isDark ? '#38BDF8' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : colors.textSecondary },
+            { color: isDark ? colors.textMuted : '#6D5BD0' },
           ]}>
           APPEARANCE & THEME MODE
         </Text>
@@ -105,17 +105,17 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                     backgroundColor: isSelected
                       ? isDark
                         ? 'rgba(59, 111, 240, 0.22)'
-                        : 'rgba(59, 111, 240, 0.10)'
+                        : 'rgba(124, 92, 224, 0.10)'
                       : isDark
                       ? 'rgba(255, 255, 255, 0.04)'
-                      : 'rgba(20, 32, 58, 0.03)',
+                      : 'rgba(255, 255, 255, 0.55)',
                     borderColor: isSelected
                       ? isDark
                         ? '#38BDF8'
-                        : colors.blue
+                        : '#7C5CE0'
                       : isDark
                       ? 'rgba(255, 255, 255, 0.10)'
-                      : 'rgba(20, 32, 58, 0.08)',
+                      : 'rgba(124, 92, 224, 0.12)',
                     opacity: pressed ? 0.8 : 1,
                   },
                 ]}>
@@ -124,7 +124,7 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                   <View
                     style={[
                       styles.selectedBadge,
-                      { backgroundColor: isDark ? '#38BDF8' : colors.blue },
+                      { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
                     ]}>
                     <Ionicons name="checkmark" size={10} color="#FFFFFF" />
                   </View>
@@ -138,10 +138,10 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                       backgroundColor: isSelected
                         ? isDark
                           ? 'rgba(56, 189, 248, 0.25)'
-                          : 'rgba(59, 111, 240, 0.18)'
+                          : 'rgba(124, 92, 224, 0.16)'
                         : isDark
                         ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(20, 32, 58, 0.06)',
+                        : 'rgba(124, 92, 224, 0.06)',
                     },
                   ]}>
                   <Ionicons
@@ -151,7 +151,7 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                       isSelected
                         ? isDark
                           ? '#38BDF8'
-                          : colors.blue
+                          : '#7C5CE0'
                         : isDark
                         ? colors.textMuted
                         : colors.textSecondary

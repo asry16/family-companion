@@ -100,15 +100,15 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
       style={styles.cardWrapper}
       contentStyle={styles.cardContent}>
       
-      {/* Light Mode: Pale mint gradient with faint leaf accent */}
+      {/* Light Mode: Pale mint/lavender gradient */}
       {!isDark && (
         <LinearGradient
           colors={
             isEmergency
-              ? ['#FFF1F2', '#FFE4E6']
+              ? ['#FFF1F4', '#FFE6F0']
               : isAlertState
               ? ['#FEF3C7', '#FDE68A']
-              : ['#ECFDF5', '#D1FAE5']
+              : ['rgba(242, 253, 249, 0.90)', 'rgba(235, 249, 244, 0.85)']
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -140,10 +140,10 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
                     ? 'rgba(245, 158, 11, 0.28)'
                     : 'rgba(34, 197, 139, 0.28)'
                   : isEmergency
-                  ? 'rgba(240, 82, 77, 0.16)'
+                  ? 'rgba(255, 77, 122, 0.20)'
                   : isAlertState
                   ? 'rgba(245, 158, 11, 0.16)'
-                  : 'rgba(34, 197, 139, 0.16)',
+                  : 'rgba(46, 191, 142, 0.20)',
                 transform: [
                   {
                     scale: pulseAnim.interpolate({
@@ -162,10 +162,10 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
           <LinearGradient
             colors={
               isEmergency
-                ? ['#F0524D', '#DC2626']
+                ? ['#FF4D7A', '#E11D48']
                 : isAlertState
                 ? ['#F59E0B', '#D97706']
-                : ['#22C58B', '#10B981']
+                : ['#2EBF8E', '#22C58B']
             }
             style={styles.shieldCircle}>
             <Ionicons
@@ -182,7 +182,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
             style={[
               styles.titleText,
               {
-                color: isDark ? bannerColor : isAlertState ? '#B45309' : '#059669',
+                color: isDark ? bannerColor : isAlertState ? '#B45309' : isEmergency ? '#E11D48' : '#2EBF8E',
                 fontSize: isElderly ? 16 : 13.5,
               },
             ]}>
@@ -193,7 +193,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
             style={[
               styles.subtitleText,
               {
-                color: isDark ? colors.textMuted : '#065F46',
+                color: isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#BE123C' : '#7A7DB0',
                 fontSize: isElderly ? 13 : 11.5,
               },
             ]}>
@@ -205,7 +205,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={isDark ? colors.textMuted : isAlertState ? '#92400E' : '#059669'}
+          color={isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#E11D48' : '#6D5BD0'}
         />
       </View>
     </GlassCard>

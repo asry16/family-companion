@@ -10,6 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -18,6 +19,7 @@ import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { initialMemories } from '@/data/mockFamilyData';
 import { MemoryItem } from '@/types';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
@@ -110,6 +112,7 @@ export default function MemoryScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <LightBackdrop />
       {/* 1. Header: Avatar "A" with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
       <VaultHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'vault' } })}

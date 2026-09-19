@@ -45,7 +45,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <View style={[styles.container, style]}>
       {categoryTag ? (
-        <Text style={[styles.categoryTag, { color: isDark ? colors.blue : colors.blue }]}>
+        <Text style={[styles.categoryTag, { color: isDark ? colors.blue : '#6D5BD0' }]}>
           {categoryTag.toUpperCase()}
         </Text>
       ) : null}
@@ -87,7 +87,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               style={[
                 styles.actionText,
                 {
-                  color: isDark ? colors.blue : colors.blue,
+                  color: isDark ? colors.blue : '#6D5BD0',
                 },
               ]}>
               {actionText}

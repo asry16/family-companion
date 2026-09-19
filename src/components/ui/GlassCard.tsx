@@ -50,11 +50,12 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     }
   };
 
-  // 1px translucent border
-  const borderColor = borderAccentColor || (isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(20, 32, 58, 0.08)');
+  // 1px translucent border (lavender in light mode, glowing blue in dark mode)
+  const borderColor =
+    borderAccentColor ||
+    (isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.14)');
 
-  // Soft colored glow
-  const resolvedGlowColor = glowColor || (isDark ? colors.blue : '#14203A');
+  // Soft colored glow: violet shadow in light mode (0 8px 24px rgba(110,90,220,0.10))
   const glowStyle: ViewStyle = isDark
     ? {
         shadowColor: glowColor ? glowColor : 'rgba(59, 111, 240, 0.35)',
@@ -64,17 +65,17 @@ export const GlassCard: React.FC<GlassCardProps> = ({
         elevation: 5,
       }
     : {
-        shadowColor: glowColor ? glowColor : '#14203A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: glowColor ? 0.12 : 0.05,
-        shadowRadius: 14,
+        shadowColor: glowColor ? glowColor : '#6E5ADC',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: glowColor ? 0.16 : 0.10,
+        shadowRadius: 24,
         elevation: 2,
       };
 
-  // Glass card gradient colors (70-80% opacity)
+  // Glass card gradient colors: white at 70-75% opacity in light mode
   const gradientColors = isDark
     ? (['rgba(15, 26, 58, 0.85)', 'rgba(11, 20, 48, 0.80)'] as const)
-    : (['rgba(255, 255, 255, 0.85)', 'rgba(251, 248, 246, 0.75)'] as const);
+    : (['rgba(255, 255, 255, 0.75)', 'rgba(255, 255, 255, 0.70)'] as const);
 
   const cardBaseStyle: ViewStyle = {
     borderRadius,

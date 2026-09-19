@@ -19,6 +19,7 @@ import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
 import { CircleTimelineCard } from '@/components/home/CircleTimelineCard';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
@@ -70,6 +71,9 @@ export default function HomeScreen() {
           backgroundColor: colors.background,
         },
       ]}>
+      {/* Light Mode Decorative Ambient Backdrop */}
+      <LightBackdrop />
+
       {/* 1. Personalized Header (Deco greeting, User avatar, Safety status, Action icons) */}
       <PersonalizedHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'home' } })}

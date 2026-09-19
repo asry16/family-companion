@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 
@@ -38,16 +39,16 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
       style={[
         styles.searchContainer,
         {
-          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-          borderColor: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(20, 32, 58, 0.08)',
-          shadowColor: isDark ? colors.blue : '#14203A',
+          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.78)',
+          borderColor: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(124, 92, 224, 0.18)',
+          shadowColor: isDark ? colors.blue : '#6E5ADC',
         },
       ]}>
       {/* Search Icon */}
       <Ionicons
         name="search-outline"
         size={19}
-        color={isDark ? colors.textMuted : colors.textSecondary}
+        color={isDark ? colors.textMuted : '#6D5BD0'}
         style={styles.searchIcon}
       />
 
@@ -58,7 +59,7 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         onSubmitEditing={onSubmit}
         returnKeyType="search"
         placeholder="Ask e.g. 'Where is Dad's passport?' or 'Wi-Fi'"
-        placeholderTextColor={isDark ? colors.textMuted : '#8A94A6'}
+        placeholderTextColor={isDark ? colors.textMuted : colors.textSecondary}
         style={[
           styles.textInput,
           {
@@ -85,7 +86,7 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         </Pressable>
       )}
 
-      {/* Blue Circular Mic Button */}
+      {/* Mic Button with Primary Gradient in Light Mode */}
       <Pressable
         onPress={() => {
           triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -95,11 +96,20 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         style={({ pressed }) => [
           styles.micButton,
           {
-            backgroundColor: colors.blue,
+            backgroundColor: isDark ? colors.blue : undefined,
             opacity: pressed ? 0.85 : 1,
-            shadowColor: colors.blue,
+            shadowColor: isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
           },
         ]}>
+        {!isDark && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <Ionicons name="mic" size={15} color={isDark ? '#000000' : '#FFFFFF'} />
       </Pressable>
     </View>

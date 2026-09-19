@@ -55,14 +55,14 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.2)',
+                  backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
+                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.2)',
                 },
               ]}>
               <Text
                 style={[
                   styles.avatarInitialText,
-                  { color: isDark ? '#38BDF8' : colors.blue },
+                  { color: isDark ? '#38BDF8' : '#7C5CE0' },
                 ]}>
                 {initial}
               </Text>
@@ -94,8 +94,8 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
               style={({ pressed }) => [
                 styles.switcherPill,
                 {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.05)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.08)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(124, 92, 224, 0.14)',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -119,12 +119,12 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
 
         {/* Right: Quick Action Controls Cluster */}
         <View style={styles.rightActionCluster}>
-          {/* Sun = Theme Toggle */}
+          {/* Sun/Moon = Theme Toggle */}
           <IconCircleButton
             name={isDark ? 'sunny' : 'moon'}
             size={36}
             iconSize={17}
-            color={isDark ? '#FBBF24' : colors.blue}
+            color={isDark ? '#FBBF24' : '#6D5BD0'}
             glowColor={isDark ? '#FBBF24' : undefined}
             onPress={toggleTheme}
             accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
@@ -135,7 +135,7 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
             name="notifications-outline"
             size={36}
             iconSize={17}
-            color={colors.text}
+            color={isDark ? colors.text : '#6D5BD0'}
             badgeCount={unreadCount > 0 ? unreadCount : 1}
             badgeColor={colors.red}
             onPress={() => router.push('/modal/notifications')}
@@ -147,7 +147,7 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
             name="settings-outline"
             size={36}
             iconSize={17}
-            color={colors.text}
+            color={isDark ? colors.text : '#6D5BD0'}
             onPress={() => {
               if (onOpenSettings) {
                 onOpenSettings();

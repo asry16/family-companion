@@ -62,13 +62,13 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
           <Ionicons
             name="sparkles"
             size={12}
-            color="rgba(59, 111, 240, 0.25)"
+            color="rgba(124, 92, 224, 0.28)"
             style={styles.sparkleLeft}
           />
           <Ionicons
             name="sparkles"
             size={10}
-            color="rgba(124, 92, 224, 0.25)"
+            color="rgba(79, 142, 247, 0.28)"
             style={styles.sparkleRight}
           />
         </View>
@@ -86,10 +86,10 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
             {
               backgroundColor: isDark
                 ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(20, 32, 58, 0.05)',
+                : 'rgba(255, 255, 255, 0.72)',
               borderColor: isDark
                 ? 'rgba(255, 255, 255, 0.12)'
-                : 'rgba(20, 32, 58, 0.08)',
+                : 'rgba(124, 92, 224, 0.15)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>

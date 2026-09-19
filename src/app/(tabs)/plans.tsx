@@ -24,6 +24,7 @@ import {
   PlansPopulatedList,
   PlanItem,
 } from '@/components/plans';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
 const MOCK_DEFAULT_PLANS: PlanItem[] = [
   {
@@ -223,6 +224,7 @@ export default function PlansScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <LightBackdrop />
       {/* 1. Header: Avatar 'A' with green online dot, title, subtitle, Bell, Theme toggle, Settings */}
       <PlansHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'plans' } })}
@@ -264,22 +266,22 @@ export default function PlansScreen({
               {
                 backgroundColor: isDark
                   ? 'rgba(59, 111, 240, 0.16)'
-                  : 'rgba(59, 111, 240, 0.08)',
+                  : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
                   ? 'rgba(59, 111, 240, 0.35)'
-                  : 'rgba(59, 111, 240, 0.20)',
+                  : 'rgba(124, 92, 224, 0.20)',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
             <Ionicons
               name={isPreviewEmpty ? 'layers-outline' : 'sparkles-outline'}
               size={13}
-              color={isDark ? '#38BDF8' : colors.blue}
+              color={isDark ? '#38BDF8' : '#7C5CE0'}
             />
             <Text
               style={[
                 styles.previewToggleText,
-                { color: isDark ? '#38BDF8' : colors.blue },
+                { color: isDark ? '#38BDF8' : '#7C5CE0' },
               ]}>
               State Preview: {isPreviewEmpty ? 'Empty State' : 'Populated State'} (Tap to switch)
             </Text>

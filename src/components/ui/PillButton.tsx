@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -68,11 +69,11 @@ export const PillButton: React.FC<PillButtonProps> = ({
     switch (variant) {
       case 'primary':
         return {
-          bg: colors.blue,
-          border: colors.blue,
+          bg: isDark ? colors.blue : 'transparent',
+          border: isDark ? colors.blue : 'transparent',
           textColor: isDark ? '#000000' : '#FFFFFF',
           iconColor: isDark ? '#000000' : '#FFFFFF',
-          glow: glowColor || colors.blue,
+          glow: glowColor || (isDark ? colors.blue : '#8A6BF2'),
         };
       case 'danger':
         return {
@@ -93,7 +94,7 @@ export const PillButton: React.FC<PillButtonProps> = ({
       case 'glass':
         return {
           bg: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-          border: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(20, 32, 58, 0.12)',
+          border: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(124, 92, 224, 0.16)',
           textColor: colors.text,
           iconColor: colors.text,
           glow: glowColor || (isDark ? colors.blue : undefined),
@@ -101,15 +102,15 @@ export const PillButton: React.FC<PillButtonProps> = ({
       case 'outline':
         return {
           bg: 'transparent',
-          border: isDark ? 'rgba(59, 111, 240, 0.45)' : colors.blue,
-          textColor: isDark ? colors.blue : colors.blue,
-          iconColor: isDark ? colors.blue : colors.blue,
+          border: isDark ? 'rgba(59, 111, 240, 0.45)' : '#7C5CE0',
+          textColor: isDark ? colors.blue : '#7C5CE0',
+          iconColor: isDark ? colors.blue : '#7C5CE0',
           glow: glowColor || (isDark ? colors.blue : undefined),
         };
     }
   })();
 
-  // Outer glow in dark mode
+  // Outer glow in dark mode or soft violet shadow in light mode
   const glowStyle: ViewStyle = isDark && config.glow
     ? {
         shadowColor: config.glow,
@@ -118,11 +119,19 @@ export const PillButton: React.FC<PillButtonProps> = ({
         shadowRadius: 10,
         elevation: 4,
       }
+    : variant === 'primary' && !isDark
+    ? {
+        shadowColor: '#8A6BF2',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 3,
+      }
     : {
-        shadowColor: '#000000',
+        shadowColor: '#6E5ADC',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.2 : 0.06,
-        shadowRadius: 5,
+        shadowOpacity: isDark ? 0.2 : 0.08,
+        shadowRadius: 6,
         elevation: 2,
       };
 
@@ -181,6 +190,16 @@ export const PillButton: React.FC<PillButtonProps> = ({
         },
         style,
       ]}>
+      {/* Primary Gradient Fill in Light Mode */}
+      {variant === 'primary' && !isDark && (
+        <LinearGradient
+          colors={['#4F8EF7', '#8A6BF2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+
       {loading ? (
         <ActivityIndicator size="small" color={config.textColor} />
       ) : (

@@ -31,6 +31,7 @@ import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
 export default function FamilyScreen() {
   const router = useRouter();
@@ -99,6 +100,9 @@ export default function FamilyScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* Light Mode Decorative Ambient Backdrop */}
+      <LightBackdrop />
+
       {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, Sun, Bell, Settings */}
       <CircleHeader
         onOpenFamilySwitcher={() => setQrModalVisible(true)}

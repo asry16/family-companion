@@ -72,10 +72,10 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
 
             {/* Below it: green dot + "Your family is safe" */}
             <View style={styles.safeStatusRow}>
-              <View style={[styles.statusBeaconOuter, { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(34, 197, 139, 0.15)' }]}>
+              <View style={[styles.statusBeaconOuter, { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(46, 191, 142, 0.16)' }]}>
                 <View style={[styles.statusBeaconInner, { backgroundColor: colors.green }]} />
               </View>
-              <Text style={[styles.safeStatusText, { color: isDark ? colors.green : '#059669' }]}>
+              <Text style={[styles.safeStatusText, { color: isDark ? colors.green : '#2EBF8E' }]}>
                 Your family is safe
               </Text>
             </View>
@@ -88,19 +88,19 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               name="notifications-outline"
               size={40}
               iconSize={18}
-              color={colors.text}
+              color={isDark ? colors.text : '#6D5BD0'}
               showBadgeDot={true}
               badgeColor={colors.red}
               onPress={() => router.push('/modal/notifications')}
               accessibilityLabel="Notifications"
             />
 
-            {/* 2. Sun = Theme Toggle */}
+            {/* 2. Sun/Moon = Theme Toggle */}
             <IconCircleButton
               name={isDark ? 'sunny' : 'moon'}
               size={40}
               iconSize={18}
-              color={isDark ? '#FBBF24' : colors.blue}
+              color={isDark ? '#FBBF24' : '#6D5BD0'}
               glowColor={isDark ? '#FBBF24' : undefined}
               onPress={toggleTheme}
               accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
@@ -111,7 +111,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               name="settings-outline"
               size={40}
               iconSize={18}
-              color={colors.text}
+              color={isDark ? colors.text : '#6D5BD0'}
               onPress={() => {
                 if (onOpenSettings) {
                   onOpenSettings();
@@ -170,7 +170,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 <View
                   style={[
                     styles.largeAvatarRoleTag,
-                    { backgroundColor: isDark ? '#38BDF8' : colors.brandAccent },
+                    { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
                   ]}>
                   <Text style={[styles.largeAvatarRoleText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
                     {activeUser?.relation || 'Self'}
@@ -190,8 +190,8 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 style={[
                   styles.accountProviderTag,
                   {
-                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : '#EFF6FF',
-                    borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : '#BFDBFE',
+                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(124, 92, 224, 0.08)',
+                    borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(124, 92, 224, 0.20)',
                   },
                 ]}>
                 <Ionicons
@@ -203,9 +203,9 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                       : 'mail-outline'
                   }
                   size={14}
-                  color={isDark ? '#38BDF8' : '#2563EB'}
+                  color={isDark ? '#38BDF8' : '#7C5CE0'}
                 />
-                <Text style={[styles.accountProviderEmail, { color: isDark ? '#38BDF8' : '#2563EB' }]}>
+                <Text style={[styles.accountProviderEmail, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
                   {user?.email || (activeUser?.name ? `${activeUser.name.toLowerCase().replace(/\s+/g, '')}@family.com` : 'you@family.com')}
                 </Text>
               </View>
@@ -216,8 +216,8 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               style={[
                 styles.metricsGrid,
                 {
-                  backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0',
+                  backgroundColor: isDark ? '#0F172A' : '#F8F7FF',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.12)',
                 },
               ]}>
               <View style={styles.metricItem}>
@@ -228,7 +228,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                   Members
                 </Text>
               </View>
-              <View style={[styles.metricDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0' }]} />
+              <View style={[styles.metricDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(124, 92, 224, 0.12)' }]} />
               <View style={styles.metricItem}>
                 <Text style={[styles.metricVal, { color: colors.yellow }]}>
                   {pendingTasks}
@@ -237,7 +237,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                   Pending
                 </Text>
               </View>
-              <View style={[styles.metricDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0' }]} />
+              <View style={[styles.metricDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(124, 92, 224, 0.12)' }]} />
               <View style={styles.metricItem}>
                 <Text style={[styles.metricVal, { color: colors.green }]}>
                   100%
@@ -253,8 +253,8 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               style={[
                 styles.appearanceBox,
                 {
-                  backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0',
+                  backgroundColor: isDark ? '#0F172A' : '#F8F7FF',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.12)',
                 },
               ]}>
               <View style={styles.appearanceTopRow}>
@@ -262,7 +262,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                   <Ionicons
                     name={isDark ? 'moon' : 'sunny'}
                     size={14}
-                    color={isDark ? '#38BDF8' : colors.brandAccent}
+                    color={isDark ? '#38BDF8' : '#7C5CE0'}
                   />
                   <Text style={[styles.appearanceTitle, { color: colors.text }]}>
                     Theme & Appearance

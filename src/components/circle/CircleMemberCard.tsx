@@ -127,11 +127,11 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
                   style={[
                     styles.youBadge,
                     {
-                      backgroundColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(59, 111, 240, 0.12)',
-                      borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(59, 111, 240, 0.25)',
+                      backgroundColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.12)',
+                      borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.25)',
                     },
                   ]}>
-                  <Text style={[styles.youBadgeText, { color: colors.blue }]}>YOU</Text>
+                  <Text style={[styles.youBadgeText, { color: isDark ? colors.blue : '#7C5CE0' }]}>YOU</Text>
                 </View>
               )}
             </View>
@@ -151,8 +151,8 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
           style={[
             styles.atHomeChip,
             {
-              backgroundColor: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(34, 197, 139, 0.12)',
-              borderColor: isDark ? 'rgba(34, 197, 139, 0.40)' : 'rgba(34, 197, 139, 0.25)',
+              backgroundColor: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(46, 191, 142, 0.12)',
+              borderColor: isDark ? 'rgba(34, 197, 139, 0.40)' : 'rgba(46, 191, 142, 0.25)',
             },
           ]}>
           <Ionicons name="home" size={12} color={colors.green} />
@@ -225,7 +225,13 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
       </View>
 
       {/* 3. Footer: "Updated 2026-09-18 20:07:22", green dot + "Live GPS"; right-aligned "Call" and "Ask" */}
-      <View style={styles.footerRow}>
+      <View
+        style={[
+          styles.footerRow,
+          {
+            borderTopColor: isDark ? 'rgba(150, 150, 150, 0.12)' : 'rgba(124, 92, 224, 0.12)',
+          },
+        ]}>
         {/* Left: Timestamp + Live GPS */}
         <View style={styles.footerLeft}>
           <Text
@@ -256,7 +262,8 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
             style={({ pressed }) => [
               styles.callButton,
               {
-                backgroundColor: '#14B8A6',
+                backgroundColor: isDark ? '#14B8A6' : '#2EBF8E',
+                shadowColor: isDark ? '#14B8A6' : '#2EBF8E',
                 opacity: pressed ? 0.85 : 1,
               },
             ]}>
@@ -264,7 +271,7 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
             <Text style={styles.callButtonText}>Call</Text>
           </Pressable>
 
-          {/* "Ask" (Outlined blue pill with chat icon) */}
+          {/* "Ask" (Outlined blue/violet pill with chat icon) */}
           <Pressable
             onPress={() => {
               triggerHaptic();
@@ -276,7 +283,7 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
               styles.askButton,
               {
                 borderColor: colors.blue,
-                backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(59, 111, 240, 0.06)',
+                backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(79, 142, 247, 0.08)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>

@@ -55,7 +55,7 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
       {/* Header Row: Count & Add Plan quick action */}
       <View style={styles.headerBar}>
         <View style={styles.countBadge}>
-          <Text style={[styles.countBadgeText, { color: isDark ? '#38BDF8' : colors.blue }]}>
+          <Text style={[styles.countBadgeText, { color: isDark ? '#38BDF8' : '#6D5BD0' }]}>
             {plans.length} SCHEDULED {plans.length === 1 ? 'PLAN' : 'PLANS'}
           </Text>
         </View>
@@ -68,13 +68,13 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
           style={({ pressed }) => [
             styles.addPlanHeaderBtn,
             {
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(59, 111, 240, 0.22)',
+              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.08)',
+              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="add" size={15} color={isDark ? '#38BDF8' : colors.blue} />
-          <Text style={[styles.addPlanHeaderText, { color: isDark ? '#38BDF8' : colors.blue }]}>
+          <Ionicons name="add" size={15} color={isDark ? '#38BDF8' : '#7C5CE0'} />
+          <Text style={[styles.addPlanHeaderText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
             Add Plan
           </Text>
         </Pressable>
@@ -170,16 +170,16 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
                     style={[
                       styles.assigneeAvatar,
                       {
-                        backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
+                        backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
                         borderColor: isDark
                           ? 'rgba(59, 111, 240, 0.35)'
-                          : 'rgba(59, 111, 240, 0.20)',
+                          : 'rgba(124, 92, 224, 0.18)',
                       },
                     ]}>
                     <Text
                       style={[
                         styles.assigneeInitial,
-                        { color: isDark ? '#38BDF8' : colors.blue },
+                        { color: isDark ? '#38BDF8' : '#7C5CE0' },
                       ]}>
                       {plan.assigneeInitial}
                     </Text>

@@ -82,7 +82,7 @@ export const CircleTimelineCard: React.FC = () => {
           <Ionicons
             name="time-outline"
             size={18}
-            color={isDark ? colors.blue : colors.blue}
+            color={isDark ? colors.blue : '#6D5BD0'}
           />
           <Text style={[styles.mainHeading, { color: colors.text, fontSize: isElderly ? 18 : 16.5 }]}>
             Today in your Circle
@@ -99,7 +99,7 @@ export const CircleTimelineCard: React.FC = () => {
             styles.viewAllPressable,
             { opacity: pressed ? 0.75 : 1 },
           ]}>
-          <Text style={[styles.timelineAllText, { color: isDark ? colors.blue : colors.blue }]}>
+          <Text style={[styles.timelineAllText, { color: isDark ? colors.blue : '#6D5BD0' }]}>
             View all →
           </Text>
         </Pressable>
@@ -137,7 +137,7 @@ export const CircleTimelineCard: React.FC = () => {
                   <View
                     style={[
                       styles.trackLine,
-                      { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(20, 32, 58, 0.08)' },
+                      { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(124, 92, 224, 0.12)' },
                     ]}
                   />
                 )}

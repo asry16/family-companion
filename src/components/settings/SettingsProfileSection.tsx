@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -47,12 +48,12 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
         <Ionicons
           name="person-outline"
           size={16}
-          color={isDark ? '#38BDF8' : colors.blue}
+          color={isDark ? '#38BDF8' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : colors.textSecondary },
+            { color: isDark ? colors.textMuted : '#6D5BD0' },
           ]}>
           YOUR PROFILE DETAILS
         </Text>
@@ -72,16 +73,25 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#2563EB' : colors.blue,
+                  backgroundColor: isDark ? '#2563EB' : undefined,
+                  overflow: 'hidden',
                 },
               ]}>
+              {!isDark && (
+                <LinearGradient
+                  colors={['#4F8EF7', '#8A6BF2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
               <Text style={styles.avatarText}>{initial}</Text>
             </View>
             <View
               style={[
                 styles.onlineBadge,
                 {
-                  backgroundColor: '#10B981',
+                  backgroundColor: colors.green,
                   borderColor: isDark ? '#0B1528' : '#FFFFFF',
                 },
               ]}
@@ -130,15 +140,15 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               {
                 backgroundColor: isDark
                   ? 'rgba(59, 111, 240, 0.18)'
-                  : 'rgba(59, 111, 240, 0.08)',
+                  : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
                   ? 'rgba(59, 111, 240, 0.35)'
-                  : 'rgba(59, 111, 240, 0.20)',
+                  : '#7C5CE0',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
-            <Ionicons name="create-outline" size={14} color={isDark ? '#38BDF8' : colors.blue} />
-            <Text style={[styles.editText, { color: isDark ? '#38BDF8' : colors.blue }]}>
+            <Ionicons name="create-outline" size={14} color={isDark ? '#38BDF8' : '#7C5CE0'} />
+            <Text style={[styles.editText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
               Edit
             </Text>
           </Pressable>

@@ -41,12 +41,12 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
         <Ionicons
           name="person-circle-outline"
           size={16}
-          color={isDark ? '#38BDF8' : colors.blue}
+          color={isDark ? '#38BDF8' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : colors.textSecondary },
+            { color: isDark ? colors.textMuted : '#6D5BD0' },
           ]}>
           ACCOUNT & SESSION
         </Text>
@@ -80,21 +80,21 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
               {
                 backgroundColor: isDark
                   ? 'rgba(255, 255, 255, 0.08)'
-                  : 'rgba(20, 32, 58, 0.05)',
+                  : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
                   ? 'rgba(255, 255, 255, 0.12)'
-                  : 'rgba(20, 32, 58, 0.08)',
+                  : 'rgba(124, 92, 224, 0.16)',
               },
             ]}>
             <Ionicons
               name="mail-outline"
               size={12}
-              color={isDark ? colors.textMuted : colors.textSecondary}
+              color={isDark ? colors.textMuted : '#7C5CE0'}
             />
             <Text
               style={[
                 styles.methodChipText,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textMuted : '#7C5CE0' },
               ]}>
               {signInMethod}
             </Text>
@@ -108,7 +108,7 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             {
               backgroundColor: isDark
                 ? 'rgba(59, 111, 240, 0.12)'
-                : 'rgba(20, 32, 58, 0.06)',
+                : 'rgba(124, 92, 224, 0.10)',
             },
           ]}
         />
@@ -126,10 +126,10 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             {
               backgroundColor: isDark
                 ? 'rgba(240, 82, 77, 0.16)'
-                : 'rgba(240, 82, 77, 0.08)',
+                : 'rgba(225, 29, 72, 0.06)',
               borderColor: isDark
                 ? 'rgba(240, 82, 77, 0.35)'
-                : 'rgba(240, 82, 77, 0.20)',
+                : 'rgba(225, 29, 72, 0.18)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>

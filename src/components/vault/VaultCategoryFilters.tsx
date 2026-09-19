@@ -63,19 +63,19 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
                 }}
                 style={styles.selectedGradientWrap}>
                 <LinearGradient
-                  colors={['#3B6FF0', '#2563EB']}
+                  colors={isDark ? ['#3B6FF0', '#2563EB'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[
                     styles.gradientPill,
                     {
-                      shadowColor: colors.blue,
+                      shadowColor: isDark ? colors.blue : '#6E5ADC',
                     },
                   ]}>
                   <Text
                     style={[
                       styles.selectedText,
-                      { color: isDark ? '#000000' : '#FFFFFF' },
+                      { color: '#FFFFFF' },
                     ]}>
                     {cat.label}
                   </Text>
@@ -94,8 +94,8 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
               style={({ pressed }) => [
                 styles.unselectedPill,
                 {
-                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(20, 32, 58, 0.08)',
+                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.16)',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -115,13 +115,13 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
           style={({ pressed }) => [
             styles.saveLocationPill,
             {
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.50)' : colors.blue,
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(59, 111, 240, 0.06)',
+              borderColor: isDark ? 'rgba(59, 111, 240, 0.50)' : '#7C5CE0',
+              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(124, 92, 224, 0.08)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="add" size={14} color={colors.blue} />
-          <Text style={[styles.saveLocationText, { color: colors.blue }]}>
+          <Ionicons name="add" size={14} color={isDark ? colors.blue : '#7C5CE0'} />
+          <Text style={[styles.saveLocationText, { color: isDark ? colors.blue : '#7C5CE0' }]}>
             + Save Location
           </Text>
         </Pressable>
@@ -135,17 +135,17 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
           style={({ pressed }) => [
             styles.previewTogglePill,
             {
-              backgroundColor: isDark ? 'rgba(124, 92, 224, 0.16)' : '#F3E8FF',
-              borderColor: isDark ? 'rgba(124, 92, 224, 0.35)' : '#D8B4FE',
+              backgroundColor: isDark ? 'rgba(124, 92, 224, 0.16)' : 'rgba(124, 92, 224, 0.10)',
+              borderColor: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.22)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name={isPreviewEmpty ? 'folder-open-outline' : 'sparkles-outline'}
             size={12}
-            color={colors.purple}
+            color={isDark ? colors.purple : '#7C5CE0'}
           />
-          <Text style={[styles.previewToggleText, { color: colors.purple }]}>
+          <Text style={[styles.previewToggleText, { color: isDark ? colors.purple : '#7C5CE0' }]}>
             {isPreviewEmpty ? 'State: Empty' : 'State: Populated'}
           </Text>
         </Pressable>

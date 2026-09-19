@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 
@@ -49,18 +50,18 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         {
           backgroundColor: isDark
             ? 'rgba(15, 26, 58, 0.88)'
-            : 'rgba(255, 255, 255, 0.90)',
+            : 'rgba(255, 255, 255, 0.78)',
           borderColor: isDark
             ? 'rgba(59, 111, 240, 0.28)'
-            : 'rgba(20, 32, 58, 0.10)',
-          shadowColor: isDark ? colors.blue : '#14203A',
+            : 'rgba(124, 92, 224, 0.18)',
+          shadowColor: isDark ? colors.blue : '#6E5ADC',
         },
       ]}>
       {/* Sparkle Icon */}
       <Ionicons
         name="sparkles"
         size={18}
-        color={isDark ? '#38BDF8' : colors.blue}
+        color={isDark ? '#38BDF8' : '#7C5CE0'}
         style={styles.sparkleIcon}
       />
 
@@ -71,7 +72,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         onSubmitEditing={handleSendPress}
         returnKeyType="send"
         placeholder={placeholder}
-        placeholderTextColor={isDark ? colors.textMuted : '#8A94A6'}
+        placeholderTextColor={isDark ? colors.textMuted : colors.textSecondary}
         style={[
           styles.textInput,
           {
@@ -81,7 +82,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         ]}
       />
 
-      {/* Filled Blue Circular Send Button */}
+      {/* Circular Send Button */}
       <Pressable
         onPress={handleSendPress}
         disabled={!canSend}
@@ -91,14 +92,25 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           styles.sendButton,
           {
             backgroundColor: canSend
-              ? colors.blue
+              ? isDark
+                ? colors.blue
+                : undefined
               : isDark
               ? 'rgba(255, 255, 255, 0.08)'
-              : 'rgba(20, 32, 58, 0.06)',
+              : 'rgba(124, 92, 224, 0.08)',
             opacity: !canSend ? 0.45 : pressed ? 0.85 : 1,
-            shadowColor: colors.blue,
+            shadowColor: isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
           },
         ]}>
+        {!isDark && canSend && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <Ionicons
           name="arrow-up"
           size={18}

@@ -52,14 +52,14 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.2)',
+                  backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
+                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
                 },
               ]}>
               <Text
                 style={[
                   styles.avatarText,
-                  { color: isDark ? '#38BDF8' : colors.blue },
+                  { color: isDark ? '#38BDF8' : '#7C5CE0' },
                 ]}>
                 {initial}
               </Text>
@@ -98,26 +98,26 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
               styles.elderlyPill,
               {
                 borderColor: simpleMode
-                  ? colors.blue
+                  ? isDark ? colors.blue : '#7C5CE0'
                   : isDark
                   ? 'rgba(59, 111, 240, 0.45)'
-                  : 'rgba(59, 111, 240, 0.35)',
+                  : 'rgba(124, 92, 224, 0.25)',
                 backgroundColor: simpleMode
                   ? isDark
                     ? 'rgba(59, 111, 240, 0.25)'
-                    : 'rgba(59, 111, 240, 0.12)'
+                    : 'rgba(124, 92, 224, 0.12)'
                   : isDark
                   ? 'rgba(59, 111, 240, 0.08)'
-                  : 'rgba(59, 111, 240, 0.05)',
+                  : 'rgba(124, 92, 224, 0.06)',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
             <Ionicons
               name={simpleMode ? 'people' : 'people-outline'}
               size={13}
-              color={colors.blue}
+              color={isDark ? colors.blue : '#7C5CE0'}
             />
-            <Text style={[styles.elderlyPillText, { color: colors.blue }]}>
+            <Text style={[styles.elderlyPillText, { color: isDark ? colors.blue : '#7C5CE0' }]}>
               Elderly
             </Text>
           </Pressable>
@@ -127,7 +127,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             name={isDark ? 'moon' : 'sunny'}
             size={36}
             iconSize={17}
-            color={isDark ? '#FBBF24' : colors.blue}
+            color={isDark ? '#FBBF24' : '#7C5CE0'}
             glowColor={isDark ? '#FBBF24' : undefined}
             onPress={toggleTheme}
             accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
@@ -138,7 +138,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             name="notifications-outline"
             size={36}
             iconSize={17}
-            color={colors.text}
+            color={isDark ? colors.text : '#6D5BD0'}
             badgeCount={unreadCount > 0 ? unreadCount : 1}
             badgeColor={colors.red}
             onPress={() => router.push('/modal/notifications')}
@@ -150,7 +150,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             name="settings-outline"
             size={36}
             iconSize={17}
-            color={colors.text}
+            color={isDark ? colors.text : '#6D5BD0'}
             onPress={() => {
               if (onOpenSettings) {
                 onOpenSettings();

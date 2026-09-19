@@ -59,36 +59,36 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
       title: 'Add Plan',
       subtitle: 'Create a new plan',
       icon: 'add' as const,
-      accent: colors.blue,
-      glowBg: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)',
-      borderAccent: isDark ? 'rgba(59, 111, 240, 0.32)' : 'rgba(59, 111, 240, 0.16)',
+      accent: isDark ? colors.blue : '#4F8EF7',
+      glowBg: isDark ? 'rgba(59, 111, 240, 0.20)' : '#EEF4FF',
+      borderAccent: isDark ? 'rgba(59, 111, 240, 0.32)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'scan',
       title: 'Scan Document',
       subtitle: 'Extract important details',
       icon: 'scan-outline' as const,
-      accent: colors.purple,
-      glowBg: isDark ? 'rgba(124, 92, 224, 0.20)' : 'rgba(124, 92, 224, 0.10)',
-      borderAccent: isDark ? 'rgba(124, 92, 224, 0.32)' : 'rgba(124, 92, 224, 0.16)',
+      accent: '#7C5CE0',
+      glowBg: isDark ? 'rgba(124, 92, 224, 0.20)' : '#F5F0FF',
+      borderAccent: isDark ? 'rgba(124, 92, 224, 0.32)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'checkin',
       title: 'Check In',
       subtitle: 'Update your location',
       icon: 'paper-plane' as const,
-      accent: colors.green,
-      glowBg: isDark ? 'rgba(34, 197, 139, 0.20)' : 'rgba(34, 197, 139, 0.10)',
-      borderAccent: isDark ? 'rgba(34, 197, 139, 0.32)' : 'rgba(34, 197, 139, 0.16)',
+      accent: '#2EBF8E',
+      glowBg: isDark ? 'rgba(34, 197, 139, 0.20)' : '#EBFDF7',
+      borderAccent: isDark ? 'rgba(34, 197, 139, 0.32)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'brief',
       title: 'AI Brief',
       subtitle: 'Understand it instantly',
       icon: 'sparkles' as const,
-      accent: colors.pink,
-      glowBg: isDark ? 'rgba(236, 72, 153, 0.20)' : 'rgba(236, 72, 153, 0.10)',
-      borderAccent: isDark ? 'rgba(236, 72, 153, 0.32)' : 'rgba(236, 72, 153, 0.16)',
+      accent: '#EC4899',
+      glowBg: isDark ? 'rgba(236, 72, 153, 0.20)' : '#FDF2F8',
+      borderAccent: isDark ? 'rgba(236, 72, 153, 0.32)' : 'rgba(124, 92, 224, 0.14)',
     },
   ];
 
@@ -118,14 +118,21 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
               styles.actionCard,
               {
                 backgroundColor: colors.cardBackground,
-                borderColor: act.borderAccent,
+                borderColor: isDark ? act.borderAccent : 'rgba(124, 92, 224, 0.14)',
                 opacity: pressed ? 0.88 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
-                shadowColor: isDark ? act.accent : '#14203A',
+                shadowColor: isDark ? act.accent : '#6E5ADC',
               },
             ]}>
-            {/* Glowing circular icon backdrop */}
-            <View style={[styles.iconCircle, { backgroundColor: act.glowBg }]}>
+            {/* Glowing circular icon backdrop with subtle inner highlight */}
+            <View
+              style={[
+                styles.iconCircle,
+                {
+                  backgroundColor: act.glowBg,
+                  borderColor: isDark ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                },
+              ]}>
               <Ionicons name={act.icon} size={20} color={act.accent} />
             </View>
 

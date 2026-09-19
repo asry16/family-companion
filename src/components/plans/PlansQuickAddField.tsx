@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 
@@ -42,20 +43,20 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.78)',
           borderColor: isListening
-            ? colors.blue
+            ? colors.red
             : isDark
             ? 'rgba(59, 111, 240, 0.28)'
-            : 'rgba(20, 32, 58, 0.08)',
-          shadowColor: isDark ? colors.blue : '#14203A',
+            : 'rgba(124, 92, 224, 0.18)',
+          shadowColor: isDark ? colors.blue : '#6E5ADC',
         },
       ]}>
       {/* Search Icon */}
       <Ionicons
         name="search-outline"
         size={19}
-        color={isDark ? colors.textMuted : colors.textSecondary}
+        color={isDark ? colors.textMuted : '#6D5BD0'}
         style={styles.searchIcon}
       />
 
@@ -68,7 +69,7 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         }}
         returnKeyType="done"
         placeholder={placeholder}
-        placeholderTextColor={isDark ? colors.textMuted : '#8A94A6'}
+        placeholderTextColor={isDark ? colors.textMuted : colors.textSecondary}
         style={[
           styles.textInput,
           {
@@ -95,7 +96,7 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         </Pressable>
       )}
 
-      {/* Blue Circular Mic Button for Voice Input */}
+      {/* Mic Button for Voice Input */}
       <Pressable
         onPress={() => {
           triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -106,11 +107,24 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         style={({ pressed }) => [
           styles.micButton,
           {
-            backgroundColor: isListening ? colors.red : colors.blue,
+            backgroundColor: isListening
+              ? colors.red
+              : isDark
+              ? colors.blue
+              : undefined,
             opacity: pressed ? 0.85 : 1,
-            shadowColor: isListening ? colors.red : colors.blue,
+            shadowColor: isListening ? colors.red : isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
           },
         ]}>
+        {!isDark && !isListening && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <Ionicons
           name={isListening ? 'mic' : 'mic-outline'}
           size={16}

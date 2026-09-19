@@ -61,24 +61,24 @@ export const StatusChip: React.FC<StatusChipProps> = ({
         return {
           defaultText,
           accent: colors.green,
-          softBg: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(34, 197, 139, 0.12)',
-          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(34, 197, 139, 0.22)',
+          softBg: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(46, 191, 142, 0.12)',
+          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(46, 191, 142, 0.25)',
           glow: colors.green,
         };
       case 'blue':
         return {
           defaultText,
-          accent: colors.blue,
-          softBg: isDark ? 'rgba(59, 111, 240, 0.18)' : 'rgba(59, 111, 240, 0.12)',
-          border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.22)',
-          glow: colors.blue,
+          accent: isDark ? colors.blue : '#7C5CE0',
+          softBg: isDark ? 'rgba(59, 111, 240, 0.18)' : 'rgba(124, 92, 224, 0.10)',
+          border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
+          glow: isDark ? colors.blue : '#7C5CE0',
         };
       case 'purple':
         return {
           defaultText,
-          accent: colors.purple,
-          softBg: isDark ? 'rgba(124, 92, 224, 0.18)' : 'rgba(124, 92, 224, 0.12)',
-          border: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.22)',
+          accent: '#7C5CE0',
+          softBg: isDark ? 'rgba(124, 92, 224, 0.18)' : 'rgba(124, 92, 224, 0.10)',
+          border: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.20)',
           glow: colors.purple,
         };
       case 'yellow':
@@ -105,10 +105,10 @@ export const StatusChip: React.FC<StatusChipProps> = ({
         elevation: 3,
       }
     : {
-        shadowColor: '#14203A',
+        shadowColor: '#6E5ADC',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
         elevation: 1,
       };
 

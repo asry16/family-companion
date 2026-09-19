@@ -65,7 +65,7 @@ export const IconCircleButton: React.FC<IconCircleButtonProps> = ({
     (isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)');
   const resolvedBorder =
     borderColor ||
-    (isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(20, 32, 58, 0.08)');
+    (isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(124, 92, 224, 0.14)');
   const resolvedBadgeColor = badgeColor || colors.red;
 
   const glowShadow: ViewStyle = glowColor
@@ -85,10 +85,10 @@ export const IconCircleButton: React.FC<IconCircleButtonProps> = ({
           elevation: 2,
         }
     : {
-        shadowColor: '#000000',
+        shadowColor: isDark ? '#000000' : '#6E5ADC',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.3 : 0.05,
-        shadowRadius: 5,
+        shadowOpacity: isDark ? 0.3 : 0.08,
+        shadowRadius: 6,
         elevation: 2,
       };
 

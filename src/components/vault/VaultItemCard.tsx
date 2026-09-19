@@ -35,19 +35,19 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
       case 'documents':
         return {
           icon: 'document-text' as const,
-          color: colors.blue,
-          bg: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)',
-          border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.18)',
+          color: isDark ? colors.blue : '#7C5CE0',
+          bg: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.10)',
+          border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.18)',
           chipLabel: 'Documents',
           chipVariant: 'Vault' as StatusChipVariant,
-          colorScheme: 'blue' as const,
+          colorScheme: 'purple' as const,
         };
       case 'household':
         return {
           icon: 'home' as const,
           color: colors.green,
-          bg: isDark ? 'rgba(34, 197, 139, 0.20)' : 'rgba(34, 197, 139, 0.10)',
-          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(34, 197, 139, 0.18)',
+          bg: isDark ? 'rgba(34, 197, 139, 0.20)' : 'rgba(46, 191, 142, 0.10)',
+          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(46, 191, 142, 0.18)',
           chipLabel: 'Household',
           chipVariant: 'Safe' as StatusChipVariant,
           colorScheme: 'green' as const,
@@ -146,14 +146,14 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
             style={[
               styles.savedByAvatar,
               {
-                backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(59, 111, 240, 0.15)',
+                backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(124, 92, 224, 0.18)',
               },
             ]}>
             <Text
               style={[
                 styles.savedByText,
-                { color: isDark ? '#38BDF8' : colors.blue },
+                { color: isDark ? '#38BDF8' : '#7C5CE0' },
               ]}>
               A
             </Text>
@@ -163,7 +163,7 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
           <Ionicons
             name="chevron-forward"
             size={16}
-            color={isDark ? colors.textMuted : colors.textSecondary}
+            color={isDark ? colors.textMuted : '#6D5BD0'}
           />
         </View>
       </View>

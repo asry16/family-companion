@@ -16,6 +16,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import {
   ChatHeader,
   ChatSuggestedPrompts,
@@ -189,6 +190,7 @@ export default function AIScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <LightBackdrop />
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -220,7 +222,7 @@ export default function AIScreen({
                 {
                   backgroundColor: isDark
                     ? 'rgba(59, 111, 240, 0.16)'
-                    : 'rgba(59, 111, 240, 0.10)',
+                    : 'rgba(79, 142, 247, 0.10)',
                 },
               ]}
             />
@@ -230,7 +232,7 @@ export default function AIScreen({
                 {
                   backgroundColor: isDark
                     ? 'rgba(124, 92, 224, 0.18)'
-                    : 'rgba(124, 92, 224, 0.08)',
+                    : 'rgba(124, 92, 224, 0.10)',
                 },
               ]}
             />

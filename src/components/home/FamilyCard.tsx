@@ -78,7 +78,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               style={[
                 styles.shieldHalo,
                 {
-                  backgroundColor: isDark ? 'rgba(34, 197, 139, 0.28)' : 'rgba(34, 197, 139, 0.16)',
+                  backgroundColor: isDark ? 'rgba(34, 197, 139, 0.28)' : 'rgba(46, 191, 142, 0.20)',
                   transform: [
                     {
                       scale: pulseAnim.interpolate({
@@ -95,7 +95,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               ]}
             />
             <LinearGradient
-              colors={['#22C58B', '#10B981']}
+              colors={['#2EBF8E', '#22C58B']}
               style={styles.shieldCoreCircle}>
               <Ionicons name="shield-checkmark" size={17} color="#FFFFFF" />
             </LinearGradient>
@@ -148,7 +148,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                 </Text>
               </View>
 
-              <View style={[styles.verticalDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.12)' }]} />
+              <View style={[styles.verticalDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(124, 92, 224, 0.12)' }]} />
 
               <Text style={[styles.lastActiveText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                 Last active / 2 min ago
@@ -162,7 +162,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           style={[
             styles.miniMapWrap,
             {
-              borderColor: isDark ? 'rgba(34, 197, 139, 0.3)' : 'rgba(34, 197, 139, 0.2)',
+              borderColor: isDark ? 'rgba(34, 197, 139, 0.3)' : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
           <Image
@@ -175,12 +175,12 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             resizeMode="cover"
           />
 
-          {/* Faded overlay */}
+          {/* Faded overlay with lavender tint in light mode */}
           <View
             style={[
               styles.mapOverlay,
               {
-                backgroundColor: isDark ? 'rgba(6, 11, 31, 0.45)' : 'rgba(255, 255, 255, 0.35)',
+                backgroundColor: isDark ? 'rgba(6, 11, 31, 0.45)' : 'rgba(238, 235, 252, 0.45)',
               },
             ]}
           />

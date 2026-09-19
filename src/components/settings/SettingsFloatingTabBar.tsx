@@ -73,11 +73,13 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
         {
           backgroundColor: isDark
             ? 'rgba(15, 26, 58, 0.88)'
-            : 'rgba(255, 255, 255, 0.88)',
+            : 'rgba(255, 255, 255, 0.78)',
           borderColor: isDark
             ? 'rgba(59, 111, 240, 0.25)'
-            : 'rgba(20, 32, 58, 0.08)',
-          shadowColor: isDark ? colors.blue : '#14203A',
+            : 'rgba(124, 92, 224, 0.14)',
+          shadowColor: isDark ? colors.blue : '#6E5ADC',
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 24,
         },
       ]}>
       {tabs.map((tab) => {
@@ -96,17 +98,19 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
               {/* Center Assistant Orb (Raised Gradient Orb) */}
               <View style={styles.centerAssistantWrap}>
                 <LinearGradient
-                  colors={['#3B6FF0', '#7C5CE0']}
+                  colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[
                     styles.centerAssistantCircle,
-                    isActive && {
-                      borderColor: '#FFFFFF',
-                      shadowColor: colors.blue,
-                      shadowOpacity: 0.65,
+                    {
+                      shadowColor: isDark ? colors.blue : '#8A6BF2',
+                      shadowOpacity: isActive ? 0.65 : 0.40,
                       shadowRadius: 16,
                       elevation: 10,
+                    },
+                    isActive && {
+                      borderColor: '#FFFFFF',
                     },
                   ]}>
                   <Ionicons name="sparkles" size={21} color="#FFFFFF" />
@@ -117,10 +121,10 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
                   styles.tabLabel,
                   {
                     color: isActive
-                      ? colors.blue
+                      ? (isDark ? colors.blue : '#7C5CE0')
                       : isDark
                       ? colors.textMuted
-                      : colors.textSecondary,
+                      : '#7A7DB0',
                     fontSize: isElderly ? 12 : 10,
                   },
                 ]}>
@@ -131,7 +135,11 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
         }
 
         const iconName = isActive ? tab.icon : tab.outlineIcon;
-        const iconColor = isActive ? colors.blue : isDark ? colors.textMuted : colors.textSecondary;
+        const iconColor = isActive
+          ? (isDark ? colors.blue : '#7C5CE0')
+          : isDark
+          ? colors.textMuted
+          : '#7A7DB0';
 
         return (
           <Pressable
@@ -149,7 +157,7 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
                   {
                     backgroundColor: isDark
                       ? 'rgba(59, 111, 240, 0.20)'
-                      : 'rgba(59, 111, 240, 0.10)',
+                      : 'rgba(124, 92, 224, 0.12)',
                   },
                 ],
               ]}>
@@ -160,10 +168,10 @@ export const SettingsFloatingTabBar: React.FC<SettingsFloatingTabBarProps> = ({
                 styles.tabLabel,
                 {
                   color: isActive
-                    ? colors.blue
+                    ? (isDark ? colors.blue : '#7C5CE0')
                     : isDark
                     ? colors.textMuted
-                    : colors.textSecondary,
+                    : '#7A7DB0',
                   fontSize: isElderly ? 12 : 10,
                 },
               ]}>
