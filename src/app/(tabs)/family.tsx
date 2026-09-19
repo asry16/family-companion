@@ -4,40 +4,48 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
   Platform,
   Linking,
+  Modal,
+  Pressable,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
-import { Header } from '@/components/ui/Header';
-import { FamilyMemberCard } from '@/components/cards/FamilyMemberCard';
-import { StylizedFamilyMap } from '@/components/location/StylizedFamilyMap';
-import { LiveFamilyMap } from '@/components/location/LiveFamilyMap';
+import { FamilyMember } from '@/types';
+
+// Circle Screen Components (Design System)
+import { CircleHeader } from '@/components/circle/CircleHeader';
+import { CircleSafetyBanner } from '@/components/circle/CircleSafetyBanner';
+import { CircleMembersHeader } from '@/components/circle/CircleMembersHeader';
+import { CircleMemberCard } from '@/components/circle/CircleMemberCard';
+import { CirclePlacesPrivacyCard } from '@/components/circle/CirclePlacesPrivacyCard';
+import { CircleLiveMapCard } from '@/components/circle/CircleLiveMapCard';
+
+// Modals
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
+import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
 
 export default function FamilyScreen() {
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
-  const { profile, members, sendFamilyPing, sendEmergencySos } = useFamily();
+  const { profile, members, activeUser, sendFamilyPing, sendEmergencySos } = useFamily();
   const { speak } = useVoice();
+
+  // Modals state
+  const [sosModalVisible, setSosModalVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
+  const [fullMapModalVisible, setFullMapModalVisible] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated]);
-
-  if (!isAuthenticated) return null;
-
+  // Confirmation modal state for decisions/pings
   const [modalState, setModalState] = useState<{
     visible: boolean;
     title: string;
@@ -51,7 +59,13 @@ export default function FamilyScreen() {
     onConfirm: () => {},
   });
 
-  const handleCall = (name: string, phone: string) => {
+  useEffect(() => {
+    if (!isAuthenticated) router.replace('/login');
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
+
+  const handleCall = (phone: string, name: string) => {
     if (Platform.OS !== 'web') {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -63,7 +77,7 @@ export default function FamilyScreen() {
     });
   };
 
-  const handleAsk = (member: any) => {
+  const handleAsk = (member: FamilyMember) => {
     setModalState({
       visible: true,
       title: `Send quick ping to ${member.name}?`,
@@ -80,246 +94,66 @@ export default function FamilyScreen() {
     });
   };
 
+  // Ensure primary user is rendered if members list is empty
+  const displayMembers = members.length > 0 ? members : [activeUser];
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Header
-        title="Family Circle"
-        subtitle={`${profile.name} • ${members.length} members connected`}
+      {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, SOS & Elderly chips, Sun, Bell, Settings */}
+      <CircleHeader
+        onOpenFamilySwitcher={() => setQrModalVisible(true)}
+        onOpenSos={() => setSosModalVisible(true)}
+        onOpenSettings={() => router.push('/modal/family-settings')}
       />
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {/* Family Circle Summary Bar */}
-        <View
-          style={[
-            styles.safetyBanner,
-            {
-              backgroundColor: colors.greenSoft,
-              borderColor: colors.greenBorder,
-            },
-          ]}>
-          <View style={styles.safetyIcon}>
-            <Ionicons name="shield-checkmark" size={20} color={colors.green} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[
-                styles.safetyTitle,
-                { color: colors.green, fontSize: isElderly ? 18 : 14 },
-              ]}>
-              ALL FAMILY MEMBERS SAFE
-            </Text>
-            <Text
-              style={[
-                styles.safetySub,
-                { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
-              ]}>
-              {members.length} active family members • Location encrypted
-            </Text>
-          </View>
-        </View>
+        {/* 2. Safety Banner (Tappable, Chevron, Glowing green shield, Leaf accent / Dark glow) */}
+        <CircleSafetyBanner
+          onPress={() => setFullMapModalVisible(true)}
+        />
 
-        {/* Members Roster */}
-        <View style={styles.sectionHeader}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: colors.text, fontSize: isElderly ? 20 : 16 },
-            ]}>
-            MEMBERS & STATUS
-          </Text>
-          <View style={styles.headerActionsRow}>
-            <Pressable
-              onPress={() => setQrModalVisible(true)}
-              style={({ pressed }) => [
-                styles.actionPill,
-                {
-                  backgroundColor: colors.separator,
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="qr-code" size={12} color={colors.text} />
-              <Text style={[styles.actionPillText, { color: colors.text }]}>QR Code</Text>
-            </Pressable>
+        {/* 3. "MEMBERS & STATUS" Section Header with Pill Buttons */}
+        <CircleMembersHeader
+          onOpenQr={() => setQrModalVisible(true)}
+          onOpenJoin={() => setJoinModalVisible(true)}
+          onAddMember={() => setQrModalVisible(true)}
+          onOpenSettings={() => router.push('/modal/family-settings')}
+        />
 
-            <Pressable
-              onPress={() => setJoinModalVisible(true)}
-              style={({ pressed }) => [
-                styles.actionPill,
-                {
-                  backgroundColor: colors.separator,
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="scan-outline" size={12} color={colors.text} />
-              <Text style={[styles.actionPillText, { color: colors.text }]}>Join Circle</Text>
-            </Pressable>
-
-            <Pressable
+        {/* 4. Member Cards (One per member, list-rendered) */}
+        <View style={styles.membersListContainer}>
+          {displayMembers.map((member) => (
+            <CircleMemberCard
+              key={member.id}
+              member={member}
               onPress={() => router.push('/modal/family-settings')}
-              style={({ pressed }) => [
-                styles.actionPill,
-                {
-                  backgroundColor: colors.brandAccent,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="person-add" size={12} color={colors.buttonTextOnAccent} />
-              <Text style={[styles.actionPillText, { color: colors.buttonTextOnAccent }]}>Add Member</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.push('/modal/family-settings')}
-              style={({ pressed }) => [
-                styles.iconActionBtn,
-                {
-                  backgroundColor: colors.separator,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Ionicons name="settings-outline" size={15} color={colors.text} />
-            </Pressable>
-          </View>
+              onCall={handleCall}
+              onAsk={handleAsk}
+            />
+          ))}
         </View>
 
-        {members.map((member) => (
-          <FamilyMemberCard
-            key={member.id}
-            member={member}
-            onPress={() => router.push('/modal/family-settings')}
-            onCall={() => handleCall(member.name, member.phone)}
-            onPing={() => handleAsk(member)}
-          />
-        ))}
+        {/* 5. "FAMILY PLACES & PRIVACY CONTROLS" Card */}
+        <CirclePlacesPrivacyCard
+          onSeeMap={() => setFullMapModalVisible(true)}
+          onPressPlaces={() => router.push('/modal/family-settings')}
+          onPressHome={() => setFullMapModalVisible(true)}
+          onPressPrivacy={() => router.push('/modal/family-settings')}
+        />
 
-        {members.length <= 1 && (
-          <View
-            style={[
-              styles.emptyFamilyCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}>
-            <View
-              style={[
-                styles.emptyIconCircle,
-                { backgroundColor: colors.brandAccent + '15' },
-              ]}>
-              <Ionicons name="people" size={26} color={colors.brandAccent} />
-            </View>
-            <Text
-              style={[
-                styles.emptyFamilyTitle,
-                { color: colors.text, fontSize: isElderly ? 20 : 17 },
-              ]}>
-              Build {profile.name}
-            </Text>
-            <Text style={[styles.emptyFamilySub, { color: colors.textSecondary }]}>
-              Add your spouse, children, parents, or companions to coordinate tasks, check phone battery, and view live radar locations.
-            </Text>
+        {/* 6. "LIVE FAMILY MAP" Card */}
+        <CircleLiveMapCard
+          onFullScreen={() => setFullMapModalVisible(true)}
+        />
 
-            <View style={styles.emptyActionRow}>
-              <Pressable
-                onPress={() => setQrModalVisible(true)}
-                style={({ pressed }) => [
-                  styles.primaryAddBtn,
-                  {
-                    backgroundColor: colors.brandAccent,
-                    flex: 1,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}>
-                <Ionicons name="qr-code" size={16} color={colors.buttonTextOnAccent} />
-                <Text style={[styles.primaryAddBtnText, { color: colors.buttonTextOnAccent }]}>
-                  Share QR Invite
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setJoinModalVisible(true)}
-                style={({ pressed }) => [
-                  styles.secondaryAddBtn,
-                  {
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                    flex: 1,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}>
-                <Ionicons name="scan-outline" size={16} color={colors.text} />
-                <Text style={[styles.secondaryAddBtnText, { color: colors.text }]}>
-                  Join via QR
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
-        {/* Real-Time Live Family Map Section */}
-        <View style={styles.sectionHeader}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: colors.text, fontSize: isElderly ? 20 : 16 },
-            ]}>
-            LIVE FAMILY MAP & PINS
-          </Text>
-        </View>
-
-        <LiveFamilyMap />
-
-        {/* Privacy Places & Check-In */}
-        <View style={[styles.sectionHeader, { marginTop: 12 }]}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: colors.text, fontSize: isElderly ? 20 : 16 },
-            ]}>
-            FAMILY PLACES & PRIVACY CONTROLS
-          </Text>
-        </View>
-
-        <StylizedFamilyMap />
-
-        {/* Emergency Family Broadcast Alert Button */}
-        <Pressable
-          onPress={() => {
-            setModalState({
-              visible: true,
-              title: 'Send Emergency Family Ping?',
-              description:
-                'This will alert all 5 family members with your live location and highest priority notification.',
-              confirmLabel: 'Confirm Family Alert',
-              onConfirm: async () => {
-                setModalState((prev) => ({ ...prev, visible: false }));
-                await sendEmergencySos('Discreet Family Check-In Alert');
-                speak('Family safety alert dispatched.');
-              },
-            });
-          }}
-          style={({ pressed }) => [
-            styles.emergencyButton,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons name="radio-outline" size={18} color={colors.red} />
-          <Text style={[styles.emergencyText, { color: colors.red }]}>
-            Discreet Family Check-In Alert
-          </Text>
-        </Pressable>
+        {/* Bottom spacer for floating navigation bar */}
+        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
+      {/* Confirmation Modal */}
       <ConfirmationModal
         visible={modalState.visible}
         title={modalState.title}
@@ -329,6 +163,15 @@ export default function FamilyScreen() {
         onCancel={() => setModalState((prev) => ({ ...prev, visible: false }))}
       />
 
+      {/* Emergency SOS Modal */}
+      <EmergencySosModal
+        visible={sosModalVisible}
+        onClose={() => setSosModalVisible(false)}
+        onTriggerSos={async (reason, details) => {
+          await sendEmergencySos(reason, details);
+        }}
+      />
+
       {/* Family QR & Join Modals */}
       <FamilyQRModal
         visible={qrModalVisible}
@@ -336,10 +179,37 @@ export default function FamilyScreen() {
         familyCode={profile.code}
         familyName={profile.name}
       />
+
       <JoinFamilyModal
         visible={joinModalVisible}
         onClose={() => setJoinModalVisible(false)}
       />
+
+      {/* Full Screen Live Family Map Modal */}
+      <Modal
+        visible={fullMapModalVisible}
+        animationType="slide"
+        onRequestClose={() => setFullMapModalVisible(false)}>
+        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? '#060B1F' : '#FBF8F6' }]}>
+          <Pressable
+            onPress={() => setFullMapModalVisible(false)}
+            style={styles.closeFullMapBtn}>
+            <View
+              style={[
+                styles.closeFullMapCircle,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(0,0,0,0.1)',
+                },
+              ]}>
+              <Text style={{ color: colors.text, fontWeight: '800' }}>✕ Close Map</Text>
+            </View>
+          </Pressable>
+          <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <FamilyCommandCenter />
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -352,145 +222,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 40,
-    gap: 12,
+    paddingTop: 4,
+    paddingBottom: 110, // Generous padding so content is never hidden behind floating nav bar
+    gap: 8,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
   },
-  safetyBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 12,
-  },
-  safetyIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  safetyTitle: {
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  safetySub: {
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 2,
-  },
-  sectionTitle: {
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  headerActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  membersListContainer: {
     gap: 8,
   },
-  actionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 14,
+  floatingNavSpacer: {
+    height: Platform.select({ ios: 36, default: 24 }),
   },
-  actionPillText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+  fullMapScreen: {
+    flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 44 : 20,
   },
-  iconActionBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  closeFullMapBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: 'flex-end',
   },
-  emergencyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 8,
-    marginTop: 8,
-  },
-  emergencyText: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  emptyFamilyCard: {
-    padding: 24,
+  closeFullMapCircle: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 8,
-    gap: 8,
-  },
-  emptyIconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  emptyFamilyTitle: {
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  emptyFamilySub: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-    maxWidth: 290,
-  },
-  primaryAddBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 14,
-    marginTop: 8,
-  },
-  primaryAddBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  emptyActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-    marginTop: 8,
-  },
-  secondaryAddBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  secondaryAddBtnText: {
-    fontWeight: '700',
-    fontSize: 13,
   },
 });
