@@ -128,13 +128,11 @@ export const apiClient = {
       familyName?: string;
       relation?: string;
     }) => {
-      const res = await request<{ token: string; user: any; verificationCode?: string }>('/api/auth/register', {
+      const res = await request<{ token: string; user: any; verificationCode?: string; delivered?: boolean }>('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      if (res.success && res.data?.token) {
-        await AsyncStorage.setItem(JWT_TOKEN_KEY, res.data.token);
-      }
+      // Do not activate token until OTP verification is completed
       return res;
     },
 
@@ -146,10 +144,11 @@ export const apiClient = {
       email: string,
       purpose: 'login' | 'register' | 'verification' | 'password_reset' = 'login'
     ) => {
-      return request<{ code?: string; delivered?: boolean; message: string }>('/api/auth/send-otp', {
+      const res = await request<{ code?: string; delivered?: boolean; message?: string }>('/api/auth/send-otp', {
         method: 'POST',
         body: JSON.stringify({ email, purpose }),
       });
+      return res;
     },
 
     loginWithOtp: async (email: string, code: string) => {
@@ -165,10 +164,15 @@ export const apiClient = {
     },
 
     verifyOtp: async (email: string, code: string) => {
-      return request('/api/auth/verify-otp', {
+      const res = await request<{ message?: string; token?: string; user?: any }>('/api/auth/verify-otp', {
         method: 'POST',
         body: JSON.stringify({ email, code }),
       });
+      const token = res.data?.token || (res as any).token;
+      if (res.success && token) {
+        await AsyncStorage.setItem(JWT_TOKEN_KEY, token);
+      }
+      return res;
     },
 
     forgotPassword: async (email: string) => {

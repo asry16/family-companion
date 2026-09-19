@@ -27,7 +27,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export type AuthCardState = 'choose' | 'signIn' | 'signUp';
+export type AuthCardState = 'choose' | 'signIn' | 'signUp' | 'verifySignUpOtp';
 
 export interface AuthCardProps {
   initialState?: AuthCardState;
@@ -54,7 +54,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 }) => {
   const { colors, isDark } = useAppTheme();
   const { setSimpleMode } = useFamily();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, verifyEmailCode, resendVerificationCode } = useAuth();
 
   // State Management
   const [cardState, setCardState] = useState<AuthCardState>(initialState);
@@ -76,6 +76,26 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const [selectedMode, setSelectedMode] = useState<'elderly' | 'default'>('elderly');
   const [inviteCodeExpanded, setInviteCodeExpanded] = useState(false);
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
+
+  // OTP Verification States for Sign Up
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [pendingVerificationCode, setPendingVerificationCode] = useState<string | null>(null);
+  const [isCodeDelivered, setIsCodeDelivered] = useState(false);
+  const [signUpOtp, setSignUpOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
+  // OTP Resend Cooldown Timer
+  React.useEffect(() => {
+    let timer: any;
+    if (otpCooldown > 0) {
+      timer = setInterval(() => {
+        setOtpCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
 
   // Field Focus States
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -282,17 +302,27 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         mode: isEligibleForElderlyMode ? selectedMode : undefined,
       });
       if (res.success) {
-        // If user is 50+ and opted for elderly mode, enable simple/elderly mode
-        if (isEligibleForElderlyMode && selectedMode === 'elderly') {
-          setSimpleMode(true);
-        }
+        if (res.requiresVerification) {
+          setPendingVerificationEmail(res.email || cleanContact);
+          setPendingVerificationCode(res.verificationCode || null);
+          setIsCodeDelivered(Boolean(res.delivered));
+          setSignUpOtp('');
+          setOtpError(null);
+          setOtpCooldown(30);
+          switchState('verifySignUpOtp');
+        } else {
+          // If user is 50+ and opted for elderly mode, enable simple/elderly mode
+          if (isEligibleForElderlyMode && selectedMode === 'elderly') {
+            setSimpleMode(true);
+          }
 
-        if (Platform.OS !== 'web') {
-          try {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch (e) {}
+          if (Platform.OS !== 'web') {
+            try {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } catch (e) {}
+          }
+          onSuccess();
         }
-        onSuccess();
       } else {
         setErrors({ general: res.error || 'Registration failed. Please try again.' });
       }
@@ -300,6 +330,74 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       setErrors({ general: err.message || 'An unexpected error occurred.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Verify Sign Up OTP Handler
+  const handleVerifySignUpOtp = async (codeToVerify?: string) => {
+    if (otpLoading) return;
+    const code = (codeToVerify || signUpOtp).trim();
+    if (!code) {
+      setOtpError('Please enter the 6-digit verification code.');
+      return;
+    }
+    if (code.length < 6) {
+      setOtpError('Please enter all 6 digits of the code.');
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError(null);
+
+    try {
+      const res = await verifyEmailCode(pendingVerificationEmail, code);
+      if (res.success) {
+        if (isEligibleForElderlyMode && selectedMode === 'elderly') {
+          setSimpleMode(true);
+        }
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch (e) {}
+        }
+        onSuccess();
+      } else {
+        setOtpError(res.error || 'Invalid verification code. Please check and try again.');
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } catch (e) {}
+        }
+      }
+    } catch (err: any) {
+      setOtpError(err?.message || 'Verification failed. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Resend Sign Up OTP Handler
+  const handleResendSignUpOtp = async () => {
+    if (otpCooldown > 0 || !pendingVerificationEmail) return;
+    setOtpError(null);
+    try {
+      const res = await resendVerificationCode(pendingVerificationEmail);
+      if (res.success) {
+        setOtpCooldown(30);
+        if (res.code) {
+          setPendingVerificationCode(res.code);
+        }
+        setIsCodeDelivered(Boolean(res.delivered));
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch (e) {}
+        }
+      } else {
+        setOtpError('Failed to resend code. Please try again shortly.');
+      }
+    } catch {
+      setOtpError('Failed to resend code. Please try again shortly.');
     }
   };
 
@@ -1014,6 +1112,186 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             </View>
           </View>
         )}
+
+        {/* State: verifySignUpOtp */}
+        {cardState === 'verifySignUpOtp' && (
+          <View style={styles.stateWrapper}>
+            {/* Form Header */}
+            <View style={styles.formHeader}>
+              <Pressable
+                onPress={() => switchState('signUp')}
+                style={styles.backButton}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Back to sign up details">
+                <Ionicons name="arrow-back" size={20} color={colors.text} />
+              </Pressable>
+              <View style={styles.headerTextWrap}>
+                <Text style={[styles.cardTitle, { color: colors.text, textAlign: 'left' }]}>
+                  Verify Your Account
+                </Text>
+                <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left', marginBottom: 0 }]}>
+                  Enter the 6-digit code sent to{' '}
+                  <Text style={{ fontWeight: '700', color: colors.text }}>
+                    {pendingVerificationEmail || signUpContact}
+                  </Text>
+                </Text>
+              </View>
+            </View>
+
+            {/* Security Shield Icon Badge */}
+            <View style={styles.otpShieldBadgeWrap}>
+              <LinearGradient
+                colors={
+                  isDark
+                    ? ['rgba(56, 189, 248, 0.25)', 'rgba(99, 102, 241, 0.15)']
+                    : ['rgba(79, 142, 247, 0.15)', 'rgba(138, 107, 242, 0.10)']
+                }
+                style={styles.otpShieldBadge}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={32}
+                  color={isDark ? '#38BDF8' : '#4F8EF7'}
+                />
+              </LinearGradient>
+            </View>
+
+            {/* Error Banner */}
+            {otpError ? (
+              <View
+                style={[
+                  styles.errorBanner,
+                  {
+                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+                    borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
+                    borderWidth: 1,
+                  },
+                ]}>
+                <Ionicons name="alert-circle" size={18} color={isDark ? '#F87171' : '#E11D48'} />
+                <Text style={[styles.errorBannerText, { color: isDark ? '#F87171' : '#E11D48' }]}>
+                  {otpError}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Simulated/Dev Code Helper Banner (if available) */}
+            {pendingVerificationCode && !isCodeDelivered && (
+              <Pressable
+                onPress={() => {
+                  setSignUpOtp(pendingVerificationCode);
+                  handleVerifySignUpOtp(pendingVerificationCode);
+                }}
+                style={[
+                  styles.devCodeBadge,
+                  {
+                    backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.10)',
+                    borderColor: isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.25)',
+                  },
+                ]}>
+                <Ionicons name="flash-outline" size={14} color={isDark ? '#FBBF24' : '#D97706'} />
+                <Text style={[styles.devCodeBadgeText, { color: isDark ? '#FBBF24' : '#D97706' }]}>
+                  Demo Code: <Text style={{ fontWeight: '800' }}>{pendingVerificationCode}</Text> (tap to fill & verify)
+                </Text>
+              </Pressable>
+            )}
+
+            {/* 6-digit OTP input */}
+            <View
+              style={[
+                inputStyle('otp'),
+                {
+                  justifyContent: 'center',
+                  height: 54,
+                  marginTop: 6,
+                  marginBottom: 12,
+                },
+              ]}>
+              <Ionicons
+                name="key-outline"
+                size={20}
+                color={focusedField === 'otp' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                style={{ marginRight: 10 }}
+              />
+              <TextInput
+                value={signUpOtp}
+                onChangeText={(t) => {
+                  const clean = t.replace(/\D/g, '').slice(0, 6);
+                  setSignUpOtp(clean);
+                  if (otpError) setOtpError(null);
+                  if (clean.length === 6) {
+                    handleVerifySignUpOtp(clean);
+                  }
+                }}
+                onFocus={() => setFocusedField('otp')}
+                onBlur={() => setFocusedField(null)}
+                placeholder="• • • • • •"
+                placeholderTextColor={themeTokens.inputPlaceholder}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                style={[
+                  styles.textInput,
+                  {
+                    color: colors.text,
+                    letterSpacing: 8,
+                    fontSize: 20,
+                    fontWeight: '700',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Resend Code row */}
+            <View style={styles.otpResendRow}>
+              <Text style={[styles.otpResendText, { color: colors.textSecondary }]}>
+                Didn't receive the code?{' '}
+              </Text>
+              {otpCooldown > 0 ? (
+                <Text style={[styles.otpResendLink, { color: colors.textSecondary, fontWeight: '500' }]}>
+                  Resend in {otpCooldown}s
+                </Text>
+              ) : (
+                <Pressable onPress={handleResendSignUpOtp} hitSlop={8}>
+                  <Text style={[styles.otpResendLink, { color: themeTokens.linkViolet }]}>
+                    Resend Code
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Submit Button */}
+            <Pressable
+              onPress={() => handleVerifySignUpOtp()}
+              disabled={otpLoading || signUpOtp.trim().length < 6}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                (signUpOtp.trim().length < 6 || otpLoading) && { opacity: 0.6 },
+                pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] },
+                { marginTop: 16 },
+              ]}>
+              <LinearGradient
+                colors={isDark ? ['#38BDF8', '#6366F1'] : ['#4F8EF7', '#8A6BF2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradientFill}>
+                {otpLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Verify & Complete Registration</Text>
+                )}
+              </LinearGradient>
+            </Pressable>
+
+            {/* Back to Edit Details Link */}
+            <View style={[styles.switchRow, { marginTop: 14 }]}>
+              <Pressable onPress={() => switchState('signUp')} hitSlop={8}>
+                <Text style={[styles.switchLink, { color: themeTokens.linkViolet }]}>
+                  ← Edit registration details
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </Animated.View>
     </View>
   );
@@ -1256,6 +1534,44 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   footerLink: {
+    fontWeight: '600',
+  },
+  otpShieldBadgeWrap: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  otpShieldBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devCodeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
+    gap: 6,
+  },
+  devCodeBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  otpResendRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  otpResendText: {
+    fontSize: 13,
+  },
+  otpResendLink: {
+    fontSize: 13,
     fontWeight: '600',
   },
 });

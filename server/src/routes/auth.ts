@@ -8,6 +8,8 @@ import { sendOtpEmail } from '../services/mailer';
 
 const router = Router();
 
+const pendingRegistrationOtps = new Map<string, { code: string; expiresAt: number }>();
+
 function generateInviteCode(): string {
   const num = Math.floor(1000 + Math.random() * 9000);
   return `KIN-${num}`;
@@ -268,10 +270,12 @@ router.post('/send-otp', async (req: Request, res: Response) => {
     const cleanEmail = email.trim().toLowerCase();
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store in users table if user exists
+    // Store in users table if user exists, or in pending map for pre-registration
     const user = usersRepo.findByEmail(cleanEmail);
     if (user) {
       usersRepo.setVerificationCode(cleanEmail, code);
+    } else {
+      pendingRegistrationOtps.set(cleanEmail, { code, expiresAt: Date.now() + 15 * 60 * 1000 });
     }
 
     // Dispatch real email via Nodemailer
@@ -653,17 +657,58 @@ const handleVerifyCode = async (req: Request, res: Response) => {
     const cleanCode = code.trim();
 
     const user = usersRepo.findByEmail(cleanEmail);
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User account not found.' });
+    const pending = pendingRegistrationOtps.get(cleanEmail);
+
+    if (user) {
+      if (user.verification_code !== cleanCode) {
+        // Also check pending map as fallback
+        if (!pending || pending.code !== cleanCode || Date.now() >= pending.expiresAt) {
+          return res.status(400).json({ success: false, error: 'Invalid verification code.' });
+        }
+      }
+
+      usersRepo.verifyEmail(cleanEmail);
+      if (pending) pendingRegistrationOtps.delete(cleanEmail);
+
+      let member = membersRepo.findByUserId(user.id);
+      let familyId = member?.family_id;
+      let family = familyId ? familiesRepo.findById(familyId) : undefined;
+
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, familyId },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      return res.json({
+        success: true,
+        message: 'Email verified successfully.',
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          isVerified: true,
+          familyMemberId: member?.id,
+          familyName: family?.name,
+          relation: member?.relation || 'Self',
+        },
+        family,
+        member,
+      });
     }
 
-    if (user.verification_code !== cleanCode) {
-      return res.status(400).json({ success: false, error: 'Invalid verification code.' });
+    if (pending && pending.code === cleanCode) {
+      if (Date.now() >= pending.expiresAt) {
+        pendingRegistrationOtps.delete(cleanEmail);
+        return res.status(400).json({ success: false, error: 'Verification code has expired. Please request a new code.' });
+      }
+      pendingRegistrationOtps.delete(cleanEmail);
+      return res.json({ success: true, message: 'Verification code confirmed.' });
     }
 
-    usersRepo.verifyEmail(cleanEmail);
-
-    return res.json({ success: true, message: 'Email verified successfully.' });
+    return res.status(404).json({ success: false, error: 'Invalid verification code or user not found.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'OTP verification failed.' });
   }

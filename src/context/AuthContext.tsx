@@ -55,7 +55,16 @@ interface AuthContextValue {
     password: string;
     inviteCode?: string;
     mode?: 'elderly' | 'default';
-  }) => Promise<{ success: boolean; error?: string; familyName?: string }>;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    familyName?: string;
+    requiresVerification?: boolean;
+    verificationCode?: string;
+    email?: string;
+    phone?: string;
+    delivered?: boolean;
+  }>;
   signInWithEmail: (email: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (
     name: string,
@@ -364,20 +373,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const customFamilyName = inviteCode ? 'Connected Family' : `${cleanName}'s Family`;
-        const userId = `user_${Date.now()}`;
-        const memberId = `member_${Date.now()}`;
-        const fallbackEmail = cleanEmail || `${cleanPhoneDigits || userId}@kinly.local`;
+        const localUserId = `user_${Date.now()}`;
+        const localMemberId = `member_${Date.now()}`;
+        const fallbackEmail = cleanEmail || `${cleanPhoneDigits || localUserId}@kinly.local`;
+
+        let serverUserId: string | null = null;
+        let serverMemberId: string | null = null;
+        let serverVerificationCode: string | undefined = undefined;
+        let serverDelivered = false;
 
         // Try backend registration in background (non-blocking)
         try {
-          await apiClient.auth.register({
+          const apiRes = await apiClient.auth.register({
             name: cleanName,
             email: fallbackEmail,
             password: cleanPass,
             familyName: customFamilyName,
             relation: 'Self',
           });
+          if (apiRes.success && apiRes.data?.user) {
+            serverUserId = apiRes.data.user.id;
+            serverMemberId = apiRes.data.user.familyMemberId;
+            serverVerificationCode = apiRes.data.verificationCode;
+            serverDelivered = Boolean(apiRes.data.delivered || (apiRes as any).delivered);
+          } else if (apiRes.error && apiRes.error.toLowerCase().includes('already exists')) {
+            return { success: false, error: apiRes.error };
+          }
         } catch {}
+
+        const memberId = serverMemberId || localMemberId;
+        const userId = serverUserId || localUserId;
+        const verificationCode = serverVerificationCode || Math.floor(100000 + Math.random() * 900000).toString();
 
         const newAccount: StoredUserAccount = {
           id: userId,
@@ -389,7 +415,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           familyMemberId: memberId,
           familyName: customFamilyName,
           relation: 'Self',
-          isEmailVerified: true,
+          isEmailVerified: false,
+          verificationCode,
           mode,
         };
 
@@ -475,24 +502,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await AsyncStorage.setItem(`@kinly_family_state_${newAccount.id}`, JSON.stringify(initialUserState));
         await AsyncStorage.setItem('@kinly_family_state_v1', JSON.stringify(initialUserState));
 
-        // Create authenticated user session and activate
-        const authenticatedUser: AuthUser = {
-          id: userId,
-          name: cleanName,
-          email: fallbackEmail,
-          phone: cleanPhone || undefined,
-          provider: 'email',
-          familyMemberId: memberId,
-          familyName: customFamilyName,
-          relation: 'Self',
-          isEmailVerified: true,
-          rememberMe: true,
-        };
-
-        await saveUserSession(authenticatedUser, true);
-
         return {
           success: true,
+          requiresVerification: true,
+          verificationCode,
+          email: fallbackEmail,
+          phone: cleanPhone || undefined,
+          delivered: serverDelivered,
           familyName: customFamilyName,
         };
       } catch (err: any) {
@@ -710,19 +726,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     []
   );
 
-  // Email OTP verification
+  // Email/Phone OTP verification
   const verifyEmailCode = useCallback(
-    async (email: string, code: string) => {
+    async (identifier: string, code: string) => {
       try {
-        const cleanEmail = email.trim().toLowerCase();
+        const cleanId = identifier.trim().toLowerCase();
         const cleanCode = code.trim();
+        const cleanDigits = cleanId.replace(/\D/g, '');
 
         const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
         const accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : [];
 
-        const account = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
+        const account = accounts.find((a) => {
+          if (a.email && a.email.toLowerCase() === cleanId) return true;
+          if (cleanDigits.length >= 7 && a.phone && a.phone.replace(/\D/g, '') === cleanDigits) return true;
+          return false;
+        });
+
         if (!account) {
-          return { success: false, error: 'Account not found.' };
+          return { success: false, error: 'Account not found. Please register again.' };
         }
 
         if (cleanCode !== account.verificationCode) {
@@ -731,7 +753,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Attempt server verification
         try {
-          await apiClient.auth.verifyOtp(cleanEmail, cleanCode);
+          const sRes = await apiClient.auth.verifyOtp(account.email, cleanCode);
+          if (sRes.success && (sRes as any).token) {
+            await AsyncStorage.setItem('@kinly_jwt_token_v1', (sRes as any).token);
+          }
         } catch {}
 
         account.isEmailVerified = true;
@@ -742,6 +767,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: account.name,
           username: account.username,
           email: account.email,
+          phone: account.phone,
           provider: 'email',
           familyMemberId: account.familyMemberId,
           familyName: account.familyName,
@@ -779,7 +805,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
       if (rawAccounts) {
         const accounts: StoredUserAccount[] = JSON.parse(rawAccounts);
-        const account = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
+        const cleanDigits = cleanEmail.replace(/\D/g, '');
+        const account = accounts.find((a) => {
+          if (a.email && a.email.toLowerCase() === cleanEmail) return true;
+          if (cleanDigits.length >= 7 && a.phone && a.phone.replace(/\D/g, '') === cleanDigits) return true;
+          return false;
+        });
         if (account) {
           account.verificationCode = dispatchedCode;
           await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
