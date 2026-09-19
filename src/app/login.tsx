@@ -23,6 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { FrontPageTokens } from '@/constants/theme';
+import { authService } from '@/services/authService';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { DarkStarsBackdrop } from '@/components/ui/DarkStarsBackdrop';
 import { AuthCard } from '@/components/auth/AuthCard';
@@ -51,7 +52,16 @@ export default function LoginScreen() {
   // Modals
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [forgotTab, setForgotTab] = useState<'link' | 'otp'>('link');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotOtpStep, setForgotOtpStep] = useState<'request' | 'verify'>('request');
+  const [forgotOtpCode, setForgotOtpCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotShowNewPassword, setForgotShowNewPassword] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
+  const [forgotDevCode, setForgotDevCode] = useState<string | null>(null);
+  const [forgotOtpError, setForgotOtpError] = useState<string | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
@@ -342,18 +352,88 @@ export default function LoginScreen() {
     }
   };
 
-  // Password reset handler
+  // Cooldown countdown timer for OTP resend
+  useEffect(() => {
+    let timer: any;
+    if (forgotCooldown > 0) {
+      timer = setInterval(() => {
+        setForgotCooldown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [forgotCooldown]);
+
+  // Password reset via email link handler
   const handleSendReset = async () => {
-    if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
+    const clean = (forgotEmail || forgotIdentifier).trim();
+    if (!clean || !clean.includes('@')) {
       alert('Please enter a valid email address.');
       return;
     }
     setForgotLoading(true);
     try {
-      const res = await sendPasswordResetEmail(forgotEmail.trim());
+      const res = await sendPasswordResetEmail(clean);
       setForgotSuccess(res.message || 'Password reset instructions have been sent.');
     } catch (err: any) {
       alert(err.message || 'Failed to send reset link.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Password reset via OTP - Request Code
+  const handleRequestOtp = async () => {
+    const cleanId = (forgotIdentifier || forgotEmail).trim();
+    if (!cleanId) {
+      setForgotOtpError('Please enter your email address or phone number.');
+      return;
+    }
+    setForgotOtpError(null);
+    setForgotLoading(true);
+    try {
+      const res = await authService.requestPasswordResetOtp(cleanId);
+      if (res.success) {
+        setForgotDevCode(res.devCode || null);
+        setForgotOtpStep('verify');
+        setForgotCooldown(60);
+      } else {
+        setForgotOtpError(res.error || 'Failed to send verification code.');
+      }
+    } catch (err: any) {
+      setForgotOtpError(err.message || 'Failed to send verification code.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Password reset via OTP - Verify Code & Set New Password
+  const handleVerifyAndReset = async () => {
+    const cleanId = (forgotIdentifier || forgotEmail).trim();
+    if (!forgotOtpCode || forgotOtpCode.trim().length !== 6) {
+      setForgotOtpError('Please enter the 6-digit OTP code.');
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 8) {
+      setForgotOtpError('New password must be at least 8 characters.');
+      return;
+    }
+    setForgotOtpError(null);
+    setForgotLoading(true);
+    try {
+      const res = await authService.verifyAndResetPasswordWithOtp(
+        cleanId,
+        forgotOtpCode.trim(),
+        forgotNewPassword
+      );
+      if (res.success) {
+        setForgotSuccess(res.message || 'Password successfully reset!');
+      } else {
+        setForgotOtpError(res.error || 'Invalid OTP code.');
+      }
+    } catch (err: any) {
+      setForgotOtpError(err.message || 'Failed to reset password.');
     } finally {
       setForgotLoading(false);
     }
@@ -535,9 +615,16 @@ export default function LoginScreen() {
               router.replace('/(tabs)');
             }}
             onJoinWithCode={() => setJoinModalVisible(true)}
-            onForgotPassword={(prefilledEmail) => {
-              if (prefilledEmail) setForgotEmail(prefilledEmail);
+            onForgotPassword={(prefilledIdentifier) => {
+              if (prefilledIdentifier) {
+                setForgotEmail(prefilledIdentifier);
+                setForgotIdentifier(prefilledIdentifier);
+              }
               setForgotSuccess(null);
+              setForgotOtpError(null);
+              setForgotOtpStep('request');
+              setForgotOtpCode('');
+              setForgotNewPassword('');
               setForgotModalVisible(true);
             }}
             onOpenTerms={() => {
@@ -574,7 +661,7 @@ export default function LoginScreen() {
       />
 
       {/* ========================================================================= */}
-      {/* FORGOT PASSWORD MODAL                                                     */}
+      {/* FORGOT PASSWORD MODAL (EMAIL LINK + OTP)                                  */}
       {/* ========================================================================= */}
       <Modal
         visible={forgotModalVisible}
@@ -586,7 +673,7 @@ export default function LoginScreen() {
             style={[
               styles.modalCard,
               {
-                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.96)' : 'rgba(255, 255, 255, 0.96)',
                 borderColor: themeTokens.cardBorder,
               },
             ]}>
@@ -599,52 +686,287 @@ export default function LoginScreen() {
 
             {forgotSuccess ? (
               <View style={{ alignItems: 'center', marginVertical: 16 }}>
-                <Ionicons name="checkmark-circle" size={48} color={colors.green} />
-                <Text style={[styles.modalText, { color: colors.text, marginTop: 12 }]}>
+                <Ionicons name="checkmark-circle" size={52} color={colors.green} />
+                <Text style={[styles.modalText, { color: colors.text, marginTop: 14, fontWeight: '600' }]}>
                   {forgotSuccess}
                 </Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary, marginTop: 6, textAlign: 'center' }]}>
+                  You can now sign in to your KinLy space.
+                </Text>
                 <Pressable
-                  onPress={() => setForgotModalVisible(false)}
-                  style={[styles.modalDoneButton, { backgroundColor: themeTokens.linkViolet }]}>
-                  <Text style={styles.modalDoneButtonText}>Done</Text>
+                  onPress={() => {
+                    setForgotModalVisible(false);
+                    setForgotSuccess(null);
+                  }}
+                  style={[styles.modalDoneButton, { backgroundColor: themeTokens.linkViolet, marginTop: 18 }]}>
+                  <Text style={styles.modalDoneButtonText}>Back to Sign in</Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                  Enter your email address and we will send you a link to reset your password.
-                </Text>
+                {/* Segmented Option Switcher: Email Link vs Reset via OTP */}
+                <View style={styles.segmentedContainer}>
+                  <Pressable
+                    onPress={() => {
+                      setForgotTab('link');
+                      setForgotOtpError(null);
+                    }}
+                    style={[
+                      styles.segmentedTab,
+                      forgotTab === 'link' && [styles.segmentedTabActive, { backgroundColor: themeTokens.linkViolet }],
+                    ]}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={15}
+                      color={forgotTab === 'link' ? '#FFFFFF' : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.segmentedTabText,
+                        { color: forgotTab === 'link' ? '#FFFFFF' : colors.textSecondary },
+                      ]}>
+                      Email Link
+                    </Text>
+                  </Pressable>
 
-                <View
-                  style={[
-                    styles.modalInputWrap,
-                    {
-                      borderColor: themeTokens.inputBorder,
-                      backgroundColor: themeTokens.inputBg,
-                    },
-                  ]}>
-                  <Ionicons name="mail-outline" size={18} color={themeTokens.inputPlaceholder} style={{ marginRight: 10 }} />
-                  <TextInput
-                    value={forgotEmail}
-                    onChangeText={setForgotEmail}
-                    placeholder="Email address"
-                    placeholderTextColor={themeTokens.inputPlaceholder}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={[styles.modalTextInput, { color: colors.text }]}
-                  />
+                  <Pressable
+                    onPress={() => {
+                      setForgotTab('otp');
+                      setForgotOtpError(null);
+                    }}
+                    style={[
+                      styles.segmentedTab,
+                      forgotTab === 'otp' && [styles.segmentedTabActive, { backgroundColor: themeTokens.linkViolet }],
+                    ]}>
+                    <Ionicons
+                      name="key-outline"
+                      size={15}
+                      color={forgotTab === 'otp' ? '#FFFFFF' : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.segmentedTabText,
+                        { color: forgotTab === 'otp' ? '#FFFFFF' : colors.textSecondary },
+                      ]}>
+                      Reset via OTP
+                    </Text>
+                  </Pressable>
                 </View>
 
-                <Pressable
-                  onPress={handleSendReset}
-                  disabled={forgotLoading}
-                  style={[styles.modalActionButton, { backgroundColor: themeTokens.linkViolet }]}>
-                  {forgotLoading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalActionButtonText}>Send reset link</Text>
-                  )}
-                </Pressable>
+                {/* TAB 1: EMAIL LINK OPTION */}
+                {forgotTab === 'link' && (
+                  <View>
+                    <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                      Enter your email address and we will send you a secure link to reset your password.
+                    </Text>
+
+                    <View
+                      style={[
+                        styles.modalInputWrap,
+                        {
+                          borderColor: themeTokens.inputBorder,
+                          backgroundColor: themeTokens.inputBg,
+                        },
+                      ]}>
+                      <Ionicons name="mail-outline" size={18} color={themeTokens.inputPlaceholder} style={{ marginRight: 10 }} />
+                      <TextInput
+                        value={forgotEmail}
+                        onChangeText={setForgotEmail}
+                        placeholder="Email address"
+                        placeholderTextColor={themeTokens.inputPlaceholder}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        style={[styles.modalTextInput, { color: colors.text }]}
+                      />
+                    </View>
+
+                    <Pressable
+                      onPress={handleSendReset}
+                      disabled={forgotLoading}
+                      style={[styles.modalActionButton, { backgroundColor: themeTokens.linkViolet }]}>
+                      {forgotLoading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.modalActionButtonText}>Send reset link</Text>
+                      )}
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* TAB 2: OTP OPTION */}
+                {forgotTab === 'otp' && (
+                  <View>
+                    {/* Error Banner */}
+                    {forgotOtpError ? (
+                      <View style={[styles.modalErrorBanner, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' }]}>
+                        <Ionicons name="alert-circle" size={16} color={isDark ? '#F87171' : '#DC2626'} />
+                        <Text style={[styles.modalErrorText, { color: isDark ? '#F87171' : '#DC2626' }]}>
+                          {forgotOtpError}
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {/* Step 1: Request OTP */}
+                    {forgotOtpStep === 'request' && (
+                      <View>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                          Enter your registered email address or phone number to receive a 6-digit OTP code.
+                        </Text>
+
+                        <View
+                          style={[
+                            styles.modalInputWrap,
+                            {
+                              borderColor: themeTokens.inputBorder,
+                              backgroundColor: themeTokens.inputBg,
+                            },
+                          ]}>
+                          <Ionicons
+                            name="call-outline"
+                            size={18}
+                            color={themeTokens.inputPlaceholder}
+                            style={{ marginRight: 10 }}
+                          />
+                          <TextInput
+                            value={forgotIdentifier}
+                            onChangeText={(t) => {
+                              setForgotIdentifier(t);
+                              if (forgotOtpError) setForgotOtpError(null);
+                            }}
+                            placeholder="Email address or phone number"
+                            placeholderTextColor={themeTokens.inputPlaceholder}
+                            autoCapitalize="none"
+                            style={[styles.modalTextInput, { color: colors.text }]}
+                          />
+                        </View>
+
+                        <Pressable
+                          onPress={handleRequestOtp}
+                          disabled={forgotLoading}
+                          style={[styles.modalActionButton, { backgroundColor: themeTokens.linkViolet }]}>
+                          {forgotLoading ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <Text style={styles.modalActionButtonText}>Send 6-digit OTP</Text>
+                          )}
+                        </Pressable>
+                      </View>
+                    )}
+
+                    {/* Step 2: Verify OTP & Enter New Password */}
+                    {forgotOtpStep === 'verify' && (
+                      <View>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                          Enter the 6-digit code sent to <Text style={{ fontWeight: '600', color: colors.text }}>{forgotIdentifier || forgotEmail}</Text>
+                        </Text>
+
+                        {/* Dev Code Quick Fill Chip */}
+                        {forgotDevCode && (
+                          <Pressable
+                            onPress={() => setForgotOtpCode(forgotDevCode)}
+                            style={[styles.devCodeBadge, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(124, 92, 224, 0.10)' }]}>
+                            <Ionicons name="flash" size={14} color={themeTokens.linkViolet} />
+                            <Text style={[styles.devCodeBadgeText, { color: themeTokens.linkViolet }]}>
+                              Simulated Code: <Text style={{ fontWeight: '800' }}>{forgotDevCode}</Text> (tap to autofill)
+                            </Text>
+                          </Pressable>
+                        )}
+
+                        {/* 6-digit OTP input */}
+                        <View
+                          style={[
+                            styles.modalInputWrap,
+                            {
+                              borderColor: themeTokens.inputBorder,
+                              backgroundColor: themeTokens.inputBg,
+                              marginBottom: 10,
+                            },
+                          ]}>
+                          <Ionicons name="key-outline" size={18} color={themeTokens.inputPlaceholder} style={{ marginRight: 10 }} />
+                          <TextInput
+                            value={forgotOtpCode}
+                            onChangeText={(t) => {
+                              setForgotOtpCode(t);
+                              if (forgotOtpError) setForgotOtpError(null);
+                            }}
+                            placeholder="6-digit OTP code"
+                            placeholderTextColor={themeTokens.inputPlaceholder}
+                            keyboardType="number-pad"
+                            maxLength={6}
+                            style={[styles.modalTextInput, { color: colors.text, letterSpacing: 3, fontWeight: '700' }]}
+                          />
+                        </View>
+
+                        {/* New Password input */}
+                        <View
+                          style={[
+                            styles.modalInputWrap,
+                            {
+                              borderColor: themeTokens.inputBorder,
+                              backgroundColor: themeTokens.inputBg,
+                              marginBottom: 10,
+                            },
+                          ]}>
+                          <Ionicons name="lock-closed-outline" size={18} color={themeTokens.inputPlaceholder} style={{ marginRight: 10 }} />
+                          <TextInput
+                            value={forgotNewPassword}
+                            onChangeText={(t) => {
+                              setForgotNewPassword(t);
+                              if (forgotOtpError) setForgotOtpError(null);
+                            }}
+                            placeholder="New password (min 8 chars)"
+                            placeholderTextColor={themeTokens.inputPlaceholder}
+                            secureTextEntry={!forgotShowNewPassword}
+                            autoCapitalize="none"
+                            style={[styles.modalTextInput, { color: colors.text }]}
+                          />
+                          <Pressable
+                            onPress={() => setForgotShowNewPassword(!forgotShowNewPassword)}
+                            hitSlop={8}
+                            style={{ padding: 4 }}>
+                            <Ionicons
+                              name={forgotShowNewPassword ? 'eye-off-outline' : 'eye-outline'}
+                              size={18}
+                              color={themeTokens.inputPlaceholder}
+                            />
+                          </Pressable>
+                        </View>
+
+                        {/* Resend row */}
+                        <View style={styles.resendRow}>
+                          <Text style={[styles.resendText, { color: colors.textSecondary }]}>
+                            Didn't receive code?{' '}
+                          </Text>
+                          <Pressable
+                            disabled={forgotCooldown > 0 || forgotLoading}
+                            onPress={handleRequestOtp}
+                            hitSlop={8}>
+                            <Text
+                              style={[
+                                styles.resendLink,
+                                {
+                                  color: forgotCooldown > 0 ? colors.textMuted : themeTokens.linkViolet,
+                                },
+                              ]}>
+                              {forgotCooldown > 0 ? `Resend in ${forgotCooldown}s` : 'Resend code'}
+                            </Text>
+                          </Pressable>
+                        </View>
+
+                        <Pressable
+                          onPress={handleVerifyAndReset}
+                          disabled={forgotLoading}
+                          style={[styles.modalActionButton, { backgroundColor: themeTokens.linkViolet, marginTop: 12 }]}>
+                          {forgotLoading ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <Text style={styles.modalActionButtonText}>Reset Password</Text>
+                          )}
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                )}
               </>
             )}
           </View>
@@ -681,8 +1003,8 @@ export default function LoginScreen() {
             <ScrollView style={{ marginTop: 12 }}>
               <Text style={[styles.modalPolicyText, { color: colors.textSecondary }]}>
                 {termsType === 'terms'
-                  ? `Welcome to Kinly. By accessing or using our application, you agree to be bound by these Terms of Service. Kinly is designed exclusively for private family coordination, document vaulting, and emergency assistance.\n\nAll personal data, locations, and family records are encrypted end-to-end and stored securely. You retain full ownership of all family content uploaded to the platform.`
-                  : `Kinly respects your private family sanctuary. We never sell, rent, or monetize your location data, family communications, or private documents.\n\nYour biometric authentication and vault data remain strictly localized or zero-knowledge encrypted. Emergency SOS location sharing is only triggered by explicit user activation.`}
+                  ? `Welcome to KinLy. By accessing or using our application, you agree to be bound by these Terms of Service. KinLy is designed exclusively for private family coordination, document vaulting, and emergency assistance.\n\nAll personal data, locations, and family records are encrypted end-to-end and stored securely. You retain full ownership of all family content uploaded to the platform.`
+                  : `KinLy respects your private family sanctuary. We never sell, rent, or monetize your location data, family communications, or private documents.\n\nYour biometric authentication and vault data remain strictly localized or zero-knowledge encrypted. Emergency SOS location sharing is only triggered by explicit user activation.`}
               </Text>
             </ScrollView>
 
@@ -858,5 +1180,73 @@ const styles = StyleSheet.create({
   modalPolicyText: {
     fontSize: 13,
     lineHeight: 20,
+  },
+  segmentedContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(124, 92, 224, 0.08)',
+    borderRadius: 14,
+    padding: 3,
+    marginBottom: 16,
+  },
+  segmentedTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 11,
+    gap: 6,
+  },
+  segmentedTabActive: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  segmentedTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  modalErrorText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  devCodeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 6,
+  },
+  devCodeBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  resendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  resendText: {
+    fontSize: 13,
+  },
+  resendLink: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

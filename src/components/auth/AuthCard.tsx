@@ -64,6 +64,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // Form Fields - Sign Up
   const [signUpName, setSignUpName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('');
+  const [signUpDob, setSignUpDob] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [inviteCodeExpanded, setInviteCodeExpanded] = useState(false);
@@ -107,9 +109,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const cleanEmail = signInEmail.trim();
 
     if (!cleanEmail) {
-      newErrors.email = 'Email address is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      newErrors.email = 'Please enter a valid email address.';
+      newErrors.email = 'Email address or phone is required.';
     }
 
     if (!signInPassword) {
@@ -155,15 +155,35 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const newErrors: Record<string, string> = {};
     const cleanName = signUpName.trim();
     const cleanEmail = signUpEmail.trim();
+    const cleanPhone = signUpPhone.trim();
+    const cleanDob = signUpDob.trim();
 
     if (!cleanName) {
       newErrors.name = 'Full name is required.';
     }
 
-    if (!cleanEmail) {
-      newErrors.email = 'Email address is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      newErrors.email = 'Please enter a valid email address.';
+    // Rule: Email and Phone number section mandatory - user must give one or both
+    if (!cleanEmail && !cleanPhone) {
+      newErrors.email = 'Email or phone number is required.';
+      newErrors.phone = 'Email or phone number is required.';
+      newErrors.general = 'Please provide an email address or a phone number (or both).';
+    } else {
+      if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        newErrors.email = 'Please enter a valid email address.';
+      }
+      if (cleanPhone) {
+        const digits = cleanPhone.replace(/\D/g, '');
+        if (digits.length < 7 || digits.length > 15) {
+          newErrors.phone = 'Please enter a valid phone number (at least 7 digits).';
+        }
+      }
+    }
+
+    if (cleanDob) {
+      const dobPattern = /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$|^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}$/;
+      if (!dobPattern.test(cleanDob)) {
+        newErrors.dob = 'Please use format YYYY-MM-DD (e.g. 1995-08-24).';
+      }
     }
 
     if (!signUpPassword) {
@@ -186,7 +206,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setLoading(true);
 
     try {
-      const res = await authService.signUp(cleanName, cleanEmail, signUpPassword, signUpInviteCode);
+      const res = await authService.signUp({
+        name: cleanName,
+        email: cleanEmail || undefined,
+        phone: cleanPhone || undefined,
+        dateOfBirth: cleanDob || undefined,
+        password: signUpPassword,
+        inviteCode: signUpInviteCode,
+      });
       if (res.success) {
         if (Platform.OS !== 'web') {
           try {
@@ -599,11 +626,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     value={signUpEmail}
                     onChangeText={(t) => {
                       setSignUpEmail(t);
-                      if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
+                      if (errors.email || errors.general) {
+                        setErrors((prev) => ({ ...prev, email: '', general: '' }));
+                      }
                     }}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Email address"
+                    placeholder="Email address (or enter phone)"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -614,6 +643,69 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 {errors.email ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.email}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Phone Number */}
+              <View>
+                <View style={inputStyle('phone')}>
+                  <Ionicons
+                    name="call-outline"
+                    size={18}
+                    color={focusedField === 'phone' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                    style={{ marginRight: 10 }}
+                  />
+                  <TextInput
+                    value={signUpPhone}
+                    onChangeText={(t) => {
+                      setSignUpPhone(t);
+                      if (errors.phone || errors.general) {
+                        setErrors((prev) => ({ ...prev, phone: '', general: '' }));
+                      }
+                    }}
+                    onFocus={() => setFocusedField('phone')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Phone number (or enter email)"
+                    placeholderTextColor={themeTokens.inputPlaceholder}
+                    keyboardType="phone-pad"
+                    autoCapitalize="none"
+                    style={[styles.textInput, { color: colors.text }]}
+                  />
+                </View>
+                {errors.phone ? (
+                  <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
+                    {errors.phone}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Date of Birth */}
+              <View>
+                <View style={inputStyle('dob')}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={focusedField === 'dob' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                    style={{ marginRight: 10 }}
+                  />
+                  <TextInput
+                    value={signUpDob}
+                    onChangeText={(t) => {
+                      setSignUpDob(t);
+                      if (errors.dob) setErrors((prev) => ({ ...prev, dob: '' }));
+                    }}
+                    onFocus={() => setFocusedField('dob')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Date of birth (YYYY-MM-DD)"
+                    placeholderTextColor={themeTokens.inputPlaceholder}
+                    autoCapitalize="none"
+                    style={[styles.textInput, { color: colors.text }]}
+                  />
+                </View>
+                {errors.dob ? (
+                  <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
+                    {errors.dob}
                   </Text>
                 ) : null}
               </View>

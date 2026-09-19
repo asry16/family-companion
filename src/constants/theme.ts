@@ -451,7 +451,7 @@ export const HomeCardTokens = {
 } as const;
 
 export const FrontPageTokens = {
-  appName: 'Kinly',
+  appName: 'KinLy',
   tagline: "Don't make the family manage the app. Make the app understand the family.",
   logoSize: 72,
   haloSize: 96,
