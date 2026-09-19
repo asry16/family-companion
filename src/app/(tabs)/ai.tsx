@@ -17,7 +17,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import {
   ChatHeader,
   ChatSuggestedPrompts,
@@ -191,7 +191,9 @@ export default function AIScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* Ambient Backdrops (Light / Dark) */}
       <LightBackdrop />
+      <DarkBackdrop />
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -212,7 +214,6 @@ export default function AIScreen({
         <GlassCard
           borderRadius={28}
           gradient
-          glowColor={isDark ? colors.blue : undefined}
           style={styles.chatCardWrapper}
           contentStyle={styles.chatCardContent}>
           {/* Ambient Background Blobs */}
@@ -222,7 +223,7 @@ export default function AIScreen({
                 styles.blobTopLeft,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(59, 111, 240, 0.16)'
+                    ? 'rgba(79, 142, 247, 0.10)'
                     : 'rgba(79, 142, 247, 0.10)',
                 },
               ]}
@@ -232,7 +233,7 @@ export default function AIScreen({
                 styles.blobBottomRight,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(124, 92, 224, 0.18)'
+                    ? 'rgba(139, 124, 246, 0.10)'
                     : 'rgba(124, 92, 224, 0.10)',
                 },
               ]}

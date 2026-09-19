@@ -41,12 +41,12 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
         <Ionicons
           name="person-circle-outline"
           size={16}
-          color={isDark ? '#38BDF8' : '#6D5BD0'}
+          color={isDark ? '#8B7CF6' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : '#6D5BD0' },
+            { color: isDark ? colors.textTertiary : '#6D5BD0' },
           ]}>
           ACCOUNT & SESSION
         </Text>
@@ -55,7 +55,7 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
       {/* Account Glass Card */}
       <GlassCard
         borderRadius={24}
-        glowColor={isDark ? colors.blue : undefined}
+        glowColor={undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
         {/* Top Row: User details on left, Sign-in method chip on right */}
@@ -67,7 +67,7 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             <Text
               style={[
                 styles.userEmail,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
               {userEmail}
             </Text>
@@ -79,22 +79,22 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
               styles.methodChip,
               {
                 backgroundColor: isDark
-                  ? 'rgba(255, 255, 255, 0.08)'
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
-                  ? 'rgba(255, 255, 255, 0.12)'
+                  ? 'rgba(140, 150, 255, 0.20)'
                   : 'rgba(124, 92, 224, 0.16)',
               },
             ]}>
             <Ionicons
               name="mail-outline"
               size={12}
-              color={isDark ? colors.textMuted : '#7C5CE0'}
+              color={isDark ? colors.textTertiary : '#7C5CE0'}
             />
             <Text
               style={[
                 styles.methodChipText,
-                { color: isDark ? colors.textMuted : '#7C5CE0' },
+                { color: isDark ? colors.textTertiary : '#7C5CE0' },
               ]}>
               {signInMethod}
             </Text>
@@ -107,7 +107,7 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             styles.divider,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.12)'
+                ? 'rgba(130, 140, 255, 0.12)'
                 : 'rgba(124, 92, 224, 0.10)',
             },
           ]}
@@ -125,10 +125,10 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             styles.logoutButton,
             {
               backgroundColor: isDark
-                ? 'rgba(240, 82, 77, 0.16)'
+                ? 'rgba(255, 77, 106, 0.12)'
                 : 'rgba(225, 29, 72, 0.06)',
               borderColor: isDark
-                ? 'rgba(240, 82, 77, 0.35)'
+                ? 'rgba(255, 77, 106, 0.30)'
                 : 'rgba(225, 29, 72, 0.18)',
               opacity: pressed ? 0.75 : 1,
             },

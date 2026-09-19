@@ -63,10 +63,10 @@ export const ChatSuggestedPrompts: React.FC<ChatSuggestedPromptsProps> = ({
               styles.pillChip,
               {
                 backgroundColor: isDark
-                  ? 'rgba(15, 26, 58, 0.85)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.28)'
+                  ? 'rgba(130, 140, 255, 0.22)'
                   : 'rgba(124, 92, 224, 0.16)',
                 opacity: pressed ? 0.75 : 1,
               },
@@ -74,7 +74,7 @@ export const ChatSuggestedPrompts: React.FC<ChatSuggestedPromptsProps> = ({
             <Ionicons
               name={item.icon}
               size={13}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
+              color={isDark ? '#8B7CF6' : '#7C5CE0'}
             />
             <Text
               style={[

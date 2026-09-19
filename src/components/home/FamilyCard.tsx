@@ -179,9 +179,9 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
       style={({ pressed }) => [
         styles.cardContainer,
         {
-          borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.14)',
-          shadowColor: isDark ? '#3B6FF0' : '#6E5ADC',
-          shadowOpacity: isDark ? 0.30 : 0.10,
+          borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
+          shadowOpacity: isDark ? 0.35 : 0.10,
           opacity: pressed ? 0.96 : 1,
           transform: [{ scale: pressed ? 0.99 : 1 }],
         },
@@ -190,7 +190,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
       <LinearGradient
         colors={
           isDark
-            ? ['rgba(15, 26, 58, 0.92)', 'rgba(10, 18, 42, 0.88)']
+            ? ['rgba(20, 27, 74, 0.72)', 'rgba(20, 27, 74, 0.72)']
             : ['rgba(255, 255, 255, 0.85)', 'rgba(247, 245, 255, 0.78)']
         }
         start={{ x: 0, y: 0 }}
@@ -275,7 +275,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               <Image source={{ uri: primaryMember.photoUrl }} style={styles.avatarImg} />
             ) : (
               <LinearGradient
-                colors={['#4F8EF7', '#8A6BF2']}
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.avatarFallback}>
@@ -354,7 +354,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           style={[
             styles.mapThumbnailWrap,
             {
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.30)' : 'rgba(124, 92, 224, 0.16)',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
           <Image
@@ -375,7 +375,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           <LinearGradient
             colors={
               isDark
-                ? ['rgba(15, 26, 58, 0.95)', 'rgba(15, 26, 58, 0.0)']
+                ? ['rgba(20, 27, 74, 0.95)', 'rgba(20, 27, 74, 0.0)']
                 : ['rgba(255, 255, 255, 0.90)', 'rgba(255, 255, 255, 0.0)']
             }
             start={{ x: 0, y: 0.5 }}
@@ -392,18 +392,18 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
         style={[
           styles.viewLiveMapPill,
           {
-            backgroundColor: isDark ? '#0F1A3A' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(56, 189, 248, 0.40)' : 'transparent',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'transparent',
             borderWidth: isDark ? 1 : 0,
-            shadowColor: isDark ? '#38BDF8' : '#6E5ADC',
-            shadowOpacity: isDark ? 0.25 : 0.15,
+            shadowColor: isDark ? 'rgba(0, 0, 10, 0.25)' : '#6E5ADC',
+            shadowOpacity: isDark ? 0.15 : 0.15,
           },
         ]}>
         <Text
           numberOfLines={1}
           style={[
             styles.viewLiveMapText,
-            { color: isDark ? '#38BDF8' : '#5B4BC4' },
+            { color: isDark ? '#8B7CF6' : '#5B4BC4' },
           ]}>
           View Live Map →
         </Text>

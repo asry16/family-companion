@@ -28,44 +28,10 @@ const STARS: StarConfig[] = [
   { top: 720, right: 50, size: 16, opacity: 0.50, color: '#38BDF8' },
 ];
 
+import { DarkBackdrop } from './DarkBackdrop';
+
 export const DarkStarsBackdrop: React.FC = () => {
-  const { isDark } = useAppTheme();
-
-  if (!isDark) return null;
-
-  return (
-    <View style={styles.container} pointerEvents="none">
-      {/* Deep Navy Gradient Base */}
-      <LinearGradient
-        colors={['#080C1B', '#0D1735', '#0A0F24', '#060A17']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Ambient Celestial Nebulae (Soft Blobs) */}
-      <View style={[styles.nebulaBlob, styles.nebulaTopRight]} />
-      <View style={[styles.nebulaBlob, styles.nebulaMidLeft]} />
-      <View style={[styles.nebulaBlob, styles.nebulaBottomRight]} />
-
-      {/* Faint Stars & Sparkles */}
-      {STARS.map((star, i) => (
-        <View
-          key={`star-${i}`}
-          style={[
-            styles.starWrap,
-            {
-              top: star.top,
-              left: star.left,
-              right: star.right,
-              opacity: star.opacity,
-            },
-          ]}>
-          <Ionicons name="sparkles" size={star.size} color={star.color} />
-        </View>
-      ))}
-    </View>
-  );
+  return <DarkBackdrop />;
 };
 
 const styles = StyleSheet.create({

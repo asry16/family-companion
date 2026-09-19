@@ -96,12 +96,12 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
         <Ionicons
           name="shield-checkmark-outline"
           size={16}
-          color={isDark ? '#38BDF8' : '#6D5BD0'}
+          color={isDark ? '#8B7CF6' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : '#6D5BD0' },
+            { color: isDark ? colors.textTertiary : '#6D5BD0' },
           ]}>
           SECURITY & SESSIONS
         </Text>
@@ -110,7 +110,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
       {/* Main GlassCard Container */}
       <GlassCard
         borderRadius={24}
-        glowColor={isDark ? colors.blue : undefined}
+        glowColor={undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
         {/* 1. SECURITY CHECK UP */}
@@ -156,7 +156,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
               <Text
                 style={[
                   styles.subtitleText,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 End-to-end encrypted vault • 2-Factor verified
               </Text>
@@ -190,27 +190,27 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
               styles.checkupBtn,
               {
                 backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.14)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.30)'
+                  ? 'rgba(139, 124, 246, 0.50)'
                   : 'rgba(124, 92, 224, 0.20)',
                 opacity: pressed || isRunningCheckup ? 0.75 : 1,
               },
             ]}>
             {isRunningCheckup ? (
-              <ActivityIndicator size="small" color={isDark ? '#38BDF8' : '#7C5CE0'} />
+              <ActivityIndicator size="small" color={isDark ? '#8B7CF6' : '#7C5CE0'} />
             ) : (
               <Ionicons
                 name="refresh-outline"
                 size={14}
-                color={isDark ? '#38BDF8' : '#7C5CE0'}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
               />
             )}
             <Text
               style={[
                 styles.checkupBtnText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                { color: isDark ? '#8B7CF6' : '#7C5CE0' },
               ]}>
               {isRunningCheckup ? 'Scanning Vault & Devices...' : 'Run Security Checkup'}
             </Text>
@@ -223,7 +223,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             styles.divider,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.12)'
+                ? 'rgba(130, 140, 255, 0.12)'
                 : 'rgba(124, 92, 224, 0.10)',
             },
           ]}
@@ -236,7 +236,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
               <Ionicons
                 name="finger-print-outline"
                 size={17}
-                color={isDark ? '#38BDF8' : '#7C5CE0'}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
               />
               <Text style={[styles.itemTitle, { color: colors.text }]}>
                 Saved Login & Face ID
@@ -245,7 +245,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             <Text
               style={[
                 styles.subtitleText,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
               Fast biometric unlock without re-entering password
             </Text>
@@ -256,7 +256,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             onValueChange={handleToggleSavedLogin}
             trackColor={{
               false: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-              true: isDark ? '#2563EB' : '#7C5CE0',
+              true: isDark ? '#8B7CF6' : '#7C5CE0',
             }}
             thumbColor="#FFFFFF"
             ios_backgroundColor={
@@ -271,7 +271,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             styles.divider,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.12)'
+                ? 'rgba(130, 140, 255, 0.12)'
                 : 'rgba(20, 32, 58, 0.06)',
             },
           ]}
@@ -286,7 +286,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             <Text
               style={[
                 styles.sessionsCountText,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
               {otherSessionsLoggedOut ? '1 Active Session' : '2 Active Sessions'}
             </Text>
@@ -298,10 +298,10 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
               styles.sessionItem,
               {
                 backgroundColor: isDark
-                  ? 'rgba(255, 255, 255, 0.04)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(255, 255, 255, 0.55)',
                 borderColor: isDark
-                  ? 'rgba(255, 255, 255, 0.08)'
+                  ? 'rgba(130, 140, 255, 0.18)'
                   : 'rgba(124, 92, 224, 0.12)',
               },
             ]}>
@@ -310,14 +310,14 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
                 styles.deviceIconCircle,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(59, 111, 240, 0.18)'
+                    ? 'rgba(139, 124, 246, 0.15)'
                     : 'rgba(124, 92, 224, 0.10)',
                 },
               ]}>
               <Ionicons
                 name="phone-portrait-outline"
                 size={16}
-                color={isDark ? '#38BDF8' : '#7C5CE0'}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
               />
             </View>
 
@@ -358,10 +358,10 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
                 styles.sessionItem,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.04)'
+                    ? 'rgba(255, 255, 255, 0.03)'
                     : 'rgba(255, 255, 255, 0.55)',
                   borderColor: isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
+                    ? 'rgba(130, 140, 255, 0.18)'
                     : 'rgba(124, 92, 224, 0.12)',
                 },
               ]}>
@@ -370,14 +370,14 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
                   styles.deviceIconCircle,
                   {
                     backgroundColor: isDark
-                      ? 'rgba(255, 255, 255, 0.08)'
+                      ? 'rgba(255, 255, 255, 0.05)'
                       : 'rgba(124, 92, 224, 0.06)',
                   },
                 ]}>
                 <Ionicons
                   name="laptop-outline"
                   size={16}
-                  color={isDark ? colors.textMuted : colors.textSecondary}
+                  color={isDark ? colors.textTertiary : colors.textSecondary}
                 />
               </View>
 
@@ -392,7 +392,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
                 <Text
                   style={[
                     styles.sessionMetaText,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? colors.textTertiary : colors.textSecondary },
                   ]}>
                   Active 2 hours ago • Chrome on macOS
                 </Text>
@@ -410,10 +410,10 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
                 styles.logoutOthersBtn,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(240, 82, 77, 0.10)'
+                    ? 'rgba(255, 77, 106, 0.10)'
                     : 'rgba(225, 29, 72, 0.06)',
                   borderColor: isDark
-                    ? 'rgba(240, 82, 77, 0.25)'
+                    ? 'rgba(255, 77, 106, 0.25)'
                     : 'rgba(225, 29, 72, 0.18)',
                   opacity: pressed ? 0.75 : 1,
                 },

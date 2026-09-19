@@ -149,10 +149,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
             styles.modalContent,
             {
               backgroundColor: isDark
-                ? 'rgba(15, 26, 58, 0.96)'
+                ? 'rgba(20, 27, 74, 0.96)'
                 : 'rgba(255, 255, 255, 0.98)',
               borderColor: isDark
-                ? 'rgba(59, 111, 240, 0.35)'
+                ? 'rgba(130, 140, 255, 0.25)'
                 : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
@@ -162,7 +162,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Ionicons
                 name="person-circle-outline"
                 size={22}
-                color={isDark ? '#38BDF8' : '#7C5CE0'}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
               />
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 Edit Profile Details
@@ -187,9 +187,9 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                     styles.previewCircle,
                     {
                       borderColor: isDark
-                        ? 'rgba(56, 189, 248, 0.40)'
+                        ? 'rgba(139, 124, 246, 0.40)'
                         : 'rgba(124, 92, 224, 0.30)',
-                      backgroundColor: isDark ? '#162238' : '#F1EFFF',
+                      backgroundColor: isDark ? 'rgba(20, 27, 74, 0.80)' : '#F1EFFF',
                     },
                   ]}>
                   {photoUrl ? (
@@ -200,7 +200,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                     />
                   ) : (
                     <LinearGradient
-                      colors={isDark ? ['#1E3A8A', '#2563EB'] : ['#4F8EF7', '#8A6BF2']}
+                      colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                       style={StyleSheet.absoluteFill}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}>
@@ -215,7 +215,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                   <View
                     style={[
                       styles.cameraBadge,
-                      { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
+                      { backgroundColor: isDark ? '#8B7CF6' : '#7C5CE0' },
                     ]}>
                     <Ionicons name="camera" size={12} color="#FFFFFF" />
                   </View>
@@ -228,7 +228,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                   <Text
                     style={[
                       styles.avatarSectionSub,
-                      { color: isDark ? colors.textMuted : colors.textSecondary },
+                      { color: isDark ? colors.textTertiary : colors.textSecondary },
                     ]}>
                     {photoUrl ? 'Custom photo selected' : 'Initials avatar active'}
                   </Text>
@@ -244,14 +244,14 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         {
                           borderColor: !photoUrl
                             ? isDark
-                              ? '#38BDF8'
+                              ? '#8B7CF6'
                               : '#7C5CE0'
                             : isDark
-                            ? 'rgba(255,255,255,0.12)'
+                            ? 'rgba(140, 150, 255, 0.20)'
                             : 'rgba(0,0,0,0.1)',
                           backgroundColor: !photoUrl
                             ? isDark
-                              ? 'rgba(56, 189, 248, 0.16)'
+                              ? 'rgba(139, 124, 246, 0.20)'
                               : 'rgba(124, 92, 224, 0.12)'
                             : 'transparent',
                         },
@@ -262,10 +262,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         color={
                           !photoUrl
                             ? isDark
-                              ? '#38BDF8'
+                              ? '#8B7CF6'
                               : '#7C5CE0'
                             : isDark
-                            ? colors.textMuted
+                            ? colors.textTertiary
                             : colors.textSecondary
                         }
                       />
@@ -275,10 +275,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                           {
                             color: !photoUrl
                               ? isDark
-                                ? '#38BDF8'
+                                ? '#8B7CF6'
                                 : '#7C5CE0'
                               : isDark
-                              ? colors.textMuted
+                              ? colors.textTertiary
                               : colors.textSecondary,
                             fontWeight: !photoUrl ? '700' : '500',
                           },
@@ -298,14 +298,14 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         {
                           borderColor: showUrlInput
                             ? isDark
-                              ? '#38BDF8'
+                              ? '#8B7CF6'
                               : '#7C5CE0'
                             : isDark
-                            ? 'rgba(255,255,255,0.12)'
+                            ? 'rgba(140, 150, 255, 0.20)'
                             : 'rgba(0,0,0,0.1)',
                           backgroundColor: showUrlInput
                             ? isDark
-                              ? 'rgba(56, 189, 248, 0.16)'
+                              ? 'rgba(139, 124, 246, 0.20)'
                               : 'rgba(124, 92, 224, 0.12)'
                             : 'transparent',
                         },
@@ -316,10 +316,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         color={
                           showUrlInput
                             ? isDark
-                              ? '#38BDF8'
+                              ? '#8B7CF6'
                               : '#7C5CE0'
                             : isDark
-                            ? colors.textMuted
+                            ? colors.textTertiary
                             : colors.textSecondary
                         }
                       />
@@ -329,10 +329,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                           {
                             color: showUrlInput
                               ? isDark
-                                ? '#38BDF8'
+                                ? '#8B7CF6'
                                 : '#7C5CE0'
                               : isDark
-                              ? colors.textMuted
+                              ? colors.textTertiary
                               : colors.textSecondary,
                             fontWeight: showUrlInput ? '700' : '500',
                           },
@@ -349,7 +349,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                 <Text
                   style={[
                     styles.fieldLabel,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? colors.textTertiary : colors.textSecondary },
                   ]}>
                   Choose from Preset Avatars
                 </Text>
@@ -372,10 +372,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                           {
                             borderColor: isChosen
                               ? isDark
-                                ? '#38BDF8'
+                                ? '#8B7CF6'
                                 : '#7C5CE0'
                               : isDark
-                              ? 'rgba(255,255,255,0.12)'
+                              ? 'rgba(140, 150, 255, 0.20)'
                               : 'rgba(0,0,0,0.08)',
                             borderWidth: isChosen ? 2.5 : 1,
                           },
@@ -385,7 +385,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                           <View
                             style={[
                               styles.presetCheckBadge,
-                              { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
+                              { backgroundColor: isDark ? '#8B7CF6' : '#7C5CE0' },
                             ]}>
                             <Ionicons name="checkmark" size={10} color="#FFFFFF" />
                           </View>
@@ -414,10 +414,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         fontSize: 13,
                         color: colors.text,
                         backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.06)'
+                          ? 'rgba(255, 255, 255, 0.05)'
                           : 'rgba(124, 92, 224, 0.04)',
                         borderColor: isDark
-                          ? 'rgba(255, 255, 255, 0.12)'
+                          ? 'rgba(140, 150, 255, 0.25)'
                           : 'rgba(124, 92, 224, 0.14)',
                       },
                     ]}
@@ -431,7 +431,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                     }}
                     style={[
                       styles.applyUrlBtn,
-                      { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
+                      { backgroundColor: isDark ? '#8B7CF6' : '#7C5CE0' },
                     ]}>
                     <Text style={styles.applyUrlBtnText}>Apply</Text>
                   </Pressable>
@@ -444,7 +444,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Text
                 style={[
                   styles.fieldLabel,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 Full Name
               </Text>
@@ -458,10 +458,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                   {
                     color: colors.text,
                     backgroundColor: isDark
-                      ? 'rgba(255, 255, 255, 0.06)'
+                      ? 'rgba(255, 255, 255, 0.05)'
                       : 'rgba(124, 92, 224, 0.04)',
                     borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
+                      ? 'rgba(140, 150, 255, 0.25)'
                       : 'rgba(124, 92, 224, 0.14)',
                   },
                 ]}
@@ -473,7 +473,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Text
                 style={[
                   styles.fieldLabel,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 Phone Number
               </Text>
@@ -488,10 +488,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                   {
                     color: colors.text,
                     backgroundColor: isDark
-                      ? 'rgba(255, 255, 255, 0.06)'
+                      ? 'rgba(255, 255, 255, 0.05)'
                       : 'rgba(20, 32, 58, 0.04)',
                     borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
+                      ? 'rgba(140, 150, 255, 0.25)'
                       : 'rgba(20, 32, 58, 0.10)',
                   },
                 ]}
@@ -503,7 +503,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Text
                 style={[
                   styles.fieldLabel,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 Your Household Role
               </Text>
@@ -524,14 +524,18 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         styles.relationChip,
                         {
                           backgroundColor: isSelected
-                            ? colors.blue
+                            ? isDark
+                              ? 'rgba(139, 124, 246, 0.22)'
+                              : colors.blue
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.06)'
+                            ? 'rgba(255, 255, 255, 0.05)'
                             : 'rgba(20, 32, 58, 0.04)',
                           borderColor: isSelected
-                            ? colors.blue
+                            ? isDark
+                              ? '#8B7CF6'
+                              : colors.blue
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.12)'
+                            ? 'rgba(140, 150, 255, 0.20)'
                             : 'rgba(20, 32, 58, 0.08)',
                         },
                       ]}>
@@ -539,7 +543,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                         style={[
                           styles.relationText,
                           {
-                            color: isSelected ? '#FFFFFF' : colors.text,
+                            color: isSelected ? (isDark ? '#8B7CF6' : '#FFFFFF') : colors.text,
                             fontWeight: isSelected ? '800' : '600',
                           },
                         ]}>
@@ -556,7 +560,7 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
               <Text
                 style={[
                   styles.fieldLabel,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 Live Status Note
               </Text>
@@ -570,10 +574,10 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                   {
                     color: colors.text,
                     backgroundColor: isDark
-                      ? 'rgba(255, 255, 255, 0.06)'
+                      ? 'rgba(255, 255, 255, 0.05)'
                       : 'rgba(20, 32, 58, 0.04)',
                     borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
+                      ? 'rgba(140, 150, 255, 0.25)'
                       : 'rgba(20, 32, 58, 0.10)',
                   },
                 ]}
@@ -587,15 +591,18 @@ export const SettingsProfileEditModal: React.FC<SettingsProfileEditModalProps> =
                 style={[
                   styles.cancelBtn,
                   {
+                    backgroundColor: isDark
+                      ? 'rgba(255, 255, 255, 0.03)'
+                      : 'rgba(20, 32, 58, 0.04)',
                     borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.15)'
+                      ? 'rgba(140, 150, 255, 0.25)'
                       : 'rgba(20, 32, 58, 0.12)',
                   },
                 ]}>
                 <Text
                   style={[
                     styles.cancelBtnText,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? colors.textTertiary : colors.textSecondary },
                   ]}>
                   Cancel
                 </Text>

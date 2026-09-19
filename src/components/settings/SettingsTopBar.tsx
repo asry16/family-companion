@@ -85,15 +85,15 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
             styles.backButton,
             {
               backgroundColor: isDark
-                ? 'rgba(255, 255, 255, 0.08)'
+                ? 'rgba(255, 255, 255, 0.05)'
                 : 'rgba(255, 255, 255, 0.72)',
               borderColor: isDark
-                ? 'rgba(255, 255, 255, 0.12)'
+                ? 'rgba(140, 150, 255, 0.25)'
                 : 'rgba(124, 92, 224, 0.15)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <Ionicons name="arrow-back" size={20} color={isDark ? '#C9CEFF' : colors.text} />
         </Pressable>
 
         {/* Center: Title & Subtitle */}
@@ -104,7 +104,7 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
           <Text
             style={[
               styles.screenSubtitle,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+              { color: isDark ? colors.textTertiary : colors.textSecondary },
             ]}>
             {familyName} • {memberLabel}
           </Text>

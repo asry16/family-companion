@@ -146,14 +146,14 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
             style={[
               styles.savedByAvatar,
               {
-                backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(124, 92, 224, 0.18)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F0FC',
+                borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
               },
             ]}>
             <Text
               style={[
                 styles.savedByText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                { color: isDark ? '#8B7CF6' : '#7C5CE0' },
               ]}>
               A
             </Text>

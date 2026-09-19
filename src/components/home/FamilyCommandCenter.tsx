@@ -89,8 +89,8 @@ export function getMemberPresence(member?: FamilyMember | null, isDark: boolean 
   return {
     status: 'AWAY',
     label: 'AWAY',
-    badgeColor: isDark ? '#38BDF8' : '#2563EB', // Cyan / Royal Blue
-    badgeBg: isDark ? 'rgba(56, 189, 248, 0.18)' : 'rgba(37, 99, 235, 0.12)',
+    badgeColor: isDark ? '#8B7CF6' : '#2563EB', // Violet / Royal Blue
+    badgeBg: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(37, 99, 235, 0.12)',
     isLive: true,
   };
 }
@@ -439,7 +439,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           onPress={() => router.push('/(tabs)/family')}
           hitSlop={10}
           style={styles.seeAllBtn}>
-          <Text style={[styles.seeAllText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+          <Text style={[styles.seeAllText, { color: colors.brandAccent }]}>
             See all →
           </Text>
         </Pressable>
@@ -474,33 +474,27 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                 styles.memberPresenceCard,
                 {
                   backgroundColor: isSelected
-                    ? isDark
-                      ? '#38BDF8'
-                      : colors.brandAccent
+                    ? colors.brandAccent
                     : isDark
-                    ? '#151F33'
+                    ? 'rgba(20, 27, 74, 0.72)'
                     : '#FFFFFF',
                   borderColor: isSelected
-                    ? isDark
-                      ? '#38BDF8'
-                      : colors.brandAccent
+                    ? colors.brandAccent
                     : presence.isLive
                     ? isDark
                       ? 'rgba(52, 211, 153, 0.45)'
                       : 'rgba(16, 185, 129, 0.35)'
                     : isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
+                    ? 'rgba(130, 140, 255, 0.22)'
                     : 'rgba(0, 0, 0, 0.06)',
                   shadowColor: isSelected
-                    ? isDark
-                      ? '#38BDF8'
-                      : colors.brandAccent
+                    ? colors.brandAccent
                     : presence.isLive
                     ? isDark
                       ? '#34D399'
                       : '#10B981'
                     : isDark
-                    ? '#000000'
+                    ? 'rgba(0, 0, 10, 0.35)'
                     : '#64748B',
                   shadowOpacity: isSelected ? 0.35 : presence.isLive ? (isDark ? 0.3 : 0.15) : 0.06,
                   shadowRadius: isSelected ? 12 : presence.isLive ? 10 : 6,
@@ -520,7 +514,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                   style={[
                     styles.cardNameText,
                     {
-                      color: isSelected ? (isDark ? '#000000' : '#FFFFFF') : colors.text,
+                      color: isSelected ? '#FFFFFF' : colors.text,
                       fontWeight: isSelected ? '800' : '700',
                     },
                   ]}>
@@ -666,17 +660,17 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           style={({ pressed }) => [
             styles.compactAddCard,
             {
-              backgroundColor: isDark ? '#151F33' : '#FFFFFF',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+              backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.08)',
               opacity: pressed ? 0.85 : 1,
             },
           ]}>
           <View
             style={[
               styles.compactAddCircle,
-              { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' },
+              { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#EFF6FF' },
             ]}>
-            <Ionicons name="add" size={20} color={isDark ? '#38BDF8' : colors.brandAccent} />
+            <Ionicons name="add" size={20} color={isDark ? '#8B7CF6' : colors.brandAccent} />
           </View>
           <Text style={[styles.compactAddText, { color: colors.text }]}>
             Add Member
@@ -694,8 +688,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
         style={[
           styles.familyStatusCard,
           {
-            backgroundColor: isDark ? '#151F33' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+            backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.06)',
             shadowColor: isDark ? '#000000' : '#64748B',
           },
         ]}>
@@ -723,7 +717,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           {/* Live */}
           <View style={styles.statusPillItem}>
             <Text style={{ fontSize: 13 }}>⚡</Text>
-            <Text style={[styles.statusItemText, { color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700' }]}>
+            <Text style={[styles.statusItemText, { color: isDark ? '#8B7CF6' : '#2563EB', fontWeight: '700' }]}>
               Live
             </Text>
           </View>
@@ -746,7 +740,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           <Pressable
             onPress={() => router.push('/(tabs)/family')}
             hitSlop={10}>
-            <Text style={[styles.fullScreenLinkText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+            <Text style={[styles.fullScreenLinkText, { color: isDark ? '#8B7CF6' : colors.brandAccent }]}>
               Full screen →
             </Text>
           </Pressable>
@@ -767,17 +761,17 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           styles.mapHeroCard,
           isFullScreen && { height: 480 },
           {
-            backgroundColor: isDark ? '#0B1120' : '#EFF6FF',
-            borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.15)',
-            shadowColor: isDark ? '#000000' : '#1E293B',
+            backgroundColor: isDark ? '#141A4A' : '#EFF6FF',
+            borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(37, 99, 235, 0.15)',
+            shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#1E293B',
           },
         ]}
         {...panResponder.panHandlers}>
         {/* Real Map Tiles or Permission Block */}
         {locationPermissionNeeded ? (
           <View style={styles.permissionNeededWrap}>
-            <View style={[styles.permissionIconCircle, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' }]}>
-              <Ionicons name="location-outline" size={28} color={isDark ? '#38BDF8' : colors.brandAccent} />
+            <View style={[styles.permissionIconCircle, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#EFF6FF' }]}>
+              <Ionicons name="location-outline" size={28} color={colors.brandAccent} />
             </View>
             <Text style={[styles.permissionTitle, { color: colors.text }]}>
               Location access needed
@@ -790,12 +784,12 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               style={({ pressed }) => [
                 styles.enableLocationBtn,
                 {
-                  backgroundColor: isDark ? '#38BDF8' : colors.brandAccent,
+                  backgroundColor: colors.brandAccent,
                   opacity: pressed ? 0.88 : 1,
                 },
               ]}>
-              <Ionicons name="navigate" size={14} color={isDark ? '#000000' : '#FFFFFF'} />
-              <Text style={[styles.enableLocationBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
+              <Ionicons name="navigate" size={14} color="#FFFFFF" />
+              <Text style={[styles.enableLocationBtnText, { color: '#FFFFFF' }]}>
                 Enable Location
               </Text>
             </Pressable>
@@ -854,8 +848,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                   style={[
                     styles.homeBadge,
                     {
-                      backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
-                      borderColor: isDark ? '#38BDF8' : '#2563EB',
+                      backgroundColor: isDark ? '#141A4A' : '#FFFFFF',
+                      borderColor: isDark ? '#8B7CF6' : '#2563EB',
                     },
                   ]}>
                   <Text style={{ fontSize: 11 }}>🏠</Text>
@@ -936,7 +930,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                       styles.avatarMarkerBorder,
                       {
                         borderColor: isDark ? '#34D399' : '#10B981',
-                        backgroundColor: isDark ? '#0B1120' : '#FFFFFF',
+                        backgroundColor: isDark ? '#141A4A' : '#FFFFFF',
                       },
                     ]}>
                     <FamilyAvatar member={member} size="sm" showStatus={false} />
@@ -949,17 +943,17 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                       {
                         backgroundColor: isFocused
                           ? isDark
-                            ? '#38BDF8'
+                            ? '#8B7CF6'
                             : colors.brandAccent
                           : isDark
-                          ? 'rgba(15, 23, 42, 0.92)'
+                          ? 'rgba(20, 27, 74, 0.92)'
                           : '#FFFFFF',
                         borderColor: isFocused
                           ? isDark
-                            ? '#38BDF8'
+                            ? '#8B7CF6'
                             : colors.brandAccent
                           : isDark
-                          ? 'rgba(255, 255, 255, 0.2)'
+                          ? 'rgba(130, 140, 255, 0.25)'
                           : 'rgba(0, 0, 0, 0.1)',
                       },
                     ]}>
@@ -981,11 +975,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                       style={[
                         styles.markerNameText,
                         {
-                          color: isFocused
-                            ? isDark
-                              ? '#000000'
-                              : '#FFFFFF'
-                            : colors.text,
+                          color: isFocused ? '#FFFFFF' : colors.text,
                           fontWeight: isFocused ? '800' : '700',
                         },
                       ]}>
@@ -1003,8 +993,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           style={[
             styles.overlayLiveCard,
             {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+              backgroundColor: isDark ? 'rgba(20, 27, 74, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(0, 0, 0, 0.08)',
             },
           ]}>
           <View style={styles.overlayLiveRow}>
@@ -1013,11 +1003,11 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               LIVE
             </Text>
             {isGpsLive ? (
-              <Text style={{ fontSize: 9, color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
+              <Text style={{ fontSize: 9, color: isDark ? '#8B7CF6' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
                 • GPS Live
               </Text>
             ) : (
-              <Text style={{ fontSize: 9, color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
+              <Text style={{ fontSize: 9, color: isDark ? '#8B7CF6' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
                 • Network Live
               </Text>
             )}
@@ -1038,8 +1028,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             style={({ pressed }) => [
               styles.overlayMapModeBtn,
               {
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.08)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
@@ -1060,8 +1050,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               style={({ pressed }) => [
                 styles.overlayFullScreenBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.08)',
                   opacity: pressed ? 0.8 : 1,
                 },
               ]}>
@@ -1080,8 +1070,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             style={({ pressed }) => [
               styles.mapZoomBtn,
               {
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.08)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
@@ -1092,8 +1082,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             style={({ pressed }) => [
               styles.mapZoomBtn,
               {
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(0, 0, 0, 0.08)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
@@ -1107,20 +1097,20 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           style={({ pressed }) => [
             styles.overlayRecenterBtn,
             {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(37, 99, 235, 0.2)',
+              backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : 'rgba(255, 255, 255, 0.95)',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(37, 99, 235, 0.2)',
               opacity: pressed ? 0.85 : 1,
             },
           ]}>
           <Ionicons
             name="locate-outline"
             size={14}
-            color={isDark ? '#38BDF8' : colors.brandAccent}
+            color={isDark ? '#8B7CF6' : colors.brandAccent}
           />
           <Text
             style={[
               styles.overlayRecenterText,
-              { color: isDark ? '#38BDF8' : colors.brandAccent },
+              { color: isDark ? '#8B7CF6' : colors.brandAccent },
             ]}>
             ⊙ Recenter
           </Text>
@@ -1145,18 +1135,14 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             styles.chipPill,
             {
               backgroundColor: !selectedMember
-                ? isDark
-                  ? '#38BDF8'
-                  : colors.brandAccent
+                ? colors.brandAccent
                 : isDark
-                ? '#151F33'
+                ? 'rgba(255, 255, 255, 0.03)'
                 : '#F1F5F9',
               borderColor: !selectedMember
-                ? isDark
-                  ? '#38BDF8'
-                  : colors.brandAccent
+                ? colors.brandAccent
                 : isDark
-                ? 'rgba(255, 255, 255, 0.1)'
+                ? 'rgba(130, 140, 255, 0.22)'
                 : '#E2E8F0',
             },
           ]}>
@@ -1165,9 +1151,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               styles.chipText,
               {
                 color: !selectedMember
-                  ? isDark
-                    ? '#000000'
-                    : '#FFFFFF'
+                  ? '#FFFFFF'
                   : colors.text,
                 fontWeight: !selectedMember ? '800' : '600',
               },
@@ -1203,18 +1187,14 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                 styles.chipPill,
                 {
                   backgroundColor: isCurrent
-                    ? isDark
-                      ? '#38BDF8'
-                      : colors.brandAccent
+                    ? colors.brandAccent
                     : isDark
-                    ? '#151F33'
+                    ? 'rgba(255, 255, 255, 0.03)'
                     : '#F1F5F9',
                   borderColor: isCurrent
-                    ? isDark
-                      ? '#38BDF8'
-                      : colors.brandAccent
+                    ? colors.brandAccent
                     : isDark
-                    ? 'rgba(255, 255, 255, 0.1)'
+                    ? 'rgba(130, 140, 255, 0.22)'
                     : '#E2E8F0',
                 },
               ]}>
@@ -1223,9 +1203,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                   styles.chipLiveDot,
                   {
                     backgroundColor: isCurrent
-                      ? isDark
-                        ? '#000000'
-                        : '#FFFFFF'
+                      ? '#FFFFFF'
                       : isDark
                       ? '#34D399'
                       : '#10B981',
@@ -1266,8 +1244,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               style={[
                 styles.sheetContainer,
                 {
-                  backgroundColor: isDark ? '#151F33' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.96)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(0, 0, 0, 0.08)',
                   transform: [{ translateY: sheetTranslateY }],
                 },
               ]}>
@@ -1341,14 +1319,14 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                   style={({ pressed }) => [
                     styles.sheetPrimaryBtn,
                     {
-                      backgroundColor: isDark ? '#38BDF8' : colors.brandAccent,
+                      backgroundColor: colors.brandAccent,
                       opacity: pressed ? 0.88 : 1,
                     },
                   ]}>
                   <Text
                     style={[
                       styles.sheetPrimaryBtnText,
-                      { color: isDark ? '#000000' : '#FFFFFF' },
+                      { color: '#FFFFFF' },
                     ]}>
                     View Profile
                   </Text>

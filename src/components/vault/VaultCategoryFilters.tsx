@@ -59,13 +59,13 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
                 }}
                 style={styles.selectedGradientWrap}>
                 <LinearGradient
-                  colors={isDark ? ['#3B6FF0', '#2563EB'] : ['#4F8EF7', '#8A6BF2']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[
                     styles.gradientPill,
                     {
-                      shadowColor: isDark ? colors.blue : '#6E5ADC',
+                      shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
                     },
                   ]}>
                   <Text
@@ -90,8 +90,8 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
               style={({ pressed }) => [
                 styles.unselectedPill,
                 {
-                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(124, 92, 224, 0.08)',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.16)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -111,13 +111,13 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
           style={({ pressed }) => [
             styles.saveLocationPill,
             {
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.50)' : '#7C5CE0',
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(124, 92, 224, 0.08)',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : '#7C5CE0',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.08)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="add" size={14} color={isDark ? colors.blue : '#7C5CE0'} />
-          <Text style={[styles.saveLocationText, { color: isDark ? colors.blue : '#7C5CE0' }]}>
+          <Ionicons name="add" size={14} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+          <Text style={[styles.saveLocationText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
             + Save Location
           </Text>
         </Pressable>

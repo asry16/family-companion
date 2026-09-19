@@ -55,7 +55,7 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
       {/* Header Row: Count & Add Plan quick action */}
       <View style={styles.headerBar}>
         <View style={styles.countBadge}>
-          <Text style={[styles.countBadgeText, { color: isDark ? '#38BDF8' : '#6D5BD0' }]}>
+          <Text style={[styles.countBadgeText, { color: isDark ? '#8B7CF6' : '#6D5BD0' }]}>
             {plans.length} SCHEDULED {plans.length === 1 ? 'PLAN' : 'PLANS'}
           </Text>
         </View>
@@ -68,13 +68,13 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
           style={({ pressed }) => [
             styles.addPlanHeaderBtn,
             {
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.08)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
+              backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.08)',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.20)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="add" size={15} color={isDark ? '#38BDF8' : '#7C5CE0'} />
-          <Text style={[styles.addPlanHeaderText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
+          <Ionicons name="add" size={15} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+          <Text style={[styles.addPlanHeaderText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
             Add Plan
           </Text>
         </Pressable>
@@ -102,10 +102,10 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
                     styles.timeBadge,
                     {
                       backgroundColor: isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
+                        ? 'rgba(255, 255, 255, 0.05)'
                         : 'rgba(20, 32, 58, 0.05)',
                       borderColor: isDark
-                        ? 'rgba(255, 255, 255, 0.12)'
+                        ? 'rgba(140, 150, 255, 0.20)'
                         : 'rgba(20, 32, 58, 0.08)',
                     },
                   ]}>
@@ -170,16 +170,16 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
                     style={[
                       styles.assigneeAvatar,
                       {
-                        backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
+                        backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#F3F0FC',
                         borderColor: isDark
-                          ? 'rgba(59, 111, 240, 0.35)'
+                          ? 'rgba(139, 124, 246, 0.35)'
                           : 'rgba(124, 92, 224, 0.18)',
                       },
                     ]}>
                     <Text
                       style={[
                         styles.assigneeInitial,
-                        { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                        { color: isDark ? '#8B7CF6' : '#7C5CE0' },
                       ]}>
                       {plan.assigneeInitial}
                     </Text>
@@ -207,12 +207,12 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
                       backgroundColor: isDone
                         ? colors.green
                         : isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
+                        ? 'rgba(255, 255, 255, 0.05)'
                         : 'rgba(20, 32, 58, 0.05)',
                       borderColor: isDone
                         ? colors.green
                         : isDark
-                        ? 'rgba(255, 255, 255, 0.20)'
+                        ? 'rgba(140, 150, 255, 0.25)'
                         : 'rgba(20, 32, 58, 0.15)',
                       opacity: pressed ? 0.75 : 1,
                     },

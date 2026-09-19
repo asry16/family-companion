@@ -44,12 +44,12 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
           <Ionicons
             name="people-outline"
             size={16}
-            color={isDark ? '#38BDF8' : '#6D5BD0'}
+            color={isDark ? '#8B7CF6' : '#6D5BD0'}
           />
           <Text
             style={[
               styles.sectionHeaderText,
-              { color: isDark ? colors.textMuted : '#6D5BD0' },
+              { color: isDark ? colors.textTertiary : '#6D5BD0' },
             ]}>
             FAMILY MEMBERS ({members.length})
           </Text>
@@ -67,10 +67,10 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
             styles.addMemberPill,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.20)'
+                ? 'rgba(255, 255, 255, 0.03)'
                 : 'rgba(124, 92, 224, 0.08)',
               borderColor: isDark
-                ? 'rgba(59, 111, 240, 0.40)'
+                ? 'rgba(139, 124, 246, 0.50)'
                 : 'rgba(124, 92, 224, 0.22)',
               opacity: pressed ? 0.75 : 1,
             },
@@ -78,12 +78,12 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
           <Ionicons
             name="person-add-outline"
             size={13}
-            color={isDark ? '#38BDF8' : '#7C5CE0'}
+            color={isDark ? '#8B7CF6' : '#7C5CE0'}
           />
           <Text
             style={[
               styles.addMemberText,
-              { color: isDark ? '#38BDF8' : '#7C5CE0' },
+              { color: isDark ? '#8B7CF6' : '#7C5CE0' },
             ]}>
             Add Member
           </Text>
@@ -103,7 +103,7 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
             <GlassCard
               key={member.id}
               borderRadius={20}
-              glowColor={isDark ? colors.blue : undefined}
+              glowColor={undefined}
               style={styles.memberCard}
               contentStyle={styles.memberCardContent}>
               {/* Left: Avatar with green online beacon dot */}
@@ -114,8 +114,8 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                     {
                       backgroundColor: member.photoUrl
                         ? 'transparent'
-                        : member.avatarColor || (isDark ? '#1E293B' : '#7C5CE0'),
-                      borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
+                        : member.avatarColor || (isDark ? '#253275' : '#7C5CE0'),
+                      borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.20)',
                       overflow: 'hidden',
                     },
                   ]}>
@@ -130,7 +130,7 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   )}
                 </View>
                 {/* Green Online Dot */}
-                <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
+                <View style={[styles.onlineDot, { backgroundColor: colors.green, borderColor: isDark ? '#0B1030' : '#FFFFFF' }]} />
               </View>
 
               {/* Middle: Details Column */}
@@ -148,17 +148,17 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                         styles.youBadge,
                         {
                           backgroundColor: isDark
-                            ? 'rgba(59, 111, 240, 0.25)'
+                            ? 'rgba(139, 124, 246, 0.18)'
                             : 'rgba(124, 92, 224, 0.12)',
                           borderColor: isDark
-                            ? 'rgba(59, 111, 240, 0.45)'
+                            ? 'rgba(139, 124, 246, 0.35)'
                             : 'rgba(124, 92, 224, 0.25)',
                         },
                       ]}>
                       <Text
                         style={[
                           styles.youBadgeText,
-                          { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                          { color: isDark ? '#8B7CF6' : '#7C5CE0' },
                         ]}>
                         You
                       </Text>
@@ -171,7 +171,7 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   numberOfLines={1}
                   style={[
                     styles.subText,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? colors.textTertiary : colors.textSecondary },
                   ]}>
                   {relation} • {phone}
                 </Text>
@@ -197,10 +197,10 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   styles.editButton,
                   {
                     backgroundColor: isDark
-                      ? 'rgba(255, 255, 255, 0.08)'
+                      ? 'rgba(255, 255, 255, 0.05)'
                       : 'rgba(124, 92, 224, 0.08)',
                     borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
+                      ? 'rgba(140, 150, 255, 0.25)'
                       : 'rgba(124, 92, 224, 0.15)',
                     opacity: pressed ? 0.75 : 1,
                   },
@@ -208,7 +208,7 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                 <Ionicons
                   name="pencil-outline"
                   size={16}
-                  color={isDark ? colors.textMuted : '#6D5BD0'}
+                  color={isDark ? '#C9CEFF' : '#6D5BD0'}
                 />
               </Pressable>
             </GlassCard>

@@ -51,12 +51,12 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
         <Ionicons
           name="person-outline"
           size={16}
-          color={isDark ? '#38BDF8' : '#6D5BD0'}
+          color={isDark ? '#8B7CF6' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : '#6D5BD0' },
+            { color: isDark ? colors.textTertiary : '#6D5BD0' },
           ]}>
           YOUR PROFILE DETAILS
         </Text>
@@ -65,7 +65,7 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
       {/* Profile Glass Card */}
       <GlassCard
         borderRadius={24}
-        glowColor={isDark ? colors.blue : undefined}
+        glowColor={undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
         {/* Top Row: Avatar, Details & Edit Pill Button */}
@@ -76,7 +76,6 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: photoUrl ? 'transparent' : isDark ? '#2563EB' : undefined,
                   overflow: 'hidden',
                 },
               ]}>
@@ -88,14 +87,12 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
                 />
               ) : (
                 <>
-                  {!isDark && (
-                    <LinearGradient
-                      colors={['#4F8EF7', '#8A6BF2']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  )}
+                  <LinearGradient
+                    colors={['#4F8EF7', '#8B6CF0']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
                   <Text style={styles.avatarText}>{initial}</Text>
                 </>
               )}
@@ -105,7 +102,7 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
                 styles.onlineBadge,
                 {
                   backgroundColor: colors.green,
-                  borderColor: isDark ? '#0B1528' : '#FFFFFF',
+                  borderColor: isDark ? '#0B1030' : '#FFFFFF',
                 },
               ]}
             />
@@ -119,7 +116,7 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
             <Text
               style={[
                 styles.userEmail,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}
               numberOfLines={1}>
               {email}
@@ -128,12 +125,12 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               <Ionicons
                 name="call-outline"
                 size={12}
-                color={isDark ? colors.textMuted : colors.textSecondary}
+                color={isDark ? colors.textTertiary : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.phoneText,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary },
                 ]}>
                 {phone}
               </Text>
@@ -152,16 +149,16 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               styles.editButton,
               {
                 backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.18)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(124, 92, 224, 0.08)',
                 borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.35)'
+                  ? 'rgba(139, 124, 246, 0.50)'
                   : '#7C5CE0',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
-            <Ionicons name="create-outline" size={14} color={isDark ? '#38BDF8' : '#7C5CE0'} />
-            <Text style={[styles.editText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
+            <Ionicons name="create-outline" size={14} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+            <Text style={[styles.editText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
               Edit
             </Text>
           </Pressable>
@@ -173,7 +170,7 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
             styles.divider,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.12)'
+                ? 'rgba(130, 140, 255, 0.12)'
                 : 'rgba(20, 32, 58, 0.06)',
             },
           ]}
@@ -187,17 +184,17 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               styles.tagPill,
               {
                 backgroundColor: isDark
-                  ? 'rgba(255, 255, 255, 0.07)'
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(20, 32, 58, 0.05)',
                 borderColor: isDark
-                  ? 'rgba(255, 255, 255, 0.10)'
+                  ? 'rgba(140, 150, 255, 0.20)'
                   : 'rgba(20, 32, 58, 0.08)',
               },
             ]}>
             <Ionicons
               name="shield-checkmark-outline"
               size={12}
-              color={isDark ? '#38BDF8' : colors.blue}
+              color={isDark ? '#8B7CF6' : colors.blue}
             />
             <Text
               style={[

@@ -17,6 +17,7 @@ export const Colors = {
     text: '#1F1B6D',                  // deep indigo
     textSecondary: '#7A7DB0',         // muted lavender-gray
     textMuted: '#7A7DB0',
+    textTertiary: '#7A7DB0',
     textInverse: '#FFFFFF',
 
     // Exact reference accents
@@ -77,59 +78,96 @@ export const Colors = {
   },
   dark: {
     // Primary & background tokens
-    background: '#060B1F',            // deep navy
-    cardBackground: 'rgba(15, 26, 58, 0.80)', // navy #0F1A3A at 80% opacity
-    cardSolid: '#0F1A3A',
-    elevatedBackground: 'rgba(20, 35, 75, 0.85)',
-    border: 'rgba(59, 111, 240, 0.22)', // 1px glowing border
-    borderSubtle: 'rgba(255, 255, 255, 0.08)',
-    separator: 'rgba(255, 255, 255, 0.08)',
+    background: '#0B1030',            // deep indigo gradient start
+    backgroundGradient: ['#0B1030', '#101540', '#151A52'] as const,
+    backgroundRadialTopGlow: 'rgba(59, 63, 168, 0.15)', // faint indigo radial glow at top center
+    cardBackground: 'rgba(20, 27, 74, 0.72)', // calm glass
+    cardSolid: '#141B4A',
+    elevatedBackground: 'rgba(28, 36, 92, 0.85)',
+    border: 'rgba(130, 140, 255, 0.22)', // 1px calm glass border
+    borderSubtle: 'rgba(130, 140, 255, 0.12)',
+    separator: 'rgba(130, 140, 255, 0.12)',
+    cardInnerHighlight: 'rgba(255, 255, 255, 0.04)',
+    cardShadow: 'rgba(0, 0, 10, 0.35)',
 
     // Typography
-    text: '#FFFFFF',
-    textSecondary: '#9AA6C4',
-    textMuted: '#9AA6C4',
-    textInverse: '#060B1F',
+    text: '#F2F4FF',                  // primary
+    textSecondary: '#A6ADE0',         // secondary
+    textMuted: '#7C84C0',             // tertiary
+    textTertiary: '#7C84C0',
+    textInverse: '#0B1030',
 
-    // Exact user accents (in dark mode, accents get a subtle outer glow)
-    blue: '#3B6FF0',
-    blueSoft: 'rgba(59, 111, 240, 0.20)',
-    blueBorder: 'rgba(59, 111, 240, 0.40)',
+    // Accents
+    violet: '#8B7CF6',                // links, counts, "You" badge
+    violetSoft: 'rgba(139, 124, 246, 0.18)',
+    violetBorder: 'rgba(139, 124, 246, 0.50)',
+    accentViolet: '#8B7CF6',
+    accentVioletLinks: '#8B7CF6',
 
-    green: '#22C58B',
-    greenSoft: 'rgba(34, 197, 139, 0.20)',
-    greenBorder: 'rgba(34, 197, 139, 0.40)',
+    blue: '#4F8EF7',
+    blueSoft: 'rgba(79, 142, 247, 0.16)',
+    blueBorder: 'rgba(79, 142, 247, 0.32)',
+
+    teal: '#2DD4BF',
+    tealSoft: 'rgba(45, 212, 191, 0.16)',
+    tealBorder: 'rgba(45, 212, 191, 0.35)',
+
+    purple: '#A855F7',
+    purpleSoft: 'rgba(168, 85, 247, 0.16)',
+    purpleBorder: 'rgba(168, 85, 247, 0.35)',
+
+    green: '#34D399',                 // safe / success green
+    headlineGreen: '#4ADE9A',
+    greenSoft: 'rgba(52, 211, 153, 0.16)',
+    greenBorder: 'rgba(52, 211, 153, 0.35)',
+    greenGlow: 'rgba(52, 211, 153, 0.40)',
 
     red: '#F0524D',
-    redSoft: 'rgba(240, 82, 77, 0.20)',
-    redBorder: 'rgba(240, 82, 77, 0.40)',
-
-    purple: '#7C5CE0',
-    purpleSoft: 'rgba(124, 92, 224, 0.20)',
-    purpleBorder: 'rgba(124, 92, 224, 0.40)',
+    redSoft: 'rgba(240, 82, 77, 0.18)',
+    redBorder: 'rgba(240, 82, 77, 0.35)',
+    notificationBadge: '#FF4D6A',
 
     pink: '#EC4899',
-    pinkSoft: 'rgba(236, 72, 153, 0.20)',
-    pinkBorder: 'rgba(236, 72, 153, 0.40)',
+    pinkSoft: 'rgba(236, 72, 153, 0.16)',
+    pinkBorder: 'rgba(236, 72, 153, 0.35)',
 
     yellow: '#FBBF24',
-    yellowSoft: 'rgba(251, 191, 36, 0.20)',
-    yellowBorder: 'rgba(251, 191, 36, 0.40)',
+    yellowSoft: 'rgba(251, 191, 36, 0.16)',
+    yellowBorder: 'rgba(251, 191, 36, 0.35)',
+
+    // Primary gradient
+    primaryGradient: ['#4F8EF7', '#8B6CF0'] as const,
+    primaryGradientStart: '#4F8EF7',
+    primaryGradientEnd: '#8B6CF0',
+
+    // Shared input & header button tokens
+    inputBg: 'rgba(255, 255, 255, 0.05)',
+    inputBorder: 'rgba(140, 150, 255, 0.25)',
+    inputFocusBorder: '#8B7CF6',
+    headerBtnBg: 'rgba(255, 255, 255, 0.05)',
+    headerBtnBorder: 'rgba(140, 150, 255, 0.25)',
+    headerBtnIcon: '#C9CEFF',
+
+    // Dark Map Style tokens
+    mapLand: '#141A4A',
+    mapRoads: '#2A3080',
+    mapParks: '#1C4B4A',
+    mapWater: '#23388A',
 
     // Brand accent
-    brand: '#FFFFFF',
-    brandAccent: '#3B6FF0',
+    brand: '#F2F4FF',
+    brandAccent: '#8B7CF6',
     brandWarm: '#FB923C',
-    brandSoft: '#0F1A3A',
+    brandSoft: '#141B4A',
 
-    activeTab: '#3B6FF0',
-    inactiveTab: '#9AA6C4',
-    ripple: 'rgba(255, 255, 255, 0.08)',
+    activeTab: '#8B7CF6',
+    inactiveTab: '#7C84C0',
+    ripple: 'rgba(139, 124, 246, 0.10)',
 
-    // High-contrast button typography tokens (Black font on bright buttons in Night Mode!)
-    buttonTextOnAccent: '#000000',
-    buttonTextOnBright: '#000000',
-    buttonTextOnDanger: '#000000',
+    // High-contrast button typography tokens
+    buttonTextOnAccent: '#FFFFFF',
+    buttonTextOnBright: '#0B1030',
+    buttonTextOnDanger: '#FFFFFF',
   },
   elderly: {
     // High-contrast simple mode tokens
@@ -144,6 +182,7 @@ export const Colors = {
     text: '#FFFFFF',
     textSecondary: '#F1F5F9',
     textMuted: '#CBD5E1',
+    textTertiary: '#CBD5E1',
     textInverse: '#000000',
 
     green: '#22C58B',
@@ -382,17 +421,19 @@ export const TabBarTokens = {
     orbGlowActive: 'rgba(91, 124, 246, 0.55)',
   },
   dark: {
-    barBg: 'rgba(10, 20, 50, 0.85)',
-    barBorder: 'rgba(80, 140, 255, 0.35)',
-    barShadow: 'rgba(56, 130, 255, 0.25)',
-    barTopHighlight: 'rgba(255, 255, 255, 0.12)',
-    activeColor: '#38BDF8',
-    activeGlow: 'rgba(56, 189, 248, 0.60)',
-    inactiveColor: '#9AA6C4',
-    orbBorderGradient: ['#4F8EF7', '#8A6BF2', '#EC4899'] as const,
-    orbRadialBg: ['#1E1B4B', '#0A1432'] as const,
-    orbGlow: 'rgba(99, 102, 241, 0.55)',
-    orbGlowActive: 'rgba(56, 189, 248, 0.75)',
+    barBg: 'rgba(16, 22, 64, 0.85)',
+    barBorder: 'rgba(130, 140, 255, 0.28)',
+    barShadow: 'rgba(0, 0, 10, 0.40)',
+    barTopHighlight: 'rgba(255, 255, 255, 0.06)',
+    activeColor: '#8B7CF6',
+    activeGlow: 'rgba(139, 124, 246, 0.40)',
+    inactiveColor: '#7C84C0',
+    orbBorderGradient: ['#4F8EF7', '#8B6CF0'] as const,
+    orbRadialBg: ['#4F8EF7', '#8B6CF0'] as const,
+    orbGradient: ['#4F8EF7', '#8B6CF0'] as const,
+    orbHalo: 'rgba(139, 124, 246, 0.18)',
+    orbGlow: 'rgba(139, 124, 246, 0.45)',
+    orbGlowActive: 'rgba(79, 142, 247, 0.65)',
   },
 
   /**
@@ -435,16 +476,16 @@ export const HomeCardTokens = {
     sosLightSubtitle: '#8A4A5A',
     sosLightCore: ['#FF4D5E', '#E11D48'] as const,
 
-    sosDarkBg: 'rgba(30, 10, 20, 0.90)',
-    sosDarkBorder: 'rgba(255, 92, 108, 0.60)',
+    sosDarkBg: 'rgba(20, 27, 74, 0.72)',
+    sosDarkBorder: 'rgba(130, 140, 255, 0.22)',
     sosDarkTitle: '#FF8A8A',
-    sosDarkSubtitle: '#F0D0D8',
+    sosDarkSubtitle: '#A6ADE0',
     sosDarkCore: ['#FF334B', '#C81E32'] as const,
     sosDarkRing: '#FF6B81',
     sosDarkGlow: 'rgba(255, 42, 69, 0.55)',
 
-    pulseGreenGlow: 'rgba(46, 191, 142, 0.40)',
-    pulseDotHalo: 'rgba(46, 191, 142, 0.50)',
+    pulseGreenGlow: 'rgba(52, 211, 153, 0.40)',
+    pulseDotHalo: 'rgba(52, 211, 153, 0.50)',
     roseRing1: 'rgba(244, 63, 94, 0.35)',
     roseRing2: 'rgba(244, 63, 94, 0.22)',
   },
@@ -461,7 +502,7 @@ export const FrontPageTokens = {
   nameTaglineGap: 8,
   taglineMaxWidth: 300,
   brandCardGap: 32,
-  cardRadius: 30,
+  cardRadius: 28,
   cardPadding: 24,
   cardMaxWidth: 440,
   buttonHeight: 48,
@@ -486,22 +527,22 @@ export const FrontPageTokens = {
       dividerText: '#8A8EB2',
     },
     dark: {
-      nameText: '#FFFFFF',
-      taglineText: '#9AA6C4',
-      cardBg: 'rgba(15, 26, 58, 0.70)',
-      cardBorder: 'rgba(56, 189, 248, 0.35)',
-      cardShadow: 'rgba(56, 189, 248, 0.20)',
-      cardGlow: 'rgba(56, 189, 248, 0.25)',
-      cardInnerHighlight: 'rgba(255, 255, 255, 0.08)',
-      haloBorder: 'rgba(167, 139, 250, 0.32)',
-      haloBg: 'rgba(124, 92, 224, 0.18)',
-      logoBg: '#7C5CE0',
-      inputBg: 'rgba(15, 23, 42, 0.65)',
-      inputBorder: 'rgba(124, 92, 224, 0.32)',
-      inputFocusBorder: '#8A6BF2',
-      inputPlaceholder: '#64748B',
-      linkViolet: '#A78BFA',
-      dividerText: '#9AA6C4',
+      nameText: '#F2F4FF',
+      taglineText: '#A6ADE0',
+      cardBg: 'rgba(20, 27, 74, 0.72)',
+      cardBorder: 'rgba(130, 140, 255, 0.22)',
+      cardShadow: 'rgba(0, 0, 10, 0.35)',
+      cardGlow: 'rgba(130, 140, 255, 0.15)',
+      cardInnerHighlight: 'rgba(255, 255, 255, 0.04)',
+      haloBorder: 'rgba(140, 150, 255, 0.25)',
+      haloBg: 'rgba(139, 124, 246, 0.14)',
+      logoBg: '#8B7CF6',
+      inputBg: 'rgba(255, 255, 255, 0.05)',
+      inputBorder: 'rgba(140, 150, 255, 0.25)',
+      inputFocusBorder: '#8B7CF6',
+      inputPlaceholder: '#7C84C0',
+      linkViolet: '#8B7CF6',
+      dividerText: '#7C84C0',
     },
   },
   timings: {

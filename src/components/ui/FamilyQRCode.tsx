@@ -83,8 +83,8 @@ export const FamilyQRCode: React.FC<FamilyQRCodeProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.border,
+          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.95)' : colors.cardBackground,
+          borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : colors.border,
         },
       ]}>
       {/* Header Info */}
@@ -92,14 +92,14 @@ export const FamilyQRCode: React.FC<FamilyQRCodeProps> = ({
         <View
           style={[
             styles.emblemBadge,
-            { backgroundColor: colors.brandAccent + '15' },
+            { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : colors.brandAccent + '15' },
           ]}>
           <Ionicons name="qr-code" size={20} color={colors.brandAccent} />
         </View>
         <Text style={[styles.title, { color: colors.text }]}>
           {familyName}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.subtitle, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
           Scan this QR code with another device to join this family circle.
         </Text>
       </View>
@@ -135,9 +135,12 @@ export const FamilyQRCode: React.FC<FamilyQRCodeProps> = ({
       <View
         style={[
           styles.codePill,
-          { backgroundColor: colors.borderSubtle, borderColor: colors.border },
+          {
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.borderSubtle,
+            borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : colors.border,
+          },
         ]}>
-        <Text style={[styles.codeLabel, { color: colors.textSecondary }]}>
+        <Text style={[styles.codeLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
           FAMILY CODE
         </Text>
         <Text style={[styles.codeValue, { color: colors.text }]}>
@@ -152,13 +155,13 @@ export const FamilyQRCode: React.FC<FamilyQRCodeProps> = ({
           style={({ pressed }) => [
             styles.actionButton,
             {
-              backgroundColor: colors.borderSubtle,
-              borderColor: colors.border,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : colors.borderSubtle,
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : colors.border,
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="copy-outline" size={16} color={colors.text} />
-          <Text style={[styles.actionText, { color: colors.text }]}>
+          <Ionicons name="copy-outline" size={16} color={isDark ? '#8B7CF6' : colors.text} />
+          <Text style={[styles.actionText, { color: isDark ? '#8B7CF6' : colors.text }]}>
             Copy Code
           </Text>
         </Pressable>

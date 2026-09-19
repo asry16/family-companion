@@ -105,10 +105,10 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
             styles.modalContent,
             {
               backgroundColor: isDark
-                ? 'rgba(15, 26, 58, 0.96)'
+                ? 'rgba(20, 27, 74, 0.96)'
                 : 'rgba(255, 255, 255, 0.98)',
               borderColor: isDark
-                ? 'rgba(59, 111, 240, 0.35)'
+                ? 'rgba(130, 140, 255, 0.25)'
                 : 'rgba(20, 32, 58, 0.12)',
             },
           ]}>
@@ -130,7 +130,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
             contentContainerStyle={styles.formContent}>
             {/* Name Input */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              <Text style={[styles.fieldLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
                 Full Name
               </Text>
               <TextInput
@@ -142,8 +142,8 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                   styles.textInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.10)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(20, 32, 58, 0.10)',
                   },
                 ]}
               />
@@ -151,7 +151,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
 
             {/* Relation Selector */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              <Text style={[styles.fieldLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
                 Family Relation
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relationsRow}>
@@ -168,14 +168,18 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                         styles.relationChip,
                         {
                           backgroundColor: isSelected
-                            ? colors.blue
+                            ? isDark
+                              ? 'rgba(139, 124, 246, 0.22)'
+                              : colors.blue
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.06)'
+                            ? 'rgba(255, 255, 255, 0.05)'
                             : 'rgba(20, 32, 58, 0.04)',
                           borderColor: isSelected
-                            ? colors.blue
+                            ? isDark
+                              ? '#8B7CF6'
+                              : colors.blue
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.12)'
+                            ? 'rgba(140, 150, 255, 0.20)'
                             : 'rgba(20, 32, 58, 0.08)',
                         },
                       ]}>
@@ -183,7 +187,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                         style={[
                           styles.relationText,
                           {
-                            color: isSelected ? (isDark ? '#000000' : '#FFFFFF') : colors.text,
+                            color: isSelected ? (isDark ? '#8B7CF6' : '#FFFFFF') : colors.text,
                             fontWeight: isSelected ? '800' : '600',
                           },
                         ]}>
@@ -197,7 +201,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
 
             {/* Phone Number Input */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              <Text style={[styles.fieldLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
                 Phone Number
               </Text>
               <TextInput
@@ -210,8 +214,8 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                   styles.textInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.10)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(20, 32, 58, 0.10)',
                   },
                 ]}
               />
@@ -219,7 +223,7 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
 
             {/* Current Place */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              <Text style={[styles.fieldLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
                 Current Place / Note
               </Text>
               <TextInput
@@ -231,8 +235,8 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                   styles.textInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.10)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(20, 32, 58, 0.10)',
                   },
                 ]}
               />

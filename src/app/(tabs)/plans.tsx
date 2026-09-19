@@ -24,6 +24,7 @@ import {
   PlanItem,
 } from '@/components/plans';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { DarkBackdrop } from '@/components/ui/DarkBackdrop';
 
 const DEFAULT_SUGGESTIONS = [
   'Doctor appointment',
@@ -209,6 +210,7 @@ export default function PlansScreen({
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <LightBackdrop />
+      <DarkBackdrop />
       {/* 1. Header: Avatar with dynamic initials, title, subtitle, Bell, Theme toggle, Settings */}
       <PlansHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'plans' } })}

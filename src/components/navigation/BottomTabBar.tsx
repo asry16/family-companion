@@ -380,31 +380,14 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  {isDark ? (
-                    // Dark mode: 2px gradient border (#4F8EF7, #8A6BF2, #EC4899) around navy-to-indigo fill
-                    <LinearGradient
-                      colors={TabBarTokens.dark.orbBorderGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.darkOrbBorder}>
-                      <LinearGradient
-                        colors={TabBarTokens.dark.orbRadialBg}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.darkOrbInner}>
-                        <Ionicons name="sparkles" size={23} color="#FFFFFF" />
-                      </LinearGradient>
-                    </LinearGradient>
-                  ) : (
-                    // Light mode: linear-gradient(135deg, #4F8EF7, #8A6BF2) with white sparkles
-                    <LinearGradient
-                      colors={TabBarTokens.light.orbGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.lightOrbCore}>
-                      <Ionicons name="sparkles" size={23} color="#FFFFFF" />
-                    </LinearGradient>
-                  )}
+                  {/* Primary gradient: linear-gradient(90deg, #4F8EF7, #8B6CF0) for Assistant orb */}
+                  <LinearGradient
+                    colors={['#4F8EF7', '#8B6CF0']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.lightOrbCore}>
+                    <Ionicons name="sparkles" size={23} color="#FFFFFF" />
+                  </LinearGradient>
                 </Animated.View>
               </View>
 

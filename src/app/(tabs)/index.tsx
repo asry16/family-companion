@@ -21,7 +21,7 @@ import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
 import { CircleTimelineCard } from '@/components/home/CircleTimelineCard';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
@@ -74,8 +74,9 @@ export default function HomeScreen() {
           backgroundColor: colors.background,
         },
       ]}>
-      {/* Light Mode Decorative Ambient Backdrop */}
+      {/* Ambient Backdrops (Light / Dark) */}
       <LightBackdrop />
+      <DarkBackdrop />
 
       {/* 1. Personalized Header (Deco greeting, User avatar, Safety status, Action icons) */}
       <PersonalizedHeader
@@ -153,11 +154,11 @@ export default function HomeScreen() {
         visible={fullMapModalVisible}
         animationType="slide"
         onRequestClose={() => setFullMapModalVisible(false)}>
-        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? '#080C15' : '#F8FAFC' }]}>
+        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? colors.background : '#F8FAFC' }]}>
           <Pressable
             onPress={() => setFullMapModalVisible(false)}
             style={styles.closeFullMapBtn}>
-            <View style={[styles.closeFullMapCircle, { backgroundColor: isDark ? '#1F2937' : '#FFFFFF' }]}>
+            <View style={[styles.closeFullMapCircle, { backgroundColor: isDark ? colors.cardBackground : '#FFFFFF', borderColor: isDark ? colors.border : 'rgba(0,0,0,0.1)' }]}>
               <Text style={{ color: colors.text, fontWeight: '800' }}>✕ Close Map</Text>
             </View>
           </Pressable>

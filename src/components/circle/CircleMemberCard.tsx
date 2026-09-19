@@ -127,11 +127,11 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
                   style={[
                     styles.youBadge,
                     {
-                      backgroundColor: isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.12)',
-                      borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.25)',
+                      backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)',
+                      borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.25)',
                     },
                   ]}>
-                  <Text style={[styles.youBadgeText, { color: isDark ? colors.blue : '#7C5CE0' }]}>YOU</Text>
+                  <Text style={[styles.youBadgeText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>YOU</Text>
                 </View>
               )}
             </View>
@@ -262,8 +262,8 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
             style={({ pressed }) => [
               styles.callButton,
               {
-                backgroundColor: isDark ? '#14B8A6' : '#2EBF8E',
-                shadowColor: isDark ? '#14B8A6' : '#2EBF8E',
+                backgroundColor: isDark ? colors.green : '#2EBF8E',
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#2EBF8E',
                 opacity: pressed ? 0.85 : 1,
               },
             ]}>
@@ -282,13 +282,13 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
             style={({ pressed }) => [
               styles.askButton,
               {
-                borderColor: colors.blue,
-                backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(79, 142, 247, 0.08)',
+                borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : colors.blue,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(79, 142, 247, 0.08)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
-            <Ionicons name="chatbubble-ellipses-outline" size={13} color={colors.blue} />
-            <Text style={[styles.askButtonText, { color: colors.blue }]}>Ask</Text>
+            <Ionicons name="chatbubble-ellipses-outline" size={13} color={isDark ? '#8B7CF6' : colors.blue} />
+            <Text style={[styles.askButtonText, { color: isDark ? '#8B7CF6' : colors.blue }]}>Ask</Text>
           </Pressable>
         </View>
       </View>

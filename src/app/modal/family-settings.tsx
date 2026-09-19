@@ -30,6 +30,7 @@ import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { DarkBackdrop } from '@/components/ui/DarkBackdrop';
 
 export interface FamilySettingsScreenProps {
   initialFamilyName?: string;
@@ -277,6 +278,7 @@ export default function FamilySettingsScreen({
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <LightBackdrop />
+      <DarkBackdrop />
       {/* 1. Top Bar: Back Arrow, Centered "Family Settings" and Subtitle */}
       <SettingsTopBar
         title="Family Settings"

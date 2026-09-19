@@ -65,13 +65,13 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
       : 'Stay on top of important care, birthdays and more.');
 
   const dividerColor = isDark
-    ? 'rgba(59, 111, 240, 0.15)'
+    ? 'rgba(130, 140, 255, 0.12)'
     : 'rgba(20, 32, 58, 0.06)';
 
   return (
     <GlassCard
       borderRadius={24}
-      glowColor={isDark ? 'rgba(59, 111, 240, 0.15)' : undefined}
+      glowColor={undefined}
       style={styles.cardContainer}
       contentStyle={styles.cardContent}>
       {/* 1. TODAY'S SCHEDULE Row */}
@@ -90,14 +90,14 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
           style={[
             styles.iconCircle,
             {
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.18)' : '#EFF6FF',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.20)',
+              backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#EFF6FF',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.30)' : 'rgba(59, 111, 240, 0.20)',
             },
           ]}>
           <Ionicons
             name="calendar"
             size={18}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#8B7CF6' : colors.blue}
           />
         </View>
 
@@ -116,13 +116,13 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
                 style={[
                   styles.badgePill,
                   {
-                    backgroundColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(59, 111, 240, 0.10)',
+                    backgroundColor: isDark ? 'rgba(139, 124, 246, 0.20)' : 'rgba(59, 111, 240, 0.10)',
                   },
                 ]}>
                 <Text
                   style={[
                     styles.badgeText,
-                    { color: isDark ? '#38BDF8' : colors.blue },
+                    { color: isDark ? '#8B7CF6' : colors.blue },
                   ]}>
                   {scheduleBadge}
                 </Text>
@@ -238,14 +238,14 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
           style={[
             styles.iconCircle,
             {
-              backgroundColor: isDark ? 'rgba(124, 92, 224, 0.18)' : '#F5F3FF',
-              borderColor: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.20)',
+              backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#F5F3FF',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.30)' : 'rgba(124, 92, 224, 0.20)',
             },
           ]}>
           <Ionicons
             name="heart"
             size={18}
-            color={isDark ? '#C084FC' : colors.purple}
+            color={isDark ? '#8B7CF6' : colors.purple}
           />
         </View>
 
@@ -264,13 +264,13 @@ export const PlansSummaryList: React.FC<PlansSummaryListProps> = ({
                 style={[
                   styles.badgePill,
                   {
-                    backgroundColor: isDark ? 'rgba(124, 92, 224, 0.25)' : 'rgba(124, 92, 224, 0.10)',
+                    backgroundColor: isDark ? 'rgba(139, 124, 246, 0.20)' : 'rgba(124, 92, 224, 0.10)',
                   },
                 ]}>
                 <Text
                   style={[
                     styles.badgeText,
-                    { color: isDark ? '#C084FC' : colors.purple },
+                    { color: isDark ? '#8B7CF6' : colors.purple },
                   ]}>
                   {remindersBadge}
                 </Text>

@@ -48,17 +48,17 @@ export const ChatRichCard: React.FC<ChatRichCardProps> = ({
         styles.cardContainer,
         {
           backgroundColor: isDark
-            ? 'rgba(15, 26, 58, 0.70)'
+            ? 'rgba(20, 27, 74, 0.72)'
             : 'rgba(255, 255, 255, 0.85)',
           borderColor: isDark
-            ? 'rgba(59, 111, 240, 0.28)'
+            ? 'rgba(130, 140, 255, 0.22)'
             : 'rgba(20, 32, 58, 0.10)',
         },
       ]}>
       {/* Optional Card Title */}
       {cardData.title && (
         <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: isDark ? '#38BDF8' : colors.blue }]}>
+          <Text style={[styles.cardTitle, { color: isDark ? colors.brandAccent : colors.blue }]}>
             {cardData.title.toUpperCase()}
           </Text>
         </View>
@@ -73,8 +73,8 @@ export const ChatRichCard: React.FC<ChatRichCardProps> = ({
               style={[
                 styles.memberAvatar,
                 {
-                  backgroundColor: member.avatarColor || (isDark ? '#1E293B' : '#EFF6FF'),
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(20, 32, 58, 0.15)',
+                  backgroundColor: member.avatarColor || (isDark ? 'rgba(255, 255, 255, 0.05)' : '#EFF6FF'),
+                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(20, 32, 58, 0.15)',
                 },
               ]}>
               <Text style={styles.avatarInitial}>{member.initials}</Text>
@@ -117,7 +117,7 @@ export const ChatRichCard: React.FC<ChatRichCardProps> = ({
                   member.batteryLevel < 20
                     ? colors.red
                     : isDark
-                    ? '#38BDF8'
+                    ? '#8B7CF6'
                     : colors.blue
                 }
               />
@@ -157,10 +157,10 @@ export const ChatRichCard: React.FC<ChatRichCardProps> = ({
             styles.actionPill,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.22)'
+                ? 'rgba(255, 255, 255, 0.03)'
                 : 'rgba(59, 111, 240, 0.12)',
               borderColor: isDark
-                ? 'rgba(59, 111, 240, 0.40)'
+                ? 'rgba(139, 124, 246, 0.50)'
                 : 'rgba(59, 111, 240, 0.25)',
               opacity: pressed ? 0.75 : 1,
             },
@@ -168,14 +168,14 @@ export const ChatRichCard: React.FC<ChatRichCardProps> = ({
           <Text
             style={[
               styles.actionPillText,
-              { color: isDark ? '#38BDF8' : colors.blue },
+              { color: isDark ? '#8B7CF6' : colors.blue },
             ]}>
             {cardData.actionLabel}
           </Text>
           <Ionicons
             name="arrow-forward"
             size={13}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#8B7CF6' : colors.blue}
           />
         </Pressable>
       )}

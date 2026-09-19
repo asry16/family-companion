@@ -44,12 +44,12 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
         <Ionicons
           name="qr-code-outline"
           size={14}
-          color={isDark ? '#38BDF8' : '#6D5BD0'}
+          color={isDark ? '#8B7CF6' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : '#6D5BD0' },
+            { color: isDark ? colors.textTertiary : '#6D5BD0' },
           ]}>
           FAMILY INVITATION & QR CODE
         </Text>
@@ -58,7 +58,7 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
       {/* Invitation Glass Card */}
       <GlassCard
         borderRadius={24}
-        glowColor={isDark ? colors.blue : undefined}
+        glowColor={undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
         {/* Top Row: Label & View QR Pill Button */}
@@ -67,7 +67,7 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
             <Text
               style={[
                 styles.codeLabel,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
               Household Private Invite Code
             </Text>
@@ -78,10 +78,10 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
                 styles.codeText,
                 isDark
                   ? {
-                      color: '#38BDF8',
-                      textShadowColor: 'rgba(56, 189, 248, 0.75)',
+                      color: '#8B7CF6',
+                      textShadowColor: 'rgba(139, 124, 246, 0.40)',
                       textShadowOffset: { width: 0, height: 0 },
-                      textShadowRadius: 10,
+                      textShadowRadius: 8,
                     }
                   : {
                       color: '#7C5CE0',
@@ -103,10 +103,10 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
               styles.viewQrPill,
               {
                 backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.20)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(124, 92, 224, 0.10)',
                 borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.40)'
+                  ? 'rgba(139, 124, 246, 0.50)'
                   : 'rgba(124, 92, 224, 0.25)',
                 opacity: pressed ? 0.75 : 1,
               },
@@ -114,12 +114,12 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
             <Ionicons
               name="qr-code-outline"
               size={13}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
+              color={isDark ? '#8B7CF6' : '#7C5CE0'}
             />
             <Text
               style={[
                 styles.viewQrText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                { color: isDark ? '#8B7CF6' : '#7C5CE0' },
               ]}>
               View QR
             </Text>
@@ -130,7 +130,7 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
         <Text
           style={[
             styles.descriptionText,
-            { color: isDark ? colors.textMuted : colors.textSecondary },
+            { color: isDark ? colors.textTertiary : colors.textSecondary },
           ]}>
           Anyone with this QR code or 8-character invite code can instantly join {familyName} and sync real-time safety status.
         </Text>
@@ -154,19 +154,19 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
               },
             ]}>
             <LinearGradient
-              colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
+              colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.gradientBtnInner}>
               <Ionicons
                 name="share-outline"
                 size={16}
-                color={isDark ? '#000000' : '#FFFFFF'}
+                color="#FFFFFF"
               />
               <Text
                 style={[
                   styles.btnText,
-                  { color: isDark ? '#000000' : '#FFFFFF' },
+                  { color: '#FFFFFF' },
                 ]}>
                 Share QR Invite
               </Text>
@@ -186,10 +186,10 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
               styles.outlinedBtn,
               {
                 borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.45)'
+                  ? 'rgba(139, 124, 246, 0.50)'
                   : '#7C5CE0',
                 backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.10)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(124, 92, 224, 0.08)',
                 opacity: pressed ? 0.75 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
@@ -198,12 +198,12 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
             <Ionicons
               name="scan-outline"
               size={16}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
+              color={isDark ? '#8B7CF6' : '#7C5CE0'}
             />
             <Text
               style={[
                 styles.btnText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                { color: isDark ? '#8B7CF6' : '#7C5CE0' },
               ]}>
               Join Other Family
             </Text>

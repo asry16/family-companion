@@ -100,14 +100,14 @@ export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
           <Ionicons
             name="sparkles"
             size={14}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#8B7CF6' : colors.blue}
             style={styles.sparkleTopRight}
           />
           {/* Sparkle 2 */}
           <Ionicons
             name="sparkles"
             size={11}
-            color={isDark ? '#C084FC' : '#F97316'}
+            color={isDark ? '#8B7CF6' : '#F97316'}
             style={styles.sparkleBottomLeft}
           />
 
@@ -211,19 +211,19 @@ export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
             },
           ]}>
           <LinearGradient
-            colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
+            colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
               styles.gradientButtonInner,
               {
-                shadowColor: isDark ? colors.purple : '#6E5ADC',
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
               },
             ]}>
             <Ionicons
               name={isSearchEmpty ? 'refresh' : 'folder'}
               size={17}
-              color={isDark ? '#000000' : '#FFFFFF'}
+              color="#FFFFFF"
             />
             <Text
               style={[

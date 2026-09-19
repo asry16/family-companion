@@ -352,7 +352,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
         <LinearGradient
           colors={
             isDark
-              ? ['rgba(32, 10, 22, 0.95)', 'rgba(22, 8, 16, 0.92)']
+              ? ['rgba(35, 14, 30, 0.88)', 'rgba(20, 27, 74, 0.85)']
               : HomeCardTokens.colors.sosLightBg
           }
           start={{ x: 0, y: 0 }}
@@ -576,7 +576,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             style={[
               styles.countdownSheet,
               {
-                backgroundColor: isDark ? '#1E0A14' : '#FFFFFF',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.98)' : '#FFFFFF',
                 borderColor: '#FF5C6C',
               },
             ]}>
@@ -601,7 +601,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             <Text
               style={[
                 styles.countdownSubtitle,
-                { color: isDark ? '#94A3B8' : '#64748B' },
+                { color: isDark ? '#A6ADE0' : '#64748B' },
               ]}>
               {alertSentSuccess
                 ? 'Emergency GPS and telemetry dispatched.'

@@ -8,7 +8,7 @@ import { FamilyPlace, SharingDuration } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 
 export const StylizedFamilyMap: React.FC = () => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
   const { places, members, activeUser, checkIn, updateLocationSharing } = useFamily();
   const [selectedPlace, setSelectedPlace] = useState<FamilyPlace | null>(places[0]);
 
@@ -89,8 +89,8 @@ export const StylizedFamilyMap: React.FC = () => {
               style={({ pressed }) => [
                 styles.durationPill,
                 {
-                  backgroundColor: isSelected ? colors.brand : colors.separator,
-                  borderColor: isSelected ? colors.brand : colors.border,
+                  backgroundColor: isSelected ? colors.brandAccent : isDark ? 'rgba(255, 255, 255, 0.03)' : colors.separator,
+                  borderColor: isSelected ? colors.brandAccent : isDark ? 'rgba(130, 140, 255, 0.22)' : colors.border,
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -114,7 +114,7 @@ export const StylizedFamilyMap: React.FC = () => {
         style={[
           styles.mapCanvas,
           {
-            backgroundColor: isElderly ? '#1E293B' : '#F1F5F9',
+            backgroundColor: isDark ? '#141A4A' : isElderly ? '#1E293B' : '#F1F5F9',
             borderColor: colors.borderSubtle,
           },
         ]}>

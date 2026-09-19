@@ -20,7 +20,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { MemoryItem } from '@/types';
-import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
@@ -110,8 +110,11 @@ export default function MemoryScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* Ambient Backdrops (Light / Dark) */}
       <LightBackdrop />
-      {/* 1. Header: Avatar with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
+      <DarkBackdrop />
+
+      {/* 1. Vault Header */}
       <VaultHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'vault' } })}
       />
@@ -192,14 +195,14 @@ export default function MemoryScreen() {
             style={[
               styles.modalCard,
               {
-                backgroundColor: isDark ? '#0F1A3A' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(20, 32, 58, 0.12)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.95)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(20, 32, 58, 0.12)',
               },
             ]}
             onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalTitleGroup}>
-                <Ionicons name="folder" size={20} color={colors.blue} />
+                <Ionicons name="folder" size={20} color={isDark ? colors.brandAccent : colors.blue} />
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Save New Location
                 </Text>
@@ -228,7 +231,7 @@ export default function MemoryScreen() {
                   {
                     color: colors.text,
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
                   },
                 ]}
               />
@@ -247,7 +250,7 @@ export default function MemoryScreen() {
                   {
                     color: colors.text,
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
                   },
                 ]}
               />
@@ -267,14 +270,14 @@ export default function MemoryScreen() {
                         styles.catSelectBtn,
                         {
                           backgroundColor: isSel
-                            ? colors.blue
+                            ? colors.brandAccent
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.06)'
+                            ? 'rgba(255, 255, 255, 0.03)'
                             : '#F1F5F9',
                           borderColor: isSel
-                            ? colors.blue
+                            ? colors.brandAccent
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.1)'
+                            ? 'rgba(130, 140, 255, 0.22)'
                             : '#E2E8F0',
                         },
                       ]}>
@@ -282,7 +285,7 @@ export default function MemoryScreen() {
                         style={[
                           styles.catSelectText,
                           {
-                            color: isSel ? (isDark ? '#000000' : '#FFFFFF') : colors.text,
+                            color: isSel ? '#FFFFFF' : colors.text,
                             fontWeight: isSel ? '800' : '600',
                           },
                         ]}>
@@ -301,12 +304,12 @@ export default function MemoryScreen() {
               style={({ pressed }) => [
                 styles.saveSubmitBtn,
                 {
-                  backgroundColor: colors.blue,
+                  backgroundColor: colors.brandAccent,
                   opacity: !newTitle.trim() || !newLocation.trim() ? 0.45 : pressed ? 0.88 : 1,
                 },
               ]}>
-              <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000000' : '#FFFFFF'} />
-              <Text style={[styles.saveSubmitBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
+              <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+              <Text style={[styles.saveSubmitBtnText, { color: '#FFFFFF' }]}>
                 Save to Family Vault
               </Text>
             </Pressable>

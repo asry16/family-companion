@@ -24,8 +24,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { FrontPageTokens } from '@/constants/theme';
 import { authService } from '@/services/authService';
-import { LightBackdrop } from '@/components/ui/LightBackdrop';
-import { DarkStarsBackdrop } from '@/components/ui/DarkStarsBackdrop';
+import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
@@ -456,7 +455,7 @@ export default function LoginScreen() {
   if (isLoading || isAuthenticated) {
     return (
       <View style={[styles.splashContainer, { backgroundColor: colors.background }]}>
-        {isDark ? <DarkStarsBackdrop /> : <LightBackdrop />}
+        {isDark ? <DarkBackdrop /> : <LightBackdrop />}
         <View style={styles.splashContent}>
           <View
             style={[
@@ -489,8 +488,8 @@ export default function LoginScreen() {
         }
       }}
       style={[styles.rootContainer, { backgroundColor: colors.background }]}>
-      {/* Background Backdrops: Light (lavender + botanticals) & Dark (deep navy + stars) */}
-      {isDark ? <DarkStarsBackdrop /> : <LightBackdrop />}
+      {/* Background Backdrops: Light (lavender + botanicals) & Dark (deep indigo + faint feathers) */}
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* Screen container: safe-area aware, centered column max width 440 */}
       <ScrollView

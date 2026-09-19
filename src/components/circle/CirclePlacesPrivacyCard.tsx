@@ -40,9 +40,9 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
       title: 'Privacy-First Family Places',
       subtitle: 'Your location is shared (always)',
       icon: 'navigate' as const,
-      accentColor: colors.blue,
-      bg: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)',
-      border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.18)',
+      accentColor: isDark ? colors.brandAccent : colors.blue,
+      bg: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(59, 111, 240, 0.10)',
+      border: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(59, 111, 240, 0.18)',
       onPress: onPressPlaces,
     },
     {
@@ -50,9 +50,9 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
       title: 'Home Location',
       subtitle: 'Home Residence',
       icon: 'home' as const,
-      accentColor: colors.green,
-      bg: isDark ? 'rgba(34, 197, 139, 0.20)' : 'rgba(34, 197, 139, 0.10)',
-      border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(34, 197, 139, 0.18)',
+      accentColor: isDark ? colors.green : colors.green,
+      bg: isDark ? 'rgba(52, 211, 153, 0.15)' : 'rgba(34, 197, 139, 0.10)',
+      border: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(34, 197, 139, 0.18)',
       onPress: onPressHome,
     },
     {
@@ -60,9 +60,9 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
       title: 'Privacy Controls',
       subtitle: 'Location, battery & notifications',
       icon: 'lock-closed' as const,
-      accentColor: colors.purple,
-      bg: isDark ? 'rgba(124, 92, 224, 0.20)' : 'rgba(124, 92, 224, 0.10)',
-      border: isDark ? 'rgba(124, 92, 224, 0.35)' : 'rgba(124, 92, 224, 0.18)',
+      accentColor: isDark ? colors.purple : colors.purple,
+      bg: isDark ? 'rgba(168, 85, 247, 0.15)' : 'rgba(124, 92, 224, 0.10)',
+      border: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.18)',
       onPress: onPressPrivacy,
     },
   ];
@@ -70,7 +70,6 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
   return (
     <GlassCard
       borderRadius={26}
-      glowColor={isDark ? colors.blue : undefined}
       style={styles.cardWrapper}
       contentStyle={styles.cardContent}>
       
@@ -78,7 +77,7 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
       <View style={styles.headerRow}>
         <View style={styles.headerLeftCol}>
           <View style={styles.titleWithIcon}>
-            <Ionicons name="location-sharp" size={17} color={colors.blue} />
+            <Ionicons name="location-sharp" size={17} color={isDark ? colors.brandAccent : colors.blue} />
             <Text
               style={[
                 styles.mainTitle,
@@ -107,7 +106,7 @@ export const CirclePlacesPrivacyCard: React.FC<CirclePlacesPrivacyCardProps> = (
             styles.seeMapPressable,
             { opacity: pressed ? 0.7 : 1 },
           ]}>
-          <Text style={[styles.seeMapText, { color: colors.blue }]}>
+          <Text style={[styles.seeMapText, { color: isDark ? colors.brandAccent : colors.blue }]}>
             See Map →
           </Text>
         </Pressable>

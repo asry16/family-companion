@@ -69,43 +69,43 @@ export const PillButton: React.FC<PillButtonProps> = ({
     switch (variant) {
       case 'primary':
         return {
-          bg: isDark ? colors.blue : 'transparent',
-          border: isDark ? colors.blue : 'transparent',
-          textColor: isDark ? '#000000' : '#FFFFFF',
-          iconColor: isDark ? '#000000' : '#FFFFFF',
-          glow: glowColor || (isDark ? colors.blue : '#8A6BF2'),
+          bg: 'transparent',
+          border: 'transparent',
+          textColor: '#FFFFFF',
+          iconColor: '#FFFFFF',
+          glow: glowColor || (isDark ? 'rgba(79, 142, 247, 0.40)' : '#8A6BF2'),
         };
       case 'danger':
         return {
           bg: colors.red,
           border: colors.red,
-          textColor: isDark ? '#000000' : '#FFFFFF',
-          iconColor: isDark ? '#000000' : '#FFFFFF',
+          textColor: '#FFFFFF',
+          iconColor: '#FFFFFF',
           glow: glowColor || colors.red,
         };
       case 'success':
         return {
           bg: colors.green,
           border: colors.green,
-          textColor: isDark ? '#000000' : '#FFFFFF',
-          iconColor: isDark ? '#000000' : '#FFFFFF',
+          textColor: '#FFFFFF',
+          iconColor: '#FFFFFF',
           glow: glowColor || colors.green,
         };
       case 'glass':
         return {
-          bg: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-          border: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(124, 92, 224, 0.16)',
-          textColor: colors.text,
-          iconColor: colors.text,
-          glow: glowColor || (isDark ? colors.blue : undefined),
+          bg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
+          border: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.16)',
+          textColor: isDark ? '#F2F4FF' : colors.text,
+          iconColor: isDark ? '#C9CEFF' : colors.text,
+          glow: glowColor,
         };
       case 'outline':
         return {
-          bg: 'transparent',
-          border: isDark ? 'rgba(59, 111, 240, 0.45)' : '#7C5CE0',
-          textColor: isDark ? colors.blue : '#7C5CE0',
-          iconColor: isDark ? colors.blue : '#7C5CE0',
-          glow: glowColor || (isDark ? colors.blue : undefined),
+          bg: isDark ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+          border: isDark ? 'rgba(139, 124, 246, 0.50)' : '#7C5CE0',
+          textColor: isDark ? '#8B7CF6' : '#7C5CE0',
+          iconColor: isDark ? '#8B7CF6' : '#7C5CE0',
+          glow: glowColor,
         };
     }
   })();
@@ -190,10 +190,10 @@ export const PillButton: React.FC<PillButtonProps> = ({
         },
         style,
       ]}>
-      {/* Primary Gradient Fill in Light Mode */}
-      {variant === 'primary' && !isDark && (
+      {/* Primary Gradient Fill (90deg, #4F8EF7, #8B6CF0) */}
+      {variant === 'primary' && (
         <LinearGradient
-          colors={['#4F8EF7', '#8A6BF2']}
+          colors={['#4F8EF7', '#8B6CF0']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}

@@ -50,20 +50,28 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     }
   };
 
-  // 1px translucent border (lavender in light mode, glowing blue in dark mode)
+  // 1px translucent border (lavender in light mode, calm glass in dark mode)
   const borderColor =
     borderAccentColor ||
-    (isDark ? 'rgba(59, 111, 240, 0.22)' : 'rgba(124, 92, 224, 0.14)');
+    (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)');
 
-  // Soft colored glow: violet shadow in light mode (0 8px 24px rgba(110,90,220,0.10))
+  // Calm glass shadow: 0 8px 24px rgba(0,0,10,0.35); glow reserved for status elements
   const glowStyle: ViewStyle = isDark
-    ? {
-        shadowColor: glowColor ? glowColor : 'rgba(59, 111, 240, 0.35)',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: glowColor ? 0.38 : 0.25,
-        shadowRadius: 16,
-        elevation: 5,
-      }
+    ? glowColor
+      ? {
+          shadowColor: glowColor,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.38,
+          shadowRadius: 16,
+          elevation: 5,
+        }
+      : {
+          shadowColor: 'rgba(0, 0, 10, 0.35)',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 24,
+          elevation: 4,
+        }
     : {
         shadowColor: glowColor ? glowColor : '#6E5ADC',
         shadowOffset: { width: 0, height: 8 },
@@ -72,9 +80,9 @@ export const GlassCard: React.FC<GlassCardProps> = ({
         elevation: 2,
       };
 
-  // Glass card gradient colors: white at 70-75% opacity in light mode
+  // Glass card gradient colors: rgba(20,27,74,0.72) glass in dark mode
   const gradientColors = isDark
-    ? (['rgba(15, 26, 58, 0.85)', 'rgba(11, 20, 48, 0.80)'] as const)
+    ? (['rgba(20, 27, 74, 0.76)', 'rgba(20, 27, 74, 0.68)'] as const)
     : (['rgba(255, 255, 255, 0.75)', 'rgba(255, 255, 255, 0.70)'] as const);
 
   const cardBaseStyle: ViewStyle = {
@@ -83,7 +91,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     borderColor,
     overflow: 'hidden',
     padding: Spacing.cardPadding,
-    backgroundColor: isDark ? colors.cardBackground : colors.cardBackground,
+    backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : colors.cardBackground,
     ...glowStyle,
   };
 
@@ -98,6 +106,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({
           pointerEvents="none"
         />
       )}
+      {/* Faint inner top highlight rgba(255, 255, 255, 0.04) in dark mode */}
+      {isDark && <View style={styles.innerTopHighlight} pointerEvents="none" />}
       <View style={[styles.innerContent, contentStyle]}>{children}</View>
     </>
   );
@@ -131,5 +141,14 @@ const styles = StyleSheet.create({
   innerContent: {
     position: 'relative',
     zIndex: 1,
+  },
+  innerTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    zIndex: 2,
   },
 });

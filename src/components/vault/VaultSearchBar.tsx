@@ -39,9 +39,9 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
       style={[
         styles.searchContainer,
         {
-          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.78)',
-          borderColor: isDark ? 'rgba(59, 111, 240, 0.28)' : 'rgba(124, 92, 224, 0.18)',
-          shadowColor: isDark ? colors.blue : '#6E5ADC',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.78)',
+          borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
         },
       ]}>
       {/* Search Icon */}
@@ -86,7 +86,7 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         </Pressable>
       )}
 
-      {/* Mic Button with Primary Gradient in Light Mode */}
+      {/* Mic Button with Primary Gradient */}
       <Pressable
         onPress={() => {
           triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -96,21 +96,18 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         style={({ pressed }) => [
           styles.micButton,
           {
-            backgroundColor: isDark ? colors.blue : undefined,
             opacity: pressed ? 0.85 : 1,
-            shadowColor: isDark ? colors.blue : '#6E5ADC',
+            shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
             overflow: 'hidden',
           },
         ]}>
-        {!isDark && (
-          <LinearGradient
-            colors={['#4F8EF7', '#8A6BF2']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <Ionicons name="mic" size={15} color={isDark ? '#000000' : '#FFFFFF'} />
+        <LinearGradient
+          colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Ionicons name="mic" size={15} color="#FFFFFF" />
       </Pressable>
     </View>
   );

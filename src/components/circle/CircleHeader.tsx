@@ -55,14 +55,14 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.2)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F0FC',
+                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.2)',
                 },
               ]}>
               <Text
                 style={[
                   styles.avatarInitialText,
-                  { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
                 ]}>
                 {initial}
               </Text>
@@ -94,8 +94,8 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
               style={({ pressed }) => [
                 styles.switcherPill,
                 {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(124, 92, 224, 0.08)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(124, 92, 224, 0.14)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.14)',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -122,8 +122,8 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
           {/* Sun/Moon = Theme Toggle */}
           <IconCircleButton
             name={isDark ? 'sunny' : 'moon'}
-            size={36}
-            iconSize={17}
+            size={40}
+            iconSize={18}
             color={isDark ? '#FBBF24' : '#6D5BD0'}
             glowColor={isDark ? '#FBBF24' : undefined}
             onPress={toggleTheme}
@@ -133,9 +133,9 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
           {/* Bell with Red Badge "1" */}
           <IconCircleButton
             name="notifications-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
+            size={40}
+            iconSize={18}
+            color={isDark ? '#C9CEFF' : '#6D5BD0'}
             badgeCount={unreadCount > 0 ? unreadCount : 1}
             badgeColor={colors.red}
             onPress={() => router.push('/modal/notifications')}
@@ -145,9 +145,9 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
           {/* Settings Gear */}
           <IconCircleButton
             name="settings-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
+            size={40}
+            iconSize={18}
+            color={isDark ? '#C9CEFF' : '#6D5BD0'}
             onPress={() => {
               if (onOpenSettings) {
                 onOpenSettings();

@@ -49,20 +49,20 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#F3F0FC',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
+                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#F3F0FC',
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.20)',
                 },
               ]}>
               <Text
                 style={[
                   styles.avatarText,
-                  { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
                 ]}>
                 {initial}
               </Text>
             </View>
             {/* Green Online Dot */}
-            <View style={[styles.onlineDotWrap, { backgroundColor: colors.green }]} />
+            <View style={[styles.onlineDotWrap, { backgroundColor: colors.green, borderColor: isDark ? '#0B1030' : '#FFFFFF' }]} />
           </View>
 
           {/* Title & Subtitle */}
@@ -77,7 +77,7 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
             <Text
               style={[
                 styles.screenSubtitle,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
               Your family's shared space
             </Text>
@@ -89,9 +89,9 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
           {/* Bell with Red Badge "1" */}
           <IconCircleButton
             name="notifications-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
+            size={40}
+            iconSize={18}
+            color={isDark ? '#C9CEFF' : '#6D5BD0'}
             badgeCount={unreadCount > 0 ? unreadCount : 1}
             badgeColor={colors.red}
             onPress={() => router.push('/modal/notifications')}
@@ -101,8 +101,8 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
           {/* Single Theme Toggle Button (Moon in Light mode, Sun in Dark mode) */}
           <IconCircleButton
             name={isDark ? 'sunny' : 'moon'}
-            size={36}
-            iconSize={17}
+            size={40}
+            iconSize={18}
             color={isDark ? '#FBBF24' : '#7C5CE0'}
             glowColor={isDark ? '#FBBF24' : undefined}
             onPress={toggleTheme}
@@ -112,9 +112,9 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
           {/* Settings Gear */}
           <IconCircleButton
             name="settings-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
+            size={40}
+            iconSize={18}
+            color={isDark ? '#C9CEFF' : '#6D5BD0'}
             onPress={() => {
               if (onOpenSettings) onOpenSettings();
               else router.push('/modal/family-settings');

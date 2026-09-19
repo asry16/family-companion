@@ -230,7 +230,7 @@ export const JoinFamilyModal: React.FC<JoinFamilyModalProps> = ({
               <View
                 style={[
                   styles.viewfinder,
-                  { borderColor: colors.brandAccent, backgroundColor: '#0B0F19' },
+                  { borderColor: colors.brandAccent, backgroundColor: isDark ? '#0B1030' : '#0B0F19' },
                 ]}>
                 <Animated.View
                   style={[

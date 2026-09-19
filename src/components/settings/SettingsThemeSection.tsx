@@ -70,12 +70,12 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
         <Ionicons
           name="color-palette-outline"
           size={16}
-          color={isDark ? '#38BDF8' : '#6D5BD0'}
+          color={isDark ? '#8B7CF6' : '#6D5BD0'}
         />
         <Text
           style={[
             styles.sectionHeaderText,
-            { color: isDark ? colors.textMuted : '#6D5BD0' },
+            { color: isDark ? colors.textTertiary : '#6D5BD0' },
           ]}>
           APPEARANCE & THEME MODE
         </Text>
@@ -84,7 +84,7 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
       {/* Theme Cards Glass Card */}
       <GlassCard
         borderRadius={24}
-        glowColor={isDark ? colors.blue : undefined}
+        glowColor={undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
         {/* Row of 3 Mode Options */}
@@ -104,17 +104,17 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                   {
                     backgroundColor: isSelected
                       ? isDark
-                        ? 'rgba(59, 111, 240, 0.22)'
+                        ? 'rgba(139, 124, 246, 0.18)'
                         : 'rgba(124, 92, 224, 0.10)'
                       : isDark
-                      ? 'rgba(255, 255, 255, 0.04)'
+                      ? 'rgba(255, 255, 255, 0.03)'
                       : 'rgba(255, 255, 255, 0.55)',
                     borderColor: isSelected
                       ? isDark
-                        ? '#38BDF8'
+                        ? '#8B7CF6'
                         : '#7C5CE0'
                       : isDark
-                      ? 'rgba(255, 255, 255, 0.10)'
+                      ? 'rgba(130, 140, 255, 0.20)'
                       : 'rgba(124, 92, 224, 0.12)',
                     opacity: pressed ? 0.8 : 1,
                   },
@@ -124,7 +124,7 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                   <View
                     style={[
                       styles.selectedBadge,
-                      { backgroundColor: isDark ? '#38BDF8' : '#7C5CE0' },
+                      { backgroundColor: isDark ? '#8B7CF6' : '#7C5CE0' },
                     ]}>
                     <Ionicons name="checkmark" size={10} color="#FFFFFF" />
                   </View>
@@ -137,10 +137,10 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                     {
                       backgroundColor: isSelected
                         ? isDark
-                          ? 'rgba(56, 189, 248, 0.25)'
+                          ? 'rgba(139, 124, 246, 0.25)'
                           : 'rgba(124, 92, 224, 0.16)'
                         : isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
+                        ? 'rgba(255, 255, 255, 0.05)'
                         : 'rgba(124, 92, 224, 0.06)',
                     },
                   ]}>
@@ -150,10 +150,10 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                     color={
                       isSelected
                         ? isDark
-                          ? '#38BDF8'
+                          ? '#8B7CF6'
                           : '#7C5CE0'
                         : isDark
-                        ? colors.textMuted
+                        ? colors.textTertiary
                         : colors.textSecondary
                     }
                   />
@@ -176,7 +176,7 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
                 <Text
                   style={[
                     styles.optionSubtitle,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? colors.textTertiary : colors.textSecondary },
                   ]}
                   numberOfLines={1}>
                   {opt.subtitle}
@@ -191,12 +191,12 @@ export const SettingsThemeSection: React.FC<SettingsThemeSectionProps> = ({
           <Ionicons
             name="information-circle-outline"
             size={13}
-            color={isDark ? colors.textMuted : colors.textSecondary}
+            color={isDark ? colors.textTertiary : colors.textSecondary}
           />
           <Text
             style={[
               styles.footerNoteText,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+              { color: isDark ? colors.textTertiary : colors.textSecondary },
             ]}>
             Adapts smoothly across your phone with calibrated glassmorphism.
           </Text>

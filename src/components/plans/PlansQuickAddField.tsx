@@ -43,20 +43,20 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.78)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.78)',
           borderColor: isListening
             ? colors.red
             : isDark
-            ? 'rgba(59, 111, 240, 0.28)'
+            ? 'rgba(140, 150, 255, 0.25)'
             : 'rgba(124, 92, 224, 0.18)',
-          shadowColor: isDark ? colors.blue : '#6E5ADC',
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
         },
       ]}>
       {/* Search Icon */}
       <Ionicons
         name="search-outline"
         size={19}
-        color={isDark ? colors.textMuted : '#6D5BD0'}
+        color={isDark ? '#8B7CF6' : '#6D5BD0'}
         style={styles.searchIcon}
       />
 
@@ -107,19 +107,15 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         style={({ pressed }) => [
           styles.micButton,
           {
-            backgroundColor: isListening
-              ? colors.red
-              : isDark
-              ? colors.blue
-              : undefined,
+            backgroundColor: isListening ? colors.red : undefined,
             opacity: pressed ? 0.85 : 1,
-            shadowColor: isListening ? colors.red : isDark ? colors.blue : '#6E5ADC',
+            shadowColor: isListening ? colors.red : isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
             overflow: 'hidden',
           },
         ]}>
-        {!isDark && !isListening && (
+        {!isListening && (
           <LinearGradient
-            colors={['#4F8EF7', '#8A6BF2']}
+            colors={['#4F8EF7', '#8B6CF0']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -128,7 +124,7 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         <Ionicons
           name={isListening ? 'mic' : 'mic-outline'}
           size={16}
-          color={isDark ? '#000000' : '#FFFFFF'}
+          color="#FFFFFF"
         />
       </Pressable>
     </View>

@@ -61,17 +61,17 @@ export const CircleMembersHeader: React.FC<CircleMembersHeaderProps> = ({
           style={({ pressed }) => [
             styles.actionPill,
             {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.05)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.08)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(20, 32, 58, 0.05)',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(20, 32, 58, 0.08)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name="qr-code"
             size={13}
-            color={colors.text}
+            color={isDark ? '#8B7CF6' : colors.text}
           />
-          <Text style={[styles.actionPillText, { color: colors.text }]}>
+          <Text style={[styles.actionPillText, { color: isDark ? '#8B7CF6' : colors.text }]}>
             QR Code
           </Text>
         </Pressable>
@@ -85,17 +85,17 @@ export const CircleMembersHeader: React.FC<CircleMembersHeaderProps> = ({
           style={({ pressed }) => [
             styles.actionPill,
             {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(20, 32, 58, 0.05)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(20, 32, 58, 0.08)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(20, 32, 58, 0.05)',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(20, 32, 58, 0.08)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name="person-add-outline"
             size={13}
-            color={colors.text}
+            color={isDark ? '#8B7CF6' : colors.text}
           />
-          <Text style={[styles.actionPillText, { color: colors.text }]}>
+          <Text style={[styles.actionPillText, { color: isDark ? '#8B7CF6' : colors.text }]}>
             Join Circle
           </Text>
         </Pressable>
@@ -109,21 +109,21 @@ export const CircleMembersHeader: React.FC<CircleMembersHeaderProps> = ({
           style={({ pressed }) => [
             styles.primaryAddPill,
             {
-              backgroundColor: colors.blue,
-              borderColor: colors.blue,
+              backgroundColor: isDark ? colors.brandAccent : colors.blue,
+              borderColor: isDark ? colors.brandAccent : colors.blue,
               opacity: pressed ? 0.88 : 1,
-              shadowColor: colors.blue,
+              shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : colors.blue,
             },
           ]}>
           <Ionicons
             name="person-add"
             size={13}
-            color={isDark ? '#000000' : '#FFFFFF'}
+            color="#FFFFFF"
           />
           <Text
             style={[
               styles.primaryAddPillText,
-              { color: isDark ? '#000000' : '#FFFFFF' },
+              { color: '#FFFFFF' },
             ]}>
             Add Member
           </Text>
@@ -134,7 +134,7 @@ export const CircleMembersHeader: React.FC<CircleMembersHeaderProps> = ({
           name="settings-outline"
           size={32}
           iconSize={15}
-          color={colors.text}
+          color={isDark ? '#C9CEFF' : colors.text}
           onPress={onOpenSettings}
           accessibilityLabel="Circle Settings"
         />

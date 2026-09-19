@@ -33,7 +33,7 @@ import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
-import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 
 export default function CircleScreen() {
   const router = useRouter();
@@ -103,8 +103,9 @@ export default function CircleScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Light Mode Decorative Ambient Backdrop */}
+      {/* Ambient Backdrops (Light / Dark) */}
       <LightBackdrop />
+      <DarkBackdrop />
 
       {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, Sun, Bell, Settings */}
       <CircleHeader
@@ -196,7 +197,7 @@ export default function CircleScreen() {
         visible={fullMapModalVisible}
         animationType="slide"
         onRequestClose={() => setFullMapModalVisible(false)}>
-        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? '#060B1F' : '#FBF8F6' }]}>
+        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? colors.background : '#FBF8F6' }]}>
           <Pressable
             onPress={() => setFullMapModalVisible(false)}
             style={styles.closeFullMapBtn}>
@@ -204,8 +205,8 @@ export default function CircleScreen() {
               style={[
                 styles.closeFullMapCircle,
                 {
-                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(0,0,0,0.1)',
+                  backgroundColor: isDark ? colors.cardBackground : '#FFFFFF',
+                  borderColor: isDark ? colors.border : 'rgba(0,0,0,0.1)',
                 },
               ]}>
               <Text style={{ color: colors.text, fontWeight: '800' }}>✕ Close Map</Text>

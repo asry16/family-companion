@@ -58,14 +58,14 @@ export const ChatTypingIndicator: React.FC = () => {
           style={[
             styles.sparkleAvatar,
             {
-              backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(59, 111, 240, 0.25)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#EFF6FF',
+              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(59, 111, 240, 0.25)',
             },
           ]}>
           <Ionicons
             name="sparkles"
             size={12}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#8B7CF6' : colors.blue}
           />
         </View>
         <Text style={[styles.assistantName, { color: colors.text }]}>
@@ -79,10 +79,10 @@ export const ChatTypingIndicator: React.FC = () => {
           styles.bubble,
           {
             backgroundColor: isDark
-              ? 'rgba(15, 26, 58, 0.85)'
+              ? 'rgba(20, 27, 74, 0.72)'
               : 'rgba(255, 255, 255, 0.90)',
             borderColor: isDark
-              ? 'rgba(59, 111, 240, 0.25)'
+              ? 'rgba(130, 140, 255, 0.22)'
               : 'rgba(20, 32, 58, 0.08)',
           },
         ]}>
@@ -92,7 +92,7 @@ export const ChatTypingIndicator: React.FC = () => {
             style={[
               styles.dot,
               {
-                backgroundColor: isDark ? '#38BDF8' : colors.blue,
+                backgroundColor: isDark ? '#8B7CF6' : colors.blue,
                 transform: [
                   {
                     translateY: dot.interpolate({

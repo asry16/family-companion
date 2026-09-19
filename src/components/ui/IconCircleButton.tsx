@@ -59,14 +59,14 @@ export const IconCircleButton: React.FC<IconCircleButtonProps> = ({
     onPress();
   };
 
-  const resolvedColor = color || (isDark ? colors.text : colors.text);
+  const resolvedColor = color || (isDark ? '#C9CEFF' : colors.text);
   const resolvedBg =
     backgroundColor ||
-    (isDark ? 'rgba(15, 26, 58, 0.85)' : 'rgba(255, 255, 255, 0.85)');
+    (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)');
   const resolvedBorder =
     borderColor ||
-    (isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(124, 92, 224, 0.14)');
-  const resolvedBadgeColor = badgeColor || colors.red;
+    (isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.14)');
+  const resolvedBadgeColor = badgeColor || (isDark ? '#FF4D6A' : colors.red);
 
   const glowShadow: ViewStyle = glowColor
     ? isDark
@@ -85,9 +85,9 @@ export const IconCircleButton: React.FC<IconCircleButtonProps> = ({
           elevation: 2,
         }
     : {
-        shadowColor: isDark ? '#000000' : '#6E5ADC',
+        shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.3 : 0.08,
+        shadowOpacity: isDark ? 0.25 : 0.08,
         shadowRadius: 6,
         elevation: 2,
       };
@@ -120,13 +120,13 @@ export const IconCircleButton: React.FC<IconCircleButtonProps> = ({
 
       {/* Numerical Badge or Notification Dot */}
       {badgeCount > 0 ? (
-        <View style={[styles.badge, { backgroundColor: resolvedBadgeColor }]}>
+        <View style={[styles.badge, { backgroundColor: resolvedBadgeColor, borderColor: isDark ? '#0B1030' : '#FFFFFF' }]}>
           <Text style={styles.badgeText}>
             {badgeCount > 99 ? '99+' : badgeCount}
           </Text>
         </View>
       ) : showBadgeDot ? (
-        <View style={[styles.dot, { backgroundColor: resolvedBadgeColor }]} />
+        <View style={[styles.dot, { backgroundColor: resolvedBadgeColor, borderColor: isDark ? '#0B1030' : '#FFFFFF' }]} />
       ) : null}
     </Pressable>
   );

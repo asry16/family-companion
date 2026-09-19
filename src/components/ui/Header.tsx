@@ -450,8 +450,8 @@ export const Header: React.FC<HeaderProps> = ({
                       style={[
                         styles.themeSegmentBtn,
                         isSelected && {
-                          backgroundColor: isDark ? '#38BDF8' : colors.brandAccent,
-                          borderColor: isDark ? '#38BDF8' : colors.brandAccent,
+                          backgroundColor: isDark ? '#8B7CF6' : colors.brandAccent,
+                          borderColor: isDark ? '#8B7CF6' : colors.brandAccent,
                         },
                       ]}>
                       <Ionicons
@@ -463,13 +463,13 @@ export const Header: React.FC<HeaderProps> = ({
                             : 'phone-portrait-outline'
                         }
                         size={13}
-                        color={isSelected ? (isDark ? '#000000' : colors.buttonTextOnAccent) : colors.textSecondary}
+                        color={isSelected ? '#FFFFFF' : colors.textSecondary}
                       />
                       <Text
                         style={[
                           styles.themeSegmentText,
                           {
-                            color: isSelected ? (isDark ? '#000000' : colors.buttonTextOnAccent) : colors.text,
+                            color: isSelected ? '#FFFFFF' : colors.text,
                             fontWeight: isSelected ? '700' : '500',
                           },
                         ]}>

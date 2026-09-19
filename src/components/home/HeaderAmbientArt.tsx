@@ -7,46 +7,9 @@ export const HeaderAmbientArt: React.FC = () => {
   const { isDark } = useAppTheme();
 
   if (isDark) {
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {/* Distant Twinkling Stars */}
-        <View style={[styles.star, { top: 16, left: '12%', opacity: 0.7, width: 2.5, height: 2.5 }]} />
-        <View style={[styles.star, { top: 28, left: '26%', opacity: 0.5, width: 2, height: 2 }]} />
-        <View style={[styles.star, { top: 12, left: '42%', opacity: 0.85, width: 3, height: 3 }]} />
-        <View style={[styles.star, { top: 32, left: '58%', opacity: 0.45, width: 2, height: 2 }]} />
-        <View style={[styles.star, { top: 18, left: '72%', opacity: 0.9, width: 3, height: 3, backgroundColor: '#BAE6FD' }]} />
-        <View style={[styles.star, { top: 36, left: '84%', opacity: 0.6, width: 2.5, height: 2.5 }]} />
-        <View style={[styles.star, { top: 10, left: '92%', opacity: 0.8, width: 2, height: 2 }]} />
-        <View style={[styles.star, { top: 48, left: '65%', opacity: 0.4, width: 2, height: 2 }]} />
-
-        {/* Shooting Star Streak */}
-        <View style={styles.shootingStarContainer}>
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.95)', 'rgba(56, 189, 248, 0.6)', 'rgba(56, 189, 248, 0)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.shootingStarTail}
-          />
-          <View style={styles.shootingStarHead} />
-        </View>
-
-        {/* Faint Mountain Silhouette at the top-right / horizon */}
-        <View style={styles.mountainCluster}>
-          <LinearGradient
-            colors={['rgba(21, 36, 78, 0.45)', 'rgba(6, 11, 31, 0.85)']}
-            style={[styles.mountainPeak, styles.peak1]}
-          />
-          <LinearGradient
-            colors={['rgba(15, 26, 58, 0.55)', 'rgba(6, 11, 31, 0.92)']}
-            style={[styles.mountainPeak, styles.peak2]}
-          />
-          <LinearGradient
-            colors={['rgba(25, 45, 95, 0.35)', 'rgba(6, 11, 31, 0.80)']}
-            style={[styles.mountainPeak, styles.peak3]}
-          />
-        </View>
-      </View>
-    );
+    // Replaced earlier stars, shooting star, and mountain silhouette.
+    // DarkBackdrop now provides the tranquil full-screen indigo backdrop & faint leaf silhouettes.
+    return null;
   }
 
   // Light Mode: Faint Leaf Illustration top-right
@@ -115,7 +78,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 2.5,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#38BDF8',
+    shadowColor: '#8B7CF6',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 5,

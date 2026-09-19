@@ -176,14 +176,14 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
               styles.filterPill,
               {
                 backgroundColor: !selectedMemberId
-                  ? isDark
-                    ? '#38BDF8'
-                    : colors.brandAccent
+                  ? colors.brandAccent
+                  : isDark
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : colors.separator,
                 borderColor: !selectedMemberId
-                  ? isDark
-                    ? '#38BDF8'
-                    : colors.brandAccent
+                  ? colors.brandAccent
+                  : isDark
+                  ? 'rgba(130, 140, 255, 0.22)'
                   : colors.border,
               },
             ]}>
@@ -192,9 +192,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                 styles.filterPillText,
                 {
                   color: !selectedMemberId
-                    ? isDark
-                      ? '#000000'
-                      : '#FFFFFF'
+                    ? '#FFFFFF'
                     : colors.text,
                   fontWeight: !selectedMemberId ? '800' : '600',
                 },
@@ -213,14 +211,14 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                   styles.filterPill,
                   {
                     backgroundColor: isFocused
-                      ? isDark
-                        ? '#38BDF8'
-                        : colors.brandAccent
+                      ? colors.brandAccent
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.03)'
                       : colors.separator,
                     borderColor: isFocused
-                      ? isDark
-                        ? '#38BDF8'
-                        : colors.brandAccent
+                      ? colors.brandAccent
+                      : isDark
+                      ? 'rgba(130, 140, 255, 0.22)'
                       : colors.border,
                   },
                 ]}>
@@ -229,8 +227,8 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                     styles.miniBatteryDot,
                     {
                       backgroundColor:
-                        isFocused && isDark
-                          ? '#000000'
+                        isFocused
+                          ? '#FFFFFF'
                           : member.batteryLevel > 50 || member.isCharging
                           ? colors.green
                           : member.batteryLevel > 20
@@ -244,9 +242,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                     styles.filterPillText,
                     {
                       color: isFocused
-                        ? isDark
-                          ? '#000000'
-                          : '#FFFFFF'
+                        ? '#FFFFFF'
                         : colors.text,
                       fontWeight: isFocused ? '800' : '600',
                     },
@@ -285,7 +281,9 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
           {
             backgroundColor:
               mapStyle === 'satellite'
-                ? '#0F172A'
+                ? (isDark ? '#0B1030' : '#0F172A')
+                : isDark
+                ? '#141A4A'
                 : isElderly
                 ? '#1E293B'
                 : '#F1F5F9',
@@ -376,14 +374,10 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                   styles.pinBadge,
                   {
                     backgroundColor: isSelected
-                      ? isDark
-                        ? '#38BDF8'
-                        : colors.brand
+                      ? colors.brandAccent
                       : colors.cardBackground,
                     borderColor: isSelected
-                      ? isDark
-                        ? '#38BDF8'
-                        : colors.brandAccent
+                      ? colors.brandAccent
                       : colors.border,
                   },
                 ]}>
@@ -391,7 +385,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                   <Text
                     style={[
                       styles.pinName,
-                      { color: isSelected ? (isDark ? '#000000' : '#FFFFFF') : colors.text },
+                      { color: isSelected ? '#FFFFFF' : colors.text },
                     ]}>
                     {member.name}
                   </Text>
@@ -409,9 +403,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
                       member.ringerMode === 'silent'
                         ? colors.red
                         : isSelected
-                        ? isDark
-                          ? '#000000'
-                          : '#FFFFFF'
+                        ? '#FFFFFF'
                         : colors.textSecondary
                     }
                   />

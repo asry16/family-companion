@@ -60,35 +60,35 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
       subtitle: 'Create a new plan',
       icon: 'add' as const,
       accent: isDark ? colors.blue : '#4F8EF7',
-      glowBg: isDark ? 'rgba(59, 111, 240, 0.20)' : '#EEF4FF',
-      borderAccent: isDark ? 'rgba(59, 111, 240, 0.32)' : 'rgba(124, 92, 224, 0.14)',
+      glowBg: isDark ? 'rgba(79, 142, 247, 0.15)' : '#EEF4FF',
+      borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'scan',
       title: 'Scan Document',
       subtitle: 'Extract important details',
       icon: 'scan-outline' as const,
-      accent: '#7C5CE0',
-      glowBg: isDark ? 'rgba(124, 92, 224, 0.20)' : '#F5F0FF',
-      borderAccent: isDark ? 'rgba(124, 92, 224, 0.32)' : 'rgba(124, 92, 224, 0.14)',
+      accent: isDark ? colors.brandAccent : '#7C5CE0',
+      glowBg: isDark ? 'rgba(139, 124, 246, 0.15)' : '#F5F0FF',
+      borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'checkin',
       title: 'Check In',
       subtitle: 'Update your location',
       icon: 'paper-plane' as const,
-      accent: '#2EBF8E',
-      glowBg: isDark ? 'rgba(34, 197, 139, 0.20)' : '#EBFDF7',
-      borderAccent: isDark ? 'rgba(34, 197, 139, 0.32)' : 'rgba(124, 92, 224, 0.14)',
+      accent: isDark ? colors.green : '#2EBF8E',
+      glowBg: isDark ? 'rgba(52, 211, 153, 0.15)' : '#EBFDF7',
+      borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
       id: 'brief',
       title: 'AI Brief',
       subtitle: 'Understand it instantly',
       icon: 'sparkles' as const,
-      accent: '#EC4899',
-      glowBg: isDark ? 'rgba(236, 72, 153, 0.20)' : '#FDF2F8',
-      borderAccent: isDark ? 'rgba(236, 72, 153, 0.32)' : 'rgba(124, 92, 224, 0.14)',
+      accent: isDark ? colors.purple : '#EC4899',
+      glowBg: isDark ? 'rgba(168, 85, 247, 0.15)' : '#FDF2F8',
+      borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
     },
   ];
 
@@ -118,10 +118,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
               styles.actionCard,
               {
                 backgroundColor: colors.cardBackground,
-                borderColor: isDark ? act.borderAccent : 'rgba(124, 92, 224, 0.14)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
                 opacity: pressed ? 0.88 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
-                shadowColor: isDark ? act.accent : '#6E5ADC',
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
               },
             ]}>
             {/* Transparent bubble with light colour */}
@@ -130,10 +130,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
                 styles.iconBubble,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.07)'
+                    ? 'rgba(255, 255, 255, 0.05)'
                     : 'rgba(255, 255, 255, 0.50)',
                   borderColor: isDark
-                    ? 'rgba(255, 255, 255, 0.12)'
+                    ? 'rgba(140, 150, 255, 0.25)'
                     : 'rgba(124, 92, 224, 0.16)',
                 },
               ]}>

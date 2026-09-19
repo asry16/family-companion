@@ -63,7 +63,7 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
   return (
     <GlassCard
       borderRadius={28}
-      glowColor={isDark ? colors.blue : undefined}
+      glowColor={undefined}
       style={styles.cardWrapper}
       contentStyle={styles.cardContent}>
       
@@ -74,7 +74,7 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
             styles.blobTopLeft,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.18)'
+                ? 'rgba(79, 142, 247, 0.10)'
                 : 'rgba(59, 111, 240, 0.12)',
             },
           ]}
@@ -84,7 +84,7 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
             styles.blobBottomRight,
             {
               backgroundColor: isDark
-                ? 'rgba(124, 92, 224, 0.20)'
+                ? 'rgba(139, 124, 246, 0.10)'
                 : 'rgba(124, 92, 224, 0.10)',
             },
           ]}
@@ -99,14 +99,14 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
           <Ionicons
             name="sparkles"
             size={14}
-            color={isDark ? '#38BDF8' : colors.blue}
+            color={isDark ? '#8B7CF6' : colors.blue}
             style={styles.sparkleTopRight}
           />
           {/* Sparkle 2 */}
           <Ionicons
             name="sparkles"
             size={11}
-            color={isDark ? '#C084FC' : '#7C5CE0'}
+            color={isDark ? '#8B7CF6' : '#7C5CE0'}
             style={styles.sparkleBottomLeft}
           />
 
@@ -116,7 +116,7 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
               styles.iconHalo,
               {
                 backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.25)'
+                  ? 'rgba(139, 124, 246, 0.15)'
                   : 'rgba(59, 111, 240, 0.18)',
                 transform: [
                   {
@@ -138,20 +138,20 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
           <LinearGradient
             colors={
               isDark
-                ? ['rgba(59, 111, 240, 0.45)', 'rgba(124, 92, 224, 0.35)']
+                ? ['rgba(79, 142, 247, 0.25)', 'rgba(139, 108, 240, 0.20)']
                 : ['#EFF6FF', '#DBEAFE']
             }
             style={[
               styles.coreCalendarCircle,
               {
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.50)' : '#93C5FD',
-                shadowColor: isDark ? colors.blue : colors.blue,
+                borderColor: isDark ? 'rgba(139, 124, 246, 0.40)' : '#93C5FD',
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : colors.blue,
               },
             ]}>
             <Ionicons
               name="calendar"
               size={32}
-              color={isDark ? '#38BDF8' : colors.blue}
+              color={isDark ? '#8B7CF6' : colors.blue}
             />
           </LinearGradient>
         </View>
@@ -162,17 +162,17 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
             styles.freshSlatePill,
             {
               backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.20)'
+                ? 'rgba(139, 124, 246, 0.15)'
                 : 'rgba(59, 111, 240, 0.10)',
               borderColor: isDark
-                ? 'rgba(59, 111, 240, 0.40)'
+                ? 'rgba(139, 124, 246, 0.35)'
                 : 'rgba(59, 111, 240, 0.22)',
             },
           ]}>
           <Text
             style={[
               styles.freshSlateText,
-              { color: isDark ? '#38BDF8' : colors.blue },
+              { color: isDark ? '#8B7CF6' : colors.blue },
             ]}>
             {badgeLabel}
           </Text>
@@ -211,13 +211,13 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
             },
           ]}>
           <LinearGradient
-            colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
+            colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
               styles.gradientButtonInner,
               {
-                shadowColor: isDark ? colors.purple : '#6E5ADC',
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
               },
             ]}>
             <Text

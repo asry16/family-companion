@@ -57,15 +57,17 @@ export const PlansSuggestionChips: React.FC<PlansSuggestionChipsProps> = ({
               {
                 backgroundColor: isSelected
                   ? isDark
-                    ? 'rgba(59, 111, 240, 0.22)'
+                    ? 'rgba(139, 124, 246, 0.20)'
                     : 'rgba(59, 111, 240, 0.12)'
                   : isDark
-                  ? 'rgba(15, 26, 58, 0.80)'
+                  ? 'rgba(255, 255, 255, 0.03)'
                   : 'rgba(255, 255, 255, 0.80)',
                 borderColor: isSelected
-                  ? colors.blue
+                  ? isDark
+                    ? '#8B7CF6'
+                    : colors.blue
                   : isDark
-                  ? 'rgba(59, 111, 240, 0.22)'
+                  ? 'rgba(130, 140, 255, 0.22)'
                   : 'rgba(20, 32, 58, 0.08)',
                 opacity: pressed ? 0.75 : 1,
               },
@@ -73,13 +75,13 @@ export const PlansSuggestionChips: React.FC<PlansSuggestionChipsProps> = ({
             <Ionicons
               name="search-outline"
               size={12}
-              color={isSelected ? colors.blue : isDark ? colors.textMuted : colors.textSecondary}
+              color={isSelected ? (isDark ? '#8B7CF6' : colors.blue) : isDark ? colors.textMuted : colors.textSecondary}
             />
             <Text
               style={[
                 styles.chipText,
                 {
-                  color: isSelected ? colors.blue : colors.text,
+                  color: isSelected ? (isDark ? '#8B7CF6' : colors.blue) : colors.text,
                   fontWeight: isSelected ? '700' : '600',
                 },
               ]}>

@@ -481,7 +481,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] },
               ]}>
               <LinearGradient
-                colors={isDark ? ['#38BDF8', '#6366F1'] : ['#4F8EF7', '#8A6BF2']}
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientFill}>
@@ -495,15 +495,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               style={({ pressed }) => [
                 styles.secondaryButton,
                 {
-                  borderColor: isDark ? 'rgba(56, 189, 248, 0.45)' : '#7C5CE0',
-                  backgroundColor: isDark ? 'rgba(56, 189, 248, 0.06)' : 'rgba(124, 92, 224, 0.05)',
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : '#7C5CE0',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.05)',
                 },
                 pressed && { opacity: 0.9, transform: [{ scale: 0.985 }] },
               ]}>
               <Text
                 style={[
                   styles.secondaryButtonText,
-                  { color: isDark ? '#38BDF8' : '#7C5CE0' },
+                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
                 ]}>
                 Sign up
               </Text>
@@ -677,7 +677,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] },
                 ]}>
                 <LinearGradient
-                  colors={isDark ? ['#38BDF8', '#6366F1'] : ['#4F8EF7', '#8A6BF2']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.gradientFill}>
@@ -1072,7 +1072,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] },
                 ]}>
                 <LinearGradient
-                  colors={isDark ? ['#38BDF8', '#6366F1'] : ['#4F8EF7', '#8A6BF2']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.gradientFill}>
@@ -1144,14 +1144,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               <LinearGradient
                 colors={
                   isDark
-                    ? ['rgba(56, 189, 248, 0.25)', 'rgba(99, 102, 241, 0.15)']
+                    ? ['rgba(79, 142, 247, 0.25)', 'rgba(139, 124, 246, 0.20)']
                     : ['rgba(79, 142, 247, 0.15)', 'rgba(138, 107, 242, 0.10)']
                 }
                 style={styles.otpShieldBadge}>
                 <Ionicons
                   name="shield-checkmark"
                   size={32}
-                  color={isDark ? '#38BDF8' : '#4F8EF7'}
+                  color={isDark ? '#8B7CF6' : '#4F8EF7'}
                 />
               </LinearGradient>
             </View>
@@ -1270,7 +1270,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 { marginTop: 16 },
               ]}>
               <LinearGradient
-                colors={isDark ? ['#38BDF8', '#6366F1'] : ['#4F8EF7', '#8A6BF2']}
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientFill}>
