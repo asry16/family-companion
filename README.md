@@ -89,7 +89,7 @@ Kinly/
 │   ├── types/
 │   │   └── index.ts             # Domain interfaces (FamilyMember, Telemetry, Task, Memory)
 │   └── data/
-│       └── mockFamilyData.ts    # Seed data showcasing 5-member household dynamics
+│       └── mockFamilyData.ts    # Type-safe schemas and default data models
 ```
 
 ---
@@ -105,9 +105,16 @@ Kinly/
 git clone https://github.com/asry16/family-companion.git
 cd family-companion
 npm install
+cd server && npm install && cd ..
 ```
 
-### 2. Start the Development Server
+### 2. Start the Backend API & AWS Services (Port 3001)
+```bash
+npm run server
+# Or: cd server && npm run dev
+```
+
+### 3. Start the Expo App (Port 8081)
 ```bash
 npx expo start
 ```
@@ -116,9 +123,10 @@ npx expo start
 - Press **`w`** to open in Google Chrome / Safari (Web Preview).
 - Scan the QR code with your iPhone Camera or Android Expo Go app to test on physical hardware.
 
-### 3. Type Checking & Verification
+### 4. Type Checking & Verification
 ```bash
 npx tsc --noEmit
+cd server && npm run build
 ```
 
 ---
