@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
@@ -32,6 +33,7 @@ import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LayoutTokens } from '@/constants/theme';
 
 export default function FamilyScreen() {
   const router = useRouter();
@@ -39,6 +41,7 @@ export default function FamilyScreen() {
   const { isAuthenticated } = useAuth();
   const { profile, members, activeUser, sendFamilyPing, sendEmergencySos } = useFamily();
   const { speak } = useVoice();
+  const insets = useSafeAreaInsets();
 
   // Modals state
   const [sosModalVisible, setSosModalVisible] = useState(false);
@@ -113,7 +116,7 @@ export default function FamilyScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: LayoutTokens.tabBarHeight + LayoutTokens.tabBarBottomOffset + insets.bottom + 8 }]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Safety Banner (Tappable, Chevron, Glowing green shield, Leaf accent / Dark glow) */}
         <CircleSafetyBanner
@@ -154,8 +157,7 @@ export default function FamilyScreen() {
           onFullScreen={() => setFullMapModalVisible(true)}
         />
 
-        {/* Bottom spacer for floating navigation bar */}
-        <View style={styles.floatingNavSpacer} />
+
       </ScrollView>
 
       {/* Confirmation Modal */}
@@ -228,7 +230,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 4,
-    paddingBottom: 110, // Generous padding so content is never hidden behind floating nav bar
     gap: 8,
     maxWidth: 500,
     width: '100%',
@@ -236,9 +237,6 @@ const styles = StyleSheet.create({
   },
   membersListContainer: {
     gap: 8,
-  },
-  floatingNavSpacer: {
-    height: Platform.select({ ios: 36, default: 24 }),
   },
   fullMapScreen: {
     flex: 1,

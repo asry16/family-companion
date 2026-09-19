@@ -17,6 +17,7 @@ import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LayoutTokens } from '@/constants/theme';
 import {
   ChatHeader,
   ChatSuggestedPrompts,
@@ -279,10 +280,7 @@ export default function AIScreen({
                 ? Platform.OS === 'ios'
                   ? 10
                   : 8
-                : Platform.select({
-                    ios: Math.max(insets.bottom + 65, 84),
-                    default: 76,
-                  }),
+                : LayoutTokens.tabBarHeight + LayoutTokens.tabBarBottomOffset + insets.bottom + 8,
             },
           ]}>
           <ChatInputBar

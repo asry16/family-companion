@@ -26,3 +26,7 @@ export { VoiceButton } from './VoiceButton';
 export { LightBackdrop } from './LightBackdrop';
 export { Button, HeaderIconCapsule } from './Button';
 export type { ButtonProps, ButtonVariant, ButtonSize, HeaderCapsuleItem, HeaderIconCapsuleProps } from './Button';
+export { PulseRing, BreathingGlow } from './PulseRing';
+export type { PulseRingProps, BreathingGlowProps } from './PulseRing';
+export { StatusDot } from './StatusDot';
+export type { StatusDotProps } from './StatusDot';

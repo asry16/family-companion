@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
@@ -23,10 +24,12 @@ import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
+import { LayoutTokens } from '@/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
   const {
     profile,
@@ -81,7 +84,7 @@ export default function HomeScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: LayoutTokens.tabBarHeight + LayoutTokens.tabBarBottomOffset + insets.bottom + 8 }]}
         showsVerticalScrollIndicator={false}>
 
         {/* 2. Family Card (Shield icon, Family heading, Live Presence, Member avatar & status, Mini map preview, View Live Map button) */}
@@ -108,8 +111,7 @@ export default function HomeScreen() {
         {/* 5. Activity / Timeline Card ("Today in your Circle" vertical timeline with glowing nodes, timestamps, status pills) */}
         <CircleTimelineCard />
 
-        {/* Bottom spacer for floating navigation bar */}
-        <View style={styles.floatingNavSpacer} />
+
       </ScrollView>
 
       {/* Confirmation Modal */}
@@ -177,14 +179,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 110, // Generous padding so content is never hidden behind floating nav bar
     gap: 16,
     maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
-  },
-  floatingNavSpacer: {
-    height: Platform.select({ ios: 36, default: 24 }),
   },
   fullMapScreen: {
     flex: 1,

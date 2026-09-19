@@ -8,8 +8,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
-import { IconCircleButton } from '@/components/ui/IconCircleButton';
-import { HeaderIconCapsule } from '@/components/ui';
+import { HeaderIconCapsule, StatusDot } from '@/components/ui';
 
 import { HeaderAmbientArt } from './HeaderAmbientArt';
 
@@ -71,11 +70,9 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
               <Text style={styles.moonEmoji}>🌙</Text>
             </View>
 
-            {/* Below it: green dot + "Your family is safe" */}
+            {/* Below it: green dot with pulsing halo + "Your family is safe" */}
             <View style={styles.safeStatusRow}>
-              <View style={[styles.statusBeaconOuter, { backgroundColor: isDark ? 'rgba(34, 197, 139, 0.22)' : 'rgba(46, 191, 142, 0.16)' }]}>
-                <View style={[styles.statusBeaconInner, { backgroundColor: colors.green }]} />
-              </View>
+              <StatusDot size={8} color={colors.green} />
               <Text style={[styles.safeStatusText, { color: isDark ? colors.green : '#2EBF8E' }]}>
                 Your family is safe
               </Text>

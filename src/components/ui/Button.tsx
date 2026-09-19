@@ -11,11 +11,14 @@ import {
   View,
   Animated,
   Easing,
+  AccessibilityInfo,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { ButtonTokens } from '@/constants/theme';
+import { PulseRing } from './PulseRing';
 
 export type ButtonVariant =
   | 'primary'
@@ -81,25 +84,54 @@ export const Button: React.FC<ButtonProps> = ({
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Concentric ambient pulse for SOS
+  // Concentric ambient breathing pulse for SOS core: 1 to 1.04 over 1600ms loop
   useEffect(() => {
     if (variant !== 'sos') return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
+    let animLoop: Animated.CompositeAnimation | null = null;
+
+    const startPulse = async () => {
+      try {
+        const isReduced = await AccessibilityInfo.isReduceMotionEnabled();
+        if (isReduced) {
+          pulseAnim.setValue(0);
+          return;
+        }
+      } catch {}
+
+      animLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animLoop.start();
+    };
+
+    startPulse();
+
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (isReduced: boolean) => {
+      if (isReduced) {
+        animLoop?.stop();
+        pulseAnim.setValue(0);
+      } else {
+        startPulse();
+      }
+    });
+
+    return () => {
+      animLoop?.stop();
+      sub?.remove();
+    };
   }, [variant, pulseAnim]);
 
   const clearHoldTimers = () => {
@@ -151,6 +183,7 @@ export const Button: React.FC<ButtonProps> = ({
         if (Platform.OS !== 'web') {
           try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           } catch (e) {}
         }
         if (onHoldComplete) {
@@ -198,12 +231,15 @@ export const Button: React.FC<ButtonProps> = ({
     if (onPress) onPress();
   };
 
-  // Dimensions & typography based on size
-  const height = size === 'sm' ? 36 : size === 'lg' ? 52 : 44;
-  const paddingH = circular ? 0 : size === 'sm' ? 14 : size === 'lg' ? 24 : 20;
-  const fontSize = size === 'sm' ? 13 : size === 'lg' ? 16.5 : 15;
-  const resolvedIconSize = iconSize || (size === 'sm' ? 14 : size === 'lg' ? 20 : 18);
-  const iconGap = size === 'sm' ? 6 : 8;
+  // Dimensions & typography from tokens
+  const sizeTokens = ButtonTokens.pill[size];
+  const isChipVariant = variant === 'chip';
+  const height = isChipVariant ? ButtonTokens.chipHeight : sizeTokens.height;
+  const circularSize = circular ? ButtonTokens.iconButton : 0;
+  const paddingH = circular ? 0 : sizeTokens.paddingH;
+  const fontSize = sizeTokens.fontSize;
+  const resolvedIconSize = iconSize || (size === 'sm' ? 14 : size === 'lg' ? 20 : 16);
+  const iconGap = size === 'sm' ? 5 : 7;
 
   // Effective variant when 'chip' is used
   const effectiveVariant = variant === 'chip' ? (selected ? 'primary' : 'tonal') : variant;
@@ -354,56 +390,48 @@ export const Button: React.FC<ButtonProps> = ({
 
   // Handle special SOS variant
   if (variant === 'sos') {
-    const pulseScale1 = pulseAnim.interpolate({
+    const coreSize = ButtonTokens.sosSize;
+    const breatheScale = pulseAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [1.0, 1.2],
-    });
-    const pulseOpacity1 = pulseAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.35, 0.0],
-    });
-
-    const pulseScale2 = pulseAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [1.1, 1.38],
-    });
-    const pulseOpacity2 = pulseAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.2, 0.0],
+      outputRange: [1.0, 1.04],
     });
 
     return (
       <View style={styles.sosContainer}>
-        {/* Glow Ring 2 */}
-        <Animated.View
-          style={[
-            styles.sosGlowRing,
-            styles.sosRing2,
-            {
-              transform: [{ scale: pulseScale2 }],
-              opacity: pulseOpacity2,
-            },
-          ]}
-        />
-        {/* Glow Ring 1 */}
-        <Animated.View
-          style={[
-            styles.sosGlowRing,
-            styles.sosRing1,
-            {
-              transform: [{ scale: pulseScale1 }],
-              opacity: pulseOpacity1,
-            },
-          ]}
-        />
+        {/* Pulse Rings — hidden during hold */}
+        {!isHolding && (
+          <>
+            <PulseRing
+              color={isDark ? 'rgba(244, 63, 94, 0.35)' : 'rgba(244, 63, 94, 0.35)'}
+              size={coreSize}
+              maxScale={1.5}
+              duration={2000}
+              delay={0}
+              startOpacity={0.35}
+              paused={isHolding}
+            />
+            <PulseRing
+              color={isDark ? 'rgba(244, 63, 94, 0.22)' : 'rgba(244, 63, 94, 0.22)'}
+              size={coreSize}
+              maxScale={1.5}
+              duration={2000}
+              delay={700}
+              startOpacity={0.22}
+              paused={isHolding}
+            />
+          </>
+        )}
 
         {/* Hold Progress Track Ring */}
         {isHolding && (
-          <View style={styles.holdRingBackground}>
+          <View style={[styles.holdRingBackground, { width: coreSize + 8, height: coreSize + 8, borderRadius: (coreSize + 8) / 2 }]}>
             <Animated.View
               style={[
                 styles.holdRingActive,
                 {
+                  width: coreSize + 8,
+                  height: coreSize + 8,
+                  borderRadius: (coreSize + 8) / 2,
                   opacity: holdProgress.interpolate({
                     inputRange: [0, 0.1, 1],
                     outputRange: [0, 1, 1],
@@ -414,28 +442,33 @@ export const Button: React.FC<ButtonProps> = ({
           </View>
         )}
 
-        {/* Center SOS Button Circle */}
-        <Pressable
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          accessibilityLabel={accessibilityLabel || 'Emergency SOS button. Press and hold for two seconds.'}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.sosCircle,
-            {
-              transform: [{ scale: pressed ? 0.94 : 1 }],
-            },
-          ]}>
-          <LinearGradient
-            colors={['#FF7A9C', '#F43F5E', '#E11D48']}
-            start={{ x: 0.3, y: 0.2 }}
-            end={{ x: 0.8, y: 0.9 }}
-            style={styles.sosGradient}>
-            {/* Inner highlight */}
-            <View style={styles.sosHighlight} />
-            <Text style={styles.sosText}>{title || 'SOS'}</Text>
-          </LinearGradient>
-        </Pressable>
+        {/* Center SOS Button Circle with breathing scale */}
+        <Animated.View style={{ transform: [{ scale: isHolding ? 1 : breatheScale }] }}>
+          <Pressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            accessibilityLabel={accessibilityLabel || 'Emergency SOS button. Press and hold for two seconds.'}
+            accessibilityRole="button"
+            hitSlop={ButtonTokens.hitSlop}
+            style={({ pressed }) => [
+              styles.sosCircle,
+              {
+                width: coreSize,
+                height: coreSize,
+                borderRadius: coreSize / 2,
+                transform: [{ scale: pressed ? 0.94 : 1 }],
+              },
+            ]}>
+            <LinearGradient
+              colors={['#FF7A9C', '#F43F5E', '#E11D48']}
+              start={{ x: 0.3, y: 0.2 }}
+              end={{ x: 0.8, y: 0.9 }}
+              style={styles.sosGradient}>
+              <View style={styles.sosHighlight} />
+              <Text style={styles.sosText}>{title || 'SOS'}</Text>
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
       </View>
     );
   }
@@ -448,7 +481,7 @@ export const Button: React.FC<ButtonProps> = ({
         disabled={disabled || loading}
         accessibilityLabel={accessibilityLabel || title}
         accessibilityRole="button"
-        hitSlop={8}
+        hitSlop={ButtonTokens.hitSlop}
         style={({ pressed }) => [
           styles.linkContainer,
           {
@@ -456,9 +489,12 @@ export const Button: React.FC<ButtonProps> = ({
             transform: [{ scale: pressed ? 0.97 : 1 }],
           },
           style,
+          { flexShrink: 0 },
         ]}>
         {title && (
-          <Text style={[styles.linkText, { color: textColor }, textStyle]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.linkText, { color: textColor }, textStyle]}>
             {title}
           </Text>
         )}
@@ -476,8 +512,8 @@ export const Button: React.FC<ButtonProps> = ({
   const isSelectedChip = variant === 'chip' && selected;
 
   const containerStyle: ViewStyle = {
-    height: circular ? height : height,
-    width: circular ? height : fullWidth ? '100%' : undefined,
+    height: circular ? (circularSize || height) : height,
+    width: circular ? (circularSize || height) : fullWidth ? '100%' : undefined,
     paddingHorizontal: paddingH,
     borderRadius: 999,
     backgroundColor: gradientColors ? 'transparent' : bgColor,
@@ -486,6 +522,7 @@ export const Button: React.FC<ButtonProps> = ({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 0,
     opacity: disabled ? 0.5 : 1,
     overflow: 'hidden',
     ...shadowStyle,
@@ -507,6 +544,7 @@ export const Button: React.FC<ButtonProps> = ({
           )}
           {title && (
             <Text
+              numberOfLines={1}
               style={[
                 styles.buttonText,
                 {
@@ -535,6 +573,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityRole="button"
+      hitSlop={ButtonTokens.hitSlop}
       style={({ pressed }) => [
         containerStyle,
         {
@@ -656,6 +695,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   gradientContent: {
     justifyContent: 'center',
@@ -673,70 +713,50 @@ const styles = StyleSheet.create({
   buttonText: {
     letterSpacing: -0.2,
     textAlign: 'center',
+    flexShrink: 0,
   },
   linkContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 4,
+    flexShrink: 0,
   },
   linkText: {
     fontSize: 14.5,
     fontWeight: '600',
     letterSpacing: -0.2,
+    flexShrink: 0,
   },
   linkIcon: {
     marginLeft: 4,
   },
   // SOS Variant Styles
   sosContainer: {
-    width: 124,
-    height: 124,
+    width: ButtonTokens.sosColumnWidth,
+    height: ButtonTokens.sosColumnWidth,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  sosGlowRing: {
-    position: 'absolute',
-    borderRadius: 999,
-  },
-  sosRing1: {
-    width: 108,
-    height: 108,
-    backgroundColor: 'rgba(244, 63, 94, 0.25)',
-  },
-  sosRing2: {
-    width: 124,
-    height: 124,
-    backgroundColor: 'rgba(244, 63, 94, 0.12)',
-  },
   holdRingBackground: {
     position: 'absolute',
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    borderWidth: 3,
+    borderWidth: 2.5,
     borderColor: 'rgba(244, 63, 94, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   holdRingActive: {
     position: 'absolute',
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    borderWidth: 3,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
   },
   sosCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
     overflow: 'hidden',
     shadowColor: '#F43F5E',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.40,
+    shadowRadius: 14,
+    elevation: 6,
   },
   sosGradient: {
     flex: 1,
@@ -745,23 +765,23 @@ const styles = StyleSheet.create({
   },
   sosHighlight: {
     position: 'absolute',
-    top: 6,
-    width: 48,
-    height: 4,
+    top: 4,
+    width: 28,
+    height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.40)',
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
   },
   // Header Icon Capsule Styles
   capsuleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    height: ButtonTokens.capsuleHeight,
     borderRadius: 999,
     paddingHorizontal: 2,
     borderWidth: 1,
@@ -771,9 +791,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   capsuleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: ButtonTokens.capsuleButton,
+    height: ButtonTokens.capsuleButton,
+    borderRadius: ButtonTokens.capsuleButton / 2,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',

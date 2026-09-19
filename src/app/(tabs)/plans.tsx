@@ -25,6 +25,7 @@ import {
   PlanItem,
 } from '@/components/plans';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { LayoutTokens } from '@/constants/theme';
 
 const MOCK_DEFAULT_PLANS: PlanItem[] = [
   {
@@ -234,7 +235,7 @@ export default function PlansScreen({
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 90, 110) },
+          { paddingBottom: LayoutTokens.tabBarHeight + LayoutTokens.tabBarBottomOffset + insets.bottom + 8 },
         ]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Quick-add field: Rounded glass bar with search icon & blue mic voice button */}

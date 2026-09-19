@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { Button, HeaderIconCapsule } from '@/components/ui';
+import { Button, HeaderIconCapsule, StatusDot } from '@/components/ui';
 
 interface CircleHeaderProps {
   onOpenFamilySwitcher?: () => void;
@@ -76,7 +76,12 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
                 {initial}
               </Text>
             </View>
-            <View style={[styles.onlineBeaconDot, { backgroundColor: colors.green }]} />
+            <StatusDot
+              size={12}
+              color={colors.green}
+              style={styles.onlineBeaconDot}
+              dotStyle={{ borderWidth: 2, borderColor: '#FFFFFF' }}
+            />
           </View>
 
           {/* Title & Switcher Pill */}

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui';
+import { ButtonTokens } from '@/constants/theme';
 
 interface EmergencySosCardProps {
   onTriggerSos: (reason: string, details: string) => void;
@@ -97,13 +98,14 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 26,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 16,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 4,
+    padding: 14,
+    overflow: 'visible',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cardInnerRow: {
     flexDirection: 'row',
@@ -113,7 +115,7 @@ const styles = StyleSheet.create({
   },
   leftCol: {
     flex: 1,
-    gap: 5,
+    gap: 3,
   },
   titleRow: {
     flexDirection: 'row',
@@ -158,10 +160,8 @@ const styles = StyleSheet.create({
 
   // SOS button right area
   sosButtonArea: {
-    width: 80,
-    height: 80,
+    width: ButtonTokens.sosColumnWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
   },
 });

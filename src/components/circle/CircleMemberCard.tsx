@@ -12,7 +12,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui';
+import { Button, StatusDot } from '@/components/ui';
 
 interface CircleMemberCardProps {
   member: FamilyMember;
@@ -110,7 +110,12 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
           {/* Avatar with Online Dot */}
           <View style={styles.avatarContainer}>
             <FamilyAvatar member={member} size={isElderly ? 'lg' : 'md'} showStatus={false} />
-            <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
+            <StatusDot
+              size={10}
+              color={colors.green}
+              style={styles.onlineDot}
+              dotStyle={{ borderWidth: 1.5, borderColor: '#FFFFFF' }}
+            />
           </View>
 
           {/* Name, YOU badge, Relation */}

@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { HeaderIconCapsule } from '@/components/ui';
+import { HeaderIconCapsule, StatusDot } from '@/components/ui';
 
 interface PlansHeaderProps {
   onOpenSettings?: () => void;
@@ -61,8 +61,13 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
                 {initial}
               </Text>
             </View>
-            {/* Green Online Dot */}
-            <View style={[styles.onlineDotWrap, { backgroundColor: colors.green }]} />
+            {/* Green Online Dot with pulsing halo */}
+            <StatusDot
+              size={12}
+              color={colors.green}
+              style={styles.onlineDotWrap}
+              dotStyle={{ borderWidth: 2, borderColor: '#FFFFFF' }}
+            />
           </View>
 
           {/* Title & Subtitle */}

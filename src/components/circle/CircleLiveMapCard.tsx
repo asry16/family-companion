@@ -17,7 +17,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui';
+import { Button, StatusDot } from '@/components/ui';
 
 interface CircleLiveMapCardProps {
   onFullScreen?: () => void;
@@ -280,7 +280,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
             },
           ]}>
           <View style={styles.liveBadgeTag}>
-            <View style={[styles.liveInnerDot, { backgroundColor: colors.green }]} />
+            <StatusDot size={7} color={colors.green} />
             <Text style={[styles.liveBadgeText, { color: colors.green }]}>LIVE</Text>
           </View>
           <Text

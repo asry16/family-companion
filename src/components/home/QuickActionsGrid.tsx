@@ -141,7 +141,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
               <Text
                 style={[
                   styles.cardTitle,
-                  { color: colors.text, fontSize: isElderly ? 16 : 14.5 },
+                  { color: colors.text, fontSize: isElderly ? 16 : 15 },
                 ]}>
                 {act.title}
               </Text>
@@ -187,19 +187,19 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     width: '48%',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1.2,
     padding: 14,
-    gap: 10,
+    gap: 8,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 2,
   },
   iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -207,11 +207,11 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   cardSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
 });

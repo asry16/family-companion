@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, ViewStyle } from 'react-native';
 import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyMember } from '@/types';
+import { StatusDot } from './StatusDot';
 
 interface FamilyAvatarProps {
   member: FamilyMember;
@@ -77,18 +78,15 @@ export const FamilyAvatar: React.FC<FamilyAvatarProps> = ({
       </View>
 
       {showStatus && member.isSharingLocation && (
-        <View
-          style={[
-            styles.statusDot,
-            {
-              width: dimensions.dot,
-              height: dimensions.dot,
-              borderRadius: dimensions.dot / 2,
-              backgroundColor: getStatusColor(),
-              borderColor: colors.cardBackground,
-              borderWidth: dimensions.borderWidth,
-            },
-          ]}
+        <StatusDot
+          size={dimensions.dot}
+          color={getStatusColor()}
+          pulsing={member.availability === 'available'}
+          style={styles.statusDot}
+          dotStyle={{
+            borderColor: colors.cardBackground,
+            borderWidth: dimensions.borderWidth,
+          }}
         />
       )}
     </View>

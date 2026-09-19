@@ -36,6 +36,8 @@ export const Colors = {
     greenSoft: 'rgba(46, 191, 142, 0.12)',
     greenBorder: 'rgba(46, 191, 142, 0.25)',
     greenGlow: 'rgba(46, 191, 142, 0.35)',
+    greenGlowRing: 'rgba(46, 191, 142, 0.35)',
+    greenDotHalo: 'rgba(46, 191, 142, 0.50)',
 
     red: '#E11D48',                   // SOS/alert rose
     redSoft: 'rgba(255, 77, 122, 0.12)',
@@ -43,10 +45,13 @@ export const Colors = {
     sosCardBg: ['#FFEFF4', '#FFE6F0'] as const,
     sosBorder: '#F9CFE0',
     sosGradient: ['#FF4D7A', '#E11D48'] as const,
+    sosRingColor1: 'rgba(244, 63, 94, 0.35)',
+    sosRingColor2: 'rgba(244, 63, 94, 0.22)',
 
     purple: '#7C5CE0',
     purpleSoft: 'rgba(124, 92, 224, 0.10)',
     purpleBorder: 'rgba(124, 92, 224, 0.20)',
+    violetOrbGlow: 'rgba(124, 92, 224, 0.60)',
 
     pink: '#EC4899',
     pinkSoft: 'rgba(236, 72, 153, 0.12)',
@@ -99,14 +104,19 @@ export const Colors = {
     green: '#22C58B',
     greenSoft: 'rgba(34, 197, 139, 0.20)',
     greenBorder: 'rgba(34, 197, 139, 0.40)',
+    greenGlowRing: 'rgba(34, 197, 139, 0.35)',
+    greenDotHalo: 'rgba(34, 197, 139, 0.50)',
 
     red: '#F0524D',
     redSoft: 'rgba(240, 82, 77, 0.20)',
     redBorder: 'rgba(240, 82, 77, 0.40)',
+    sosRingColor1: 'rgba(244, 63, 94, 0.35)',
+    sosRingColor2: 'rgba(244, 63, 94, 0.22)',
 
     purple: '#7C5CE0',
     purpleSoft: 'rgba(124, 92, 224, 0.20)',
     purpleBorder: 'rgba(124, 92, 224, 0.40)',
+    violetOrbGlow: 'rgba(124, 92, 224, 0.60)',
 
     pink: '#EC4899',
     pinkSoft: 'rgba(236, 72, 153, 0.20)',
@@ -165,6 +175,7 @@ export const Colors = {
     purple: '#7C5CE0',
     purpleSoft: 'rgba(124, 92, 224, 0.25)',
     purpleBorder: '#7C5CE0',
+    violetOrbGlow: 'rgba(124, 92, 224, 0.60)',
 
     pink: '#EC4899',
     pinkSoft: 'rgba(236, 72, 153, 0.25)',
@@ -354,3 +365,23 @@ export const Shadows = Platform.select({
     }
   },
 });
+
+export const ButtonTokens = {
+  pill: {
+    sm: { height: 32, paddingH: 14, fontSize: 13 },
+    md: { height: 38, paddingH: 16, fontSize: 14 },
+    lg: { height: 48, paddingH: 22, fontSize: 16 },
+  },
+  iconButton: 38,
+  capsuleButton: 36,
+  capsuleHeight: 40,
+  chipHeight: 32,
+  sosSize: 56,
+  sosColumnWidth: 88,
+  hitSlop: { top: 6, bottom: 6, left: 6, right: 6 },
+} as const;
+
+export const LayoutTokens = {
+  tabBarHeight: Platform.select({ ios: 68, default: 64 }) as number,
+  tabBarBottomOffset: Platform.select({ ios: 20, default: 14 }) as number,
+} as const;

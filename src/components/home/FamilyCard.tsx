@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Animated, Image } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -7,7 +7,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui';
+import { Button, PulseRing, StatusDot } from '@/components/ui';
 
 interface FamilyCardProps {
   onViewLiveMap: () => void;
@@ -27,28 +27,6 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
     lastUpdated: '2 min ago',
     batteryLevel: 87,
   };
-
-  // Continuous subtle pulse animation for glowing green shield circle
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulseAnim]);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -74,25 +52,12 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
         <View style={styles.titleWithShield}>
           {/* Glowing Green Circle with Shield Icon */}
           <View style={styles.shieldGlowWrap}>
-            <Animated.View
-              style={[
-                styles.shieldHalo,
-                {
-                  backgroundColor: isDark ? 'rgba(34, 197, 139, 0.28)' : 'rgba(46, 191, 142, 0.20)',
-                  transform: [
-                    {
-                      scale: pulseAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.95, 1.25],
-                      }),
-                    },
-                  ],
-                  opacity: pulseAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.6, 0.2],
-                  }),
-                },
-              ]}
+            <PulseRing
+              color={isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(46, 191, 142, 0.35)'}
+              size={34}
+              maxScale={1.35}
+              duration={2400}
+              startOpacity={0.4}
             />
             <LinearGradient
               colors={['#2EBF8E', '#22C58B']}
@@ -129,12 +94,17 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
         <View style={styles.memberInfoContainer}>
           <View style={styles.avatarWithStatus}>
             <FamilyAvatar member={primaryMember as any} size="md" showStatus={false} />
-            <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
+            <StatusDot
+              size={10}
+              color={colors.green}
+              style={styles.onlineDot}
+              dotStyle={{ borderWidth: 1.5, borderColor: '#FFFFFF' }}
+            />
           </View>
 
           <View style={styles.memberDetailsCol}>
             <View style={styles.memberNameRow}>
-              <View style={[styles.inlineDot, { backgroundColor: colors.green }]} />
+              <StatusDot size={6} color={colors.green} />
               <Text style={[styles.memberNameText, { color: colors.text }]}>
                 {primaryMember.name}
               </Text>
@@ -157,7 +127,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           </View>
         </View>
 
-        {/* Right: Faded mini-map thumbnail with green pin + "View Live Map →" pill button over it */}
+        {/* Map Illustration — lavender gradient to avoid API key watermark */}
         <View
           style={[
             styles.miniMapWrap,
@@ -165,25 +135,22 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               borderColor: isDark ? 'rgba(34, 197, 139, 0.3)' : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
-          <Image
-            source={{
-              uri: isDark
-                ? 'https://a.basemaps.cartocdn.com/dark_all/14/9889/6249@2x.png'
-                : 'https://a.basemaps.cartocdn.com/rastertiles/voyager/14/9889/6249@2x.png',
-            }}
+          <LinearGradient
+            colors={isDark
+              ? ['#0D1530', '#131E3F', '#0F1733']
+              : ['#EAE6FB', '#E0DBF8', '#D8D2F3']}
             style={styles.miniMapImage}
-            resizeMode="cover"
           />
 
-          {/* Faded overlay with lavender tint in light mode */}
-          <View
-            style={[
-              styles.mapOverlay,
-              {
-                backgroundColor: isDark ? 'rgba(6, 11, 31, 0.45)' : 'rgba(238, 235, 252, 0.45)',
-              },
-            ]}
-          />
+          {/* Faded grid lines for map texture */}
+          <View style={[styles.mapOverlay, { opacity: isDark ? 0.12 : 0.08 }]}>
+            <View style={styles.mapGridHorizontal} />
+            <View style={[styles.mapGridHorizontal, { top: '33%' }]} />
+            <View style={[styles.mapGridHorizontal, { top: '66%' }]} />
+            <View style={styles.mapGridVertical} />
+            <View style={[styles.mapGridVertical, { left: '33%' }]} />
+            <View style={[styles.mapGridVertical, { left: '66%' }]} />
+          </View>
 
           {/* Green Pin */}
           <View style={styles.greenPinWrap}>
@@ -193,7 +160,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             </View>
           </View>
 
-          {/* "View Live Map" Primary Button with Arrow Over It */}
+          {/* "View Live Map" Small Pill */}
           <Button
             title="View Live Map"
             variant="primary"
@@ -235,12 +202,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  shieldHalo: {
-    position: 'absolute',
-    width: 42,
-    height: 42,
-    borderRadius: 21,
   },
   shieldCoreCircle: {
     width: 34,
@@ -337,6 +298,7 @@ const styles = StyleSheet.create({
     height: 105,
     borderRadius: 18,
     borderWidth: 1,
+    borderColor: 'rgba(124, 92, 224, 0.16)',
     overflow: 'hidden',
     position: 'relative',
     alignItems: 'center',
@@ -344,10 +306,25 @@ const styles = StyleSheet.create({
   },
   miniMapImage: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.65,
   },
   mapOverlay: {
     ...StyleSheet.absoluteFill,
+  },
+  mapGridHorizontal: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(124, 92, 224, 0.15)',
+  },
+  mapGridVertical: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '50%',
+    width: 1,
+    backgroundColor: 'rgba(124, 92, 224, 0.15)',
   },
   greenPinWrap: {
     position: 'absolute',
@@ -373,14 +350,7 @@ const styles = StyleSheet.create({
   },
   viewLiveMapBtn: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    minHeight: 30,
-  },
-  viewLiveMapBtnText: {
-    fontSize: 11.5,
-    fontWeight: '700',
+    bottom: 8,
+    right: 8,
   },
 });
