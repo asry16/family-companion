@@ -15,8 +15,12 @@ import { useAuth } from '@/context/AuthContext';
 import { FamilyMember, MemberRelation } from '@/types';
 import {
   SettingsTopBar,
+  SettingsProfileSection,
+  SettingsProfileEditModal,
+  SettingsThemeSection,
   SettingsInviteCard,
   SettingsMembersSection,
+  SettingsSecuritySection,
   SettingsAccountSection,
   SettingsMemberEditModal,
   SettingsFloatingTabBar,
@@ -69,8 +73,8 @@ export default function FamilySettingsScreen({
   const router = useRouter();
   const params = useLocalSearchParams<{ fromTab?: string }>();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useAppTheme();
-  const { user, signOut } = useAuth();
+  const { colors } = useAppTheme();
+  const { user, signOut, updateUserProfile } = useAuth();
   const {
     profile,
     members: contextMembers,
@@ -101,6 +105,15 @@ export default function FamilySettingsScreen({
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
+  const [profileEditModalVisible, setProfileEditModalVisible] = useState(false);
+
+  // Current user's member object
+  const selfMember = memberList.find((m) => m.isSelf || m.id === user?.familyMemberId) || memberList[0];
+  const userName = user?.name || selfMember?.name || 'Asmita Roy';
+  const userEmail = user?.email || 'asmita@kinly.family';
+  const userPhone = user?.phone || selfMember?.phone || '+1 555-0100';
+  const userRelation = (user?.relation || selfMember?.relation || 'Self') as MemberRelation;
+  const userStatus = selfMember?.statusMessage || 'Online and safe';
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -161,6 +174,15 @@ export default function FamilySettingsScreen({
         relation: data.relation,
         phone: data.phone,
       });
+
+      // If updating self member, also sync to auth profile
+      if (data.id === selfMember?.id) {
+        updateUserProfile({
+          name: data.name,
+          phone: data.phone,
+          relation: data.relation,
+        });
+      }
     } else {
       // Add new
       const newMember: FamilyMember = {
@@ -186,6 +208,46 @@ export default function FamilySettingsScreen({
     }
   };
 
+  // Save Profile Changes
+  const handleSaveProfile = async (data: {
+    name: string;
+    phone: string;
+    relation: MemberRelation;
+    statusMessage: string;
+  }) => {
+    // 1. Update Auth Context
+    await updateUserProfile({
+      name: data.name,
+      phone: data.phone,
+      relation: data.relation,
+    });
+
+    // 2. Update Self in local memberList state
+    const targetId = selfMember?.id || user?.familyMemberId || 'mem-1';
+    setMemberList((prev) =>
+      prev.map((m) =>
+        m.id === targetId
+          ? {
+              ...m,
+              name: data.name,
+              phone: data.phone,
+              relation: data.relation,
+              statusMessage: data.statusMessage,
+              initials: data.name.charAt(0).toUpperCase(),
+            }
+          : m
+      )
+    );
+
+    // 3. Sync to Family Context
+    updateFamilyMember(targetId, {
+      name: data.name,
+      phone: data.phone,
+      relation: data.relation,
+      statusMessage: data.statusMessage,
+    });
+  };
+
   // Logout
   const handleConfirmLogout = async () => {
     setLogoutModalVisible(false);
@@ -195,9 +257,9 @@ export default function FamilySettingsScreen({
   };
 
   const accountInfo = account || {
-    name: user?.name || memberList[0]?.name || 'Asmita Roy',
-    email: user?.email || 'asmita@kinly.family',
-    signInMethod: 'Email',
+    name: userName,
+    email: userEmail,
+    signInMethod: user?.provider === 'google' ? 'Google' : 'Email',
   };
 
   return (
@@ -217,7 +279,20 @@ export default function FamilySettingsScreen({
           { paddingBottom: Math.max(insets.bottom + 95, 115) },
         ]}
         showsVerticalScrollIndicator={false}>
-        {/* 2. Section: FAMILY INVITATION & QR CODE */}
+        {/* 2. Section: YOUR PROFILE DETAILS & EDITING */}
+        <SettingsProfileSection
+          name={userName}
+          email={userEmail}
+          phone={userPhone}
+          relation={userRelation === 'Self' ? 'Self (Family Organizer)' : userRelation}
+          statusMessage={userStatus}
+          onEditProfile={() => setProfileEditModalVisible(true)}
+        />
+
+        {/* 3. Section: CHANGING MODES (Dark mode, Light mode, Mobile default) */}
+        <SettingsThemeSection />
+
+        {/* 4. Section: FAMILY INVITATION & QR CODE */}
         <SettingsInviteCard
           inviteCode={inviteCode}
           familyName={familyName}
@@ -226,15 +301,18 @@ export default function FamilySettingsScreen({
           onJoinOtherFamily={() => setJoinModalVisible(true)}
         />
 
-        {/* 3. Section: FAMILY MEMBERS (count) */}
+        {/* 5. Section: FAMILY MEMBERS (count) */}
         <SettingsMembersSection
           members={memberList}
-          currentUserId={memberList.find((m) => m.isSelf)?.id || memberList[0]?.id}
+          currentUserId={selfMember?.id || memberList[0]?.id}
           onAddMember={handleOpenAddMember}
           onEditMember={handleOpenEditMember}
         />
 
-        {/* 4. Section: ACCOUNT & SESSION */}
+        {/* 6. Section: SECURITY & SESSIONS (Where logged in, security checkup, saved login) */}
+        <SettingsSecuritySection />
+
+        {/* 7. Section: ACCOUNT & SESSION */}
         <SettingsAccountSection
           userName={accountInfo.name}
           userEmail={accountInfo.email}
@@ -243,11 +321,22 @@ export default function FamilySettingsScreen({
         />
       </ScrollView>
 
-      {/* 5. Fixed Bottom Tab Bar: Highlight caller tab (do not highlight Assistant by default) */}
+      {/* 8. Fixed Bottom Tab Bar: Highlight caller tab */}
       <SettingsFloatingTabBar activeTab={callerTab} />
 
       {/* Modals */}
-      {/* 1. View QR Modal */}
+      {/* 1. Profile Edit Modal */}
+      <SettingsProfileEditModal
+        visible={profileEditModalVisible}
+        initialName={userName}
+        initialPhone={userPhone}
+        initialRelation={userRelation}
+        initialStatusMessage={userStatus}
+        onClose={() => setProfileEditModalVisible(false)}
+        onSave={handleSaveProfile}
+      />
+
+      {/* 2. View QR Modal */}
       <FamilyQRModal
         visible={qrModalVisible}
         familyCode={inviteCode}
@@ -255,14 +344,14 @@ export default function FamilySettingsScreen({
         onClose={() => setQrModalVisible(false)}
       />
 
-      {/* 2. Join Family Scanner Modal */}
+      {/* 3. Join Family Scanner Modal */}
       <JoinFamilyModal
         visible={joinModalVisible}
         onClose={() => setJoinModalVisible(false)}
         onSuccess={() => setJoinModalVisible(false)}
       />
 
-      {/* 3. Member Edit / Add Modal */}
+      {/* 4. Member Edit / Add Modal */}
       <SettingsMemberEditModal
         visible={editModalVisible}
         member={editingMember}
@@ -270,7 +359,7 @@ export default function FamilySettingsScreen({
         onSave={handleSaveMember}
       />
 
-      {/* 4. Logout Confirmation Modal */}
+      {/* 5. Logout Confirmation Modal */}
       <ConfirmationModal
         visible={logoutModalVisible}
         title="Log Out of Kinly?"
@@ -295,6 +384,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 4,
-    gap: 8,
+    gap: 10,
   },
 });

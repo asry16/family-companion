@@ -15,6 +15,7 @@ export interface AuthUser {
   username?: string;
   email: string;
   photoUrl?: string;
+  phone?: string;
   provider: 'google' | 'apple' | 'email' | 'demo';
   familyMemberId: string;
   familyName?: string;
@@ -59,6 +60,7 @@ interface AuthContextValue {
   ) => Promise<{ success: boolean; code?: string; devCode?: string; delivered?: boolean; message: string; error?: string }>;
   signInWithOtp: (email: string, code: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetEmail: (email: string) => Promise<{ success: boolean; message: string }>;
+  updateUserProfile: (updates: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -743,6 +745,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error('Apple Sign-In is only available on supported iOS devices.');
   }, []);
 
+  const updateUserProfile = useCallback(async (updates: Partial<AuthUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated: AuthUser = { ...prev, ...updates };
+      AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updated)).catch((err) => {
+        console.error('Failed to save updated user profile:', err);
+      });
+      return updated;
+    });
+  }, []);
+
   const signOut = useCallback(async () => {
     setUser(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
@@ -766,6 +779,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         requestOtp,
         signInWithOtp,
         sendPasswordResetEmail,
+        updateUserProfile,
         signOut,
       }}>
       {children}
