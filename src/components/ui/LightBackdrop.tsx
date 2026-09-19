@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, G, Circle } from 'react-native-svg';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/context/ThemeContext';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const LightBackdrop: React.FC = () => {
   const { isDark } = useAppTheme();
@@ -23,134 +23,42 @@ export const LightBackdrop: React.FC = () => {
       />
 
       {/* 2. Large Blurred Pale-Violet Ambient Blobs (#E4E0FA at 40% opacity) */}
-      {/* Top-Right Soft Ambient Blob */}
       <View style={[styles.ambientBlob, styles.blobTopRight]} />
-      {/* Mid-Left Soft Ambient Blob */}
       <View style={[styles.ambientBlob, styles.blobMidLeft]} />
-      {/* Bottom-Right Soft Ambient Blob */}
       <View style={[styles.ambientBlob, styles.blobBottomRight]} />
 
       {/* 3. Decorative Botanical Sprigs, Butterfly, and 4-Point Sparkles (30-40% Opacity) */}
-      <Svg
-        width={SCREEN_WIDTH}
-        height={SCREEN_HEIGHT}
-        style={StyleSheet.absoluteFill}
-        viewBox={`0 0 ${SCREEN_WIDTH} ${SCREEN_HEIGHT}`}>
-        
-        {/* Top-Left Lavender Botanical Sprig */}
-        <G opacity={0.36} transform="translate(4, 18)">
-          {/* Main Stem */}
-          <Path
-            d="M 12 10 Q 38 45 42 110"
-            stroke="#8A6BF2"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Leaflets */}
-          <Path
-            d="M 16 26 Q 30 20 28 32 Q 22 34 16 26 Z"
-            fill="#A78BFA"
-          />
-          <Path
-            d="M 22 46 Q 38 40 34 52 Q 28 54 22 46 Z"
-            fill="#8A6BF2"
-          />
-          <Path
-            d="M 28 68 Q 44 64 40 76 Q 34 78 28 68 Z"
-            fill="#A78BFA"
-          />
-          <Path
-            d="M 36 90 Q 52 86 48 98 Q 42 100 36 90 Z"
-            fill="#8A6BF2"
-          />
-          {/* Little lavender buds */}
-          <Circle cx="13" cy="11" r="2.4" fill="#7C5CE0" />
-          <Circle cx="29" cy="28" r="2" fill="#8A6BF2" />
-          <Circle cx="35" cy="48" r="2" fill="#7C5CE0" />
-        </G>
+      {/* Top-Left Lavender Botanical Sprig */}
+      <View style={styles.sprigTopLeft}>
+        <Ionicons name="leaf-outline" size={34} color="#8A6BF2" style={{ transform: [{ rotate: '-35deg' }] }} />
+        <Ionicons name="flower-outline" size={16} color="#7C5CE0" style={styles.flowerTopLeft} />
+      </View>
 
-        {/* Bottom-Right Lavender Botanical Sprig */}
-        <G
-          opacity={0.34}
-          transform={`translate(${SCREEN_WIDTH - 65}, ${SCREEN_HEIGHT - 170})`}>
-          {/* Main Stem curved upward */}
-          <Path
-            d="M 45 130 Q 15 75 22 10"
-            stroke="#8A6BF2"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Leaflets */}
-          <Path
-            d="M 38 105 Q 18 100 24 90 Q 32 92 38 105 Z"
-            fill="#A78BFA"
-          />
-          <Path
-            d="M 30 80 Q 10 76 16 66 Q 24 68 30 80 Z"
-            fill="#8A6BF2"
-          />
-          <Path
-            d="M 24 55 Q 6 50 12 40 Q 20 42 24 55 Z"
-            fill="#A78BFA"
-          />
-          {/* Little lavender buds */}
-          <Circle cx="22" cy="10" r="2.5" fill="#7C5CE0" />
-          <Circle cx="14" cy="42" r="2" fill="#8A6BF2" />
-        </G>
+      {/* Bottom-Right Lavender Botanical Sprig */}
+      <View style={styles.sprigBottomRight}>
+        <Ionicons name="leaf-outline" size={38} color="#8A6BF2" style={{ transform: [{ rotate: '145deg' }] }} />
+        <Ionicons name="flower-outline" size={18} color="#7C5CE0" style={styles.flowerBottomRight} />
+      </View>
 
-        {/* Small Butterfly on the Right Edge (around y: 240) */}
-        <G
-          opacity={0.35}
-          transform={`translate(${SCREEN_WIDTH - 36}, 245) scale(0.9)`}>
-          {/* Upper Wings */}
-          <Path
-            d="M 12 14 C 4 2 20 -4 28 6 C 26 12 18 14 12 14 Z"
-            fill="#8A6BF2"
-          />
-          <Path
-            d="M 12 14 C 18 6 32 4 30 18 C 24 20 18 18 12 14 Z"
-            fill="#A78BFA"
-          />
-          {/* Lower Wings */}
-          <Path
-            d="M 12 14 C 6 22 16 28 22 22 C 20 16 16 14 12 14 Z"
-            fill="#C4B5FD"
-          />
-          {/* Body */}
-          <Path
-            d="M 10 10 Q 12 16 11 22"
-            stroke="#6D5BD0"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </G>
+      {/* Small Butterfly on the Right Edge */}
+      <View style={styles.butterflyContainer}>
+        <MaterialCommunityIcons name="butterfly" size={24} color="#8A6BF2" style={{ transform: [{ rotate: '-15deg' }] }} />
+      </View>
 
-        {/* Tiny Four-Point Sparkle 1 (Top-Right) */}
-        <G opacity={0.38} transform={`translate(${SCREEN_WIDTH - 68}, 85)`}>
-          <Path
-            d="M 8 0 Q 8 8 16 8 Q 8 8 8 16 Q 8 8 0 8 Q 8 8 8 0 Z"
-            fill="#8A6BF2"
-          />
-        </G>
+      {/* Sparkle 1: Top-Right */}
+      <View style={styles.sparkleTopRight}>
+        <Ionicons name="sparkles" size={18} color="#8A6BF2" />
+      </View>
 
-        {/* Tiny Four-Point Sparkle 2 (Mid-Left edge) */}
-        <G opacity={0.32} transform="translate(18, 380)">
-          <Path
-            d="M 6 0 Q 6 6 12 6 Q 6 6 6 12 Q 6 6 0 6 Q 6 6 6 0 Z"
-            fill="#7C5CE0"
-          />
-        </G>
+      {/* Sparkle 2: Mid-Left edge */}
+      <View style={styles.sparkleMidLeft}>
+        <Ionicons name="sparkles" size={15} color="#7C5CE0" />
+      </View>
 
-        {/* Tiny Four-Point Sparkle 3 (Bottom-Center margin) */}
-        <G opacity={0.35} transform={`translate(${SCREEN_WIDTH * 0.45}, ${SCREEN_HEIGHT - 110})`}>
-          <Path
-            d="M 6 0 Q 6 6 12 6 Q 6 6 6 12 Q 6 6 0 6 Q 6 6 6 0 Z"
-            fill="#A78BFA"
-          />
-        </G>
-      </Svg>
+      {/* Sparkle 3: Bottom-Center margin */}
+      <View style={styles.sparkleBottomCenter}>
+        <Ionicons name="sparkles" size={16} color="#A78BFA" />
+      </View>
     </View>
   );
 };
@@ -187,5 +95,51 @@ const styles = StyleSheet.create({
     height: 260,
     bottom: 50,
     right: -70,
+  },
+  sprigTopLeft: {
+    position: 'absolute',
+    top: 24,
+    left: 10,
+    opacity: 0.35,
+  },
+  flowerTopLeft: {
+    position: 'absolute',
+    top: -4,
+    left: 20,
+  },
+  sprigBottomRight: {
+    position: 'absolute',
+    bottom: 120,
+    right: 12,
+    opacity: 0.34,
+  },
+  flowerBottomRight: {
+    position: 'absolute',
+    bottom: 24,
+    right: 22,
+  },
+  butterflyContainer: {
+    position: 'absolute',
+    top: 235,
+    right: 12,
+    opacity: 0.35,
+  },
+  sparkleTopRight: {
+    position: 'absolute',
+    top: 85,
+    right: 56,
+    opacity: 0.38,
+  },
+  sparkleMidLeft: {
+    position: 'absolute',
+    top: 380,
+    left: 18,
+    opacity: 0.32,
+  },
+  sparkleBottomCenter: {
+    position: 'absolute',
+    bottom: 100,
+    left: SCREEN_WIDTH * 0.44,
+    opacity: 0.35,
   },
 });
