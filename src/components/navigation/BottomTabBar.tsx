@@ -510,8 +510,6 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     ...(Platform.OS === 'web'
       ? ({
-          outline: 'none',
-          WebkitTapHighlightColor: 'transparent',
           cursor: 'pointer',
         } as any)
       : {}),
