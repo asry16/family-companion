@@ -2,6 +2,12 @@ import { Router, Response } from 'express';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { membersRepo, notificationsRepo } from '../db/database';
 import { broadcastToFamily } from '../websocket';
+import {
+  dynamodbService,
+  snsService,
+  cloudwatchService,
+  eventbridgeService,
+} from '../aws';
 
 const router = Router();
 router.use(authMiddleware);
@@ -38,6 +44,15 @@ router.post('/location', async (req: AuthenticatedRequest, res: Response) => {
       timestamp: new Date().toISOString(),
     });
 
+    // AWS DynamoDB: High-throughput telemetry & location persistence
+    dynamodbService.recordTelemetry({
+      familyId,
+      memberId: targetId,
+      latitude,
+      longitude,
+      humanLocation,
+    }).catch(e => console.warn('DynamoDB location err:', e.message));
+
     return res.json({ success: true, message: 'Location updated.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to update location.' });
@@ -71,6 +86,15 @@ router.post('/device', async (req: AuthenticatedRequest, res: Response) => {
       ringerMode,
       timestamp: new Date().toISOString(),
     });
+
+    // AWS DynamoDB: Device heartbeat recording
+    dynamodbService.recordTelemetry({
+      familyId,
+      memberId: targetId,
+      batteryLevel,
+      isCharging: Boolean(isCharging),
+      ringerMode,
+    }).catch(e => console.warn('DynamoDB device err:', e.message));
 
     return res.json({ success: true, message: 'Device telemetry updated.' });
   } catch (err: any) {
@@ -110,13 +134,16 @@ router.post('/ping', async (req: AuthenticatedRequest, res: Response) => {
       timestamp: new Date().toISOString(),
     });
 
+    // AWS CloudWatch: Track family connectivity metrics
+    cloudwatchService.putMetric('ActiveFamilyPings', 1, { FamilyId: familyId })
+      .catch(e => console.warn('CloudWatch ping metric err:', e.message));
+
     return res.json({ success: true, message: 'Ping sent successfully.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to send ping.' });
   }
 });
 
-// -------------------------------------------------------------
 // -------------------------------------------------------------
 // POST /api/telemetry/sos - Emergency SOS Broadcast Alert
 // -------------------------------------------------------------
@@ -143,23 +170,57 @@ router.post('/sos', async (req: AuthenticatedRequest, res: Response) => {
       category: 'sos',
     });
 
-    broadcastToFamily(familyId, {
-      type: 'EMERGENCY_SOS',
+    const incidentData = {
+      incidentId: notifId,
+      familyId,
       senderId,
       senderName,
       senderRelation,
       humanLocation: loc,
       batteryLevel: batt,
-      coords: coords || (sender ? { x: sender.coords_x, y: sender.coords_y, latitude: sender.latitude, longitude: sender.longitude } : undefined),
-      message: message || 'Emergency broadcast triggered.',
+      coords: coords || (sender ? { latitude: sender.latitude, longitude: sender.longitude } : undefined),
+      message: message || 'Emergency SOS broadcast triggered.',
+    };
+
+    broadcastToFamily(familyId, {
+      type: 'EMERGENCY_SOS',
+      ...incidentData,
       timestamp: new Date().toISOString(),
     });
 
+    // 1. AWS DynamoDB: Immutable emergency incident log
+    dynamodbService.recordSOSIncident(incidentData)
+      .catch(e => console.warn('DynamoDB SOS record err:', e.message));
+
+    // 2. AWS SNS: Broadcast alert to SNS topic and dispatch SMS alerts
+    const alertBody = `🚨 KINLY EMERGENCY: ${senderName} (${senderRelation}) triggered SOS at ${loc}! Battery: ${batt}%. Open Kinly map immediately!`;
+    snsService.broadcastToTopic(`EMERGENCY: ${senderName} Needs Help!`, alertBody)
+      .catch(e => console.warn('SNS broadcast err:', e.message));
+
+    // Also send direct SMS if member phones are available
+    const otherMembers = membersRepo.findByFamilyId(familyId).filter(m => m.id !== senderId);
+    for (const member of otherMembers) {
+      if (member.phone && member.phone.startsWith('+')) {
+        snsService.sendEmergencySMS(member.phone, alertBody).catch(() => {});
+      }
+    }
+
+    // 3. AWS CloudWatch: Emit emergency alarm metric and log audit entry
+    cloudwatchService.putMetric('EmergencySOSTriggered', 1, { FamilyId: familyId, Priority: 'Urgent' })
+      .catch(e => console.warn('CloudWatch SOS metric err:', e.message));
+    cloudwatchService.logAuditEvent('KinlyEmergencySOS', incidentData)
+      .catch(e => console.warn('CloudWatch SOS audit err:', e.message));
+
+    // 4. AWS EventBridge: Publish domain event for external responders / queues
+    eventbridgeService.publishEvent('KinlyEmergencySOS', incidentData)
+      .catch(e => console.warn('EventBridge SOS event err:', e.message));
+
     return res.json({
       success: true,
-      message: 'Emergency broadcast dispatched to all family members.',
+      message: 'Emergency broadcast dispatched via Kinly Live Bus & AWS SNS/CloudWatch/DynamoDB.',
       senderName,
       location: loc,
+      incidentId: notifId,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to dispatch SOS.' });

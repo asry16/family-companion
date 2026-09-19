@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { Transporter } from 'nodemailer';
 
 export interface EmailOptions {
   to: string;
@@ -14,7 +14,7 @@ export interface MailerResult {
   error?: string;
 }
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: Transporter | null = null;
 let isLive = false;
 
 export function isConfiguredForLiveDelivery(): boolean {
@@ -25,7 +25,7 @@ export function isConfiguredForLiveDelivery(): boolean {
   return Boolean((host && user && pass) || (service && user && pass) || (user && pass && user.includes('@gmail.com')));
 }
 
-function getTransporter(): { mailer: nodemailer.Transporter; isLiveDelivery: boolean } {
+function getTransporter(): { mailer: Transporter; isLiveDelivery: boolean } {
   if (transporter) return { mailer: transporter, isLiveDelivery: isLive };
 
   const host = process.env.SMTP_HOST;

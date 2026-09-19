@@ -2,6 +2,12 @@ import { Router, Response } from 'express';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { documentsRepo, memoriesRepo } from '../db/database';
 import { broadcastToFamily } from '../websocket';
+import {
+  s3Service,
+  sagemakerService,
+  cloudwatchService,
+  eventbridgeService,
+} from '../aws';
 
 const router = Router();
 router.use(authMiddleware);
@@ -12,13 +18,30 @@ router.use(authMiddleware);
 router.post('/documents', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { title, type, amount, currency, dueDate, provider, status, assignedToMemberId, fields, suggestedActions, notes } = req.body || {};
+    const { title, type, amount, currency, dueDate, provider, status, assignedToMemberId, fields, suggestedActions, notes, rawImage, image } = req.body || {};
 
     if (!title) {
       return res.status(400).json({ success: false, error: 'Document title is required.' });
     }
 
     const docId = `doc_${Date.now()}`;
+
+    // AWS S3: Upload encrypted document / receipt scan
+    let s3Url: string | undefined;
+    if (rawImage || image) {
+      try {
+        const uploadRes = await s3Service.uploadAsset({
+          familyId,
+          category: 'documents',
+          fileKey: `${docId}.jpg`,
+          base64Data: rawImage || image,
+        });
+        s3Url = uploadRes.url;
+      } catch (err: any) {
+        console.warn('S3 document upload err:', err?.message || err);
+      }
+    }
+
     documentsRepo.create({
       id: docId,
       family_id: familyId,
@@ -33,7 +56,7 @@ router.post('/documents', async (req: AuthenticatedRequest, res: Response) => {
       scanned_at: new Date().toISOString(),
       fields_json: JSON.stringify(fields || []),
       suggested_actions_json: JSON.stringify(suggestedActions || []),
-      notes: notes || null,
+      notes: notes ? (s3Url ? `${notes}\n[S3 Vault: ${s3Url}]` : notes) : (s3Url ? `[S3 Vault: ${s3Url}]` : null),
     });
 
     const newDoc = {
@@ -50,6 +73,7 @@ router.post('/documents', async (req: AuthenticatedRequest, res: Response) => {
       fields: fields || {},
       suggestedActions: suggestedActions || [],
       notes: notes || null,
+      s3Url,
     };
 
     broadcastToFamily(familyId, {
@@ -57,6 +81,20 @@ router.post('/documents', async (req: AuthenticatedRequest, res: Response) => {
       docId,
       document: newDoc,
     });
+
+    // AWS CloudWatch: Metric for document processing
+    cloudwatchService.putMetric('DocumentScannedCount', 1, { FamilyId: familyId, Type: type || 'receipt' })
+      .catch(e => console.warn('CloudWatch doc metric err:', e.message));
+
+    // AWS EventBridge: Publish document uploaded domain event
+    eventbridgeService.publishEvent('KinlyDocumentUploaded', {
+      familyId,
+      docId,
+      title,
+      type: type || 'receipt',
+      amount,
+      s3Url,
+    }).catch(e => console.warn('EventBridge doc event err:', e.message));
 
     return res.status(201).json({
       success: true,
@@ -109,93 +147,74 @@ router.delete('/documents/:id', async (req: AuthenticatedRequest, res: Response)
 });
 
 // -------------------------------------------------------------
-// POST /api/vault/scan - Document & Receipt Optical Analysis
+// POST /api/vault/scan and /api/vault/documents/analyze
+// Amazon SageMaker AI Vision & OCR Extraction
 // -------------------------------------------------------------
-router.post('/scan', async (req: AuthenticatedRequest, res: Response) => {
+const handleAnalyzeDoc = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { text, rawImage } = req.body || {};
+    const { text, rawImage, image, filename } = req.body || {};
 
-    // Analyze document text and extract structured fields
-    let detectedType = 'receipt';
-    let detectedTitle = 'Scanned Receipt';
-    let detectedAmount = 120.0;
-    let detectedDueDate = 'Next Week';
-    let detectedProvider = 'Utility Provider';
-
-    const clean = (text || '').toLowerCase();
-    if (clean.includes('electricity') || clean.includes('power') || clean.includes('kwh')) {
-      detectedType = 'electricity_bill';
-      detectedTitle = 'Electricity Utility Bill';
-      detectedAmount = 2450.0;
-      detectedDueDate = 'Due in 5 days';
-      detectedProvider = 'State Power Board';
-    } else if (clean.includes('water') || clean.includes('sewer')) {
-      detectedType = 'receipt';
-      detectedTitle = 'Municipal Water Dues';
-      detectedAmount = 850.0;
-      detectedDueDate = 'Due next Friday';
-      detectedProvider = 'City Water Authority';
-    } else if (clean.includes('hospital') || clean.includes('dr.') || clean.includes('clinic') || clean.includes('rx')) {
-      detectedType = 'medical_prescription';
-      detectedTitle = 'Medical Prescription & Invoice';
-      detectedAmount = 650.0;
-      detectedDueDate = 'Prescription Active';
-      detectedProvider = 'Healthcare Clinic';
-    } else if (clean.includes('insurance') || clean.includes('policy')) {
-      detectedType = 'insurance';
-      detectedTitle = 'Family Health Insurance Policy';
-      detectedAmount = 14500.0;
-      detectedDueDate = 'Annual Renewal';
-      detectedProvider = 'Insurance Corp';
-    }
+    // 1. Invoke AWS SageMaker AI / Bedrock Vision OCR Service
+    const analysis = await sagemakerService.analyzeDocument(filename || text, rawImage || image);
 
     return res.json({
       success: true,
       extracted: {
-        title: detectedTitle,
-        type: detectedType,
-        amount: detectedAmount,
-        currency: '₹',
-        dueDate: detectedDueDate,
-        provider: detectedProvider,
+        title: analysis.title,
+        type: analysis.type,
+        amount: analysis.amount,
+        currency: analysis.currency,
+        dueDate: analysis.dueDate,
+        provider: analysis.provider,
         status: 'pending',
-        fields: [
-          { label: 'Document Type', value: detectedType.toUpperCase().replace('_', ' ') },
-          { label: 'Extracted Total', value: `₹${detectedAmount.toLocaleString()}` },
-          { label: 'Status', value: 'Payment Due' },
-        ],
-        suggestedActions: [
-          {
-            id: `act_${Date.now()}_remind`,
-            label: 'Set Payment Reminder',
-            actionType: 'add_reminder',
-          },
-          {
-            id: `act_${Date.now()}_task`,
-            label: 'Add to Family Tasks',
-            actionType: 'assign_task',
-          },
-        ],
+        summary: analysis.summary,
+        fields: analysis.fields,
+        suggestedActions: analysis.suggestedActions.map((label, idx) => ({
+          id: `act_${Date.now()}_${idx}`,
+          label,
+          actionType: label.toLowerCase().includes('reminder') ? 'add_reminder' : 'assign_task',
+        })),
       },
+      data: { analysis },
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Document analysis failed.' });
   }
-});
+};
+
+router.post('/scan', handleAnalyzeDoc);
+router.post('/documents/analyze', handleAnalyzeDoc);
 
 // -------------------------------------------------------------
-// PHYSICAL MEMORIES
+// PHYSICAL MEMORIES (Amazon S3 Media Backing)
 // -------------------------------------------------------------
 router.post('/memories', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { title, category, savedLocation, notes, tags, relatedMemberIds, emoji } = req.body || {};
+    const { title, category, savedLocation, notes, tags, relatedMemberIds, emoji, photo, image } = req.body || {};
 
     if (!title || !savedLocation) {
       return res.status(400).json({ success: false, error: 'Memory title and saved physical location are required.' });
     }
 
     const memoryId = `mem_${Date.now()}`;
+
+    // AWS S3: Upload memory photo/token if provided
+    let s3PhotoUrl: string | undefined;
+    if (photo || image) {
+      try {
+        const uploadRes = await s3Service.uploadAsset({
+          familyId,
+          category: 'memories',
+          fileKey: `${memoryId}.jpg`,
+          base64Data: photo || image,
+        });
+        s3PhotoUrl = uploadRes.url;
+      } catch (err: any) {
+        console.warn('S3 memory upload warning:', err?.message || err);
+      }
+    }
+
     memoriesRepo.create({
       id: memoryId,
       family_id: familyId,
@@ -203,7 +222,7 @@ router.post('/memories', async (req: AuthenticatedRequest, res: Response) => {
       category: category || 'household',
       saved_location: savedLocation.trim(),
       last_verified: 'Today',
-      notes: notes || '',
+      notes: notes ? (s3PhotoUrl ? `${notes}\n[Photo: ${s3PhotoUrl}]` : notes) : (s3PhotoUrl ? `[Photo: ${s3PhotoUrl}]` : ''),
       tags_json: JSON.stringify(tags || []),
       related_member_ids_json: JSON.stringify(relatedMemberIds || []),
       emoji: emoji || '📘',
@@ -213,9 +232,10 @@ router.post('/memories', async (req: AuthenticatedRequest, res: Response) => {
       type: 'MEMORY_SAVED',
       memoryId,
       title,
+      s3PhotoUrl,
     });
 
-    return res.status(201).json({ success: true, memoryId });
+    return res.status(201).json({ success: true, memoryId, s3PhotoUrl });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to save memory.' });
   }

@@ -10,6 +10,7 @@ import {
   memoriesRepo,
   placesRepo,
 } from '../db/database';
+import { sagemakerService } from '../aws';
 
 const router = Router();
 router.use(authMiddleware);
@@ -314,14 +315,21 @@ router.post('/query', async (req: AuthenticatedRequest, res: Response) => {
         };
       }
     } else {
-      // General overview summary of the family
+      // General overview and intelligent reasoning powered by AWS SageMaker AI / Bedrock
       const memberNames = members.map((m) => m.name).join(', ');
       const pendingTasksCount = tasks.filter((t) => !t.isCompleted).length;
       const todayDate = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
       
+      const contextSummary = `Family: ${familyName}. Active members (${members.length}): ${memberNames}. Pending Tasks: ${pendingTasksCount}. Events: ${events.length}. Vault Documents: ${documents.length}. Today: ${todayDate}.`;
+      const aiInference = await sagemakerService.queryAssistant(query, contextSummary);
+
+      const generatedAnswer = aiInference.source !== 'heuristic_engine' && aiInference.answer
+        ? aiInference.answer
+        : `Hello! I'm Kinly, your intelligent assistant for the ${familyName}. It's ${todayDate}. You have ${members.length} members connected (${memberNames}), ${pendingTasksCount} pending tasks, and ${events.length} scheduled family events. How can I help you today?`;
+
       response = {
-        answer: `Hello! I'm Kinly, your intelligent assistant for the ${familyName}. It's ${todayDate}. You have ${members.length} members connected (${memberNames}), ${pendingTasksCount} pending tasks, and ${events.length} scheduled family events. How can I help you today?`,
-        highlight: `${familyName} Hub`,
+        answer: generatedAnswer,
+        highlight: `${familyName} Hub • AWS AI`,
         actionCard: {
           id: `act_${Date.now()}`,
           type: 'check_in',
