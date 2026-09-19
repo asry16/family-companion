@@ -106,10 +106,14 @@ function lat2tile(lat: number, zoom: number) {
   );
 }
 
-export const FamilyCommandCenter: React.FC = () => {
+export interface FamilyCommandCenterProps {
+  isFullScreen?: boolean;
+}
+
+export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFullScreen = false }) => {
   const router = useRouter();
   const { colors, isDark, isElderly } = useAppTheme();
-  const { members, activeUser, places, sendFamilyPing } = useFamily();
+  const { members, activeUser, places, sendFamilyPing, updateFamilyMember } = useFamily();
 
   // Selected member for map focus & bottom sheet
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
@@ -118,9 +122,14 @@ export const FamilyCommandCenter: React.FC = () => {
   // Invite Modal State
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
-  // Real GPS & Location Permission State
+  // Real GPS & Location State
   const [locationPermissionNeeded, setLocationPermissionNeeded] = useState<boolean>(false);
   const [realUserCoords, setRealUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [isGpsLive, setIsGpsLive] = useState<boolean>(false);
+
+  // Container dimensions for responsive tile centering
+  const [mapLayout, setMapLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Interactive Map State: Pan & Zoom
   const [zoomLevel, setZoomLevel] = useState(1.0);
@@ -187,10 +196,18 @@ export const FamilyCommandCenter: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocationPermissionNeeded(false);
+          setIsGpsLive(true);
+          setGpsAccuracy(Math.round(position.coords.accuracy || 10));
           setRealUserCoords({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
         },
         (error) => {
           console.log('Location request error:', error.message);
@@ -203,27 +220,67 @@ export const FamilyCommandCenter: React.FC = () => {
     }
   };
 
-  // Check location permission on mount
+  // Live GPS tracking on mount and continuous watch
   useEffect(() => {
+    let watchId: number | null = null;
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocationPermissionNeeded(false);
+          setIsGpsLive(true);
+          setGpsAccuracy(Math.round(position.coords.accuracy || 10));
           setRealUserCoords({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
         },
         (error) => {
-          // If denied
           if (error.code === 1) {
             setLocationPermissionNeeded(true);
           }
         },
-        { timeout: 4000 }
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setLocationPermissionNeeded(false);
+          setIsGpsLive(true);
+          setGpsAccuracy(Math.round(position.coords.accuracy || 10));
+          setRealUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
+        },
+        (error) => {
+          if (error.code === 1) {
+            setLocationPermissionNeeded(true);
+          }
+        },
+        { enableHighAccuracy: true, maximumAge: 4000, timeout: 12000 }
       );
     }
-  }, []);
+
+    return () => {
+      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
+        try {
+          navigator.geolocation.clearWatch(watchId);
+        } catch (e) {}
+      }
+    };
+  }, [activeUser?.id, updateFamilyMember]);
 
   // Ensure active user is displayed if members list is empty
   const displayMembers: FamilyMember[] = useMemo(() => {
@@ -287,43 +344,53 @@ export const FamilyCommandCenter: React.FC = () => {
     };
   }, [displayMembers, isDark]);
 
-  // Real base coordinates for map tiles (Default Delhi or real user coordinates)
+  // Real base coordinates for map tiles (User live coordinates or default)
   const baseLat = realUserCoords?.latitude ?? 28.5498;
   const baseLon = realUserCoords?.longitude ?? 77.2005;
   const tileZoom = 14;
   const centerTileX = lon2tile(baseLon, tileZoom);
   const centerTileY = lat2tile(baseLat, tileZoom);
 
-  // Generate 3x3 tile grid for real map background
+  // Dynamic layout calculations for full coverage without black gaps
+  const containerW = mapLayout.width > 0 ? mapLayout.width : 500;
+  const containerH = mapLayout.height > 0 ? mapLayout.height : (isFullScreen ? 440 : 280);
+  const centerX = Math.round(containerW / 2);
+  const centerY = Math.round(containerH / 2);
+
+  // Determine horizontal and vertical tile span needed to fill container plus buffer for panning
+  const halfSpanX = Math.max(2, Math.ceil(containerW / 512) + 1);
+  const halfSpanY = Math.max(1, Math.ceil(containerH / 512) + 1);
+
+  // Generate tile grid without any watermarks or API key requirements (using fast ArcGIS World Dark/Light Gray Base)
   const mapTiles = useMemo(() => {
     const tiles: Array<{ x: number; y: number; url: string; key: string }> = [];
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const tx = centerTileX + dx;
-        const ty = centerTileY + dy;
+    for (let dy = -halfSpanY; dy <= halfSpanY; dy++) {
+      for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
+        const tx = (centerTileX + dx + 16384) % 16384;
+        const ty = (centerTileY + dy + 16384) % 16384;
         const url =
           mapMode === 'satellite'
             ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tileZoom}/${ty}/${tx}`
             : isDark
-            ? `https://a.basemaps.cartocdn.com/dark_all/${tileZoom}/${tx}/${ty}@2x.png`
-            : `https://a.basemaps.cartocdn.com/rastertiles/voyager/${tileZoom}/${tx}/${ty}@2x.png`;
+            ? `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`
+            : `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`;
         tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
       }
     }
     return tiles;
-  }, [centerTileX, centerTileY, mapMode, isDark]);
+  }, [centerTileX, centerTileY, mapMode, isDark, halfSpanX, halfSpanY]);
 
   // Pan gesture responder for the interactive map
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 4 || Math.abs(gestureState.dy) > 4;
+        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
       },
       onPanResponderMove: (_, gestureState) => {
         setPanOffset((prev) => ({
-          x: Math.min(Math.max(prev.x + gestureState.dx * 0.15, -140), 140),
-          y: Math.min(Math.max(prev.y + gestureState.dy * 0.15, -140), 140),
+          x: Math.min(Math.max(prev.x + gestureState.dx * 0.35, -280), 280),
+          y: Math.min(Math.max(prev.y + gestureState.dy * 0.35, -280), 280),
         }));
       },
       onPanResponderRelease: () => {},
@@ -742,8 +809,17 @@ export const FamilyCommandCenter: React.FC = () => {
 
       {/* Interactive Map Card */}
       <View
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width > 0 && height > 0) {
+            setMapLayout((prev) =>
+              prev.width === width && prev.height === height ? prev : { width, height }
+            );
+          }
+        }}
         style={[
           styles.mapHeroCard,
+          isFullScreen && { height: 480 },
           {
             backgroundColor: isDark ? '#0B1120' : '#EFF6FF',
             borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(37, 99, 235, 0.15)',
@@ -790,7 +866,7 @@ export const FamilyCommandCenter: React.FC = () => {
                 ],
               },
             ]}>
-            {/* Real Map Raster Tiles (3x3 Grid) */}
+            {/* Real Map Raster Tiles (Full Coverage Grid without Watermarks) */}
             <View style={styles.tileGridContainer}>
               {mapTiles.map((tile) => (
                 <Image
@@ -799,8 +875,8 @@ export const FamilyCommandCenter: React.FC = () => {
                   style={[
                     styles.mapRasterTile,
                     {
-                      left: 150 + tile.x * 256 - 128,
-                      top: 130 + tile.y * 256 - 128,
+                      left: centerX + tile.x * 256 - 128,
+                      top: centerY + tile.y * 256 - 128,
                     },
                   ]}
                   resizeMode="cover"
@@ -814,8 +890,8 @@ export const FamilyCommandCenter: React.FC = () => {
                 style={[
                   styles.homeMarkerWrap,
                   {
-                    left: `${homePlace?.coords?.x ?? 50}%`,
-                    top: `${homePlace?.coords?.y ?? 50}%`,
+                    left: centerX - 38,
+                    top: centerY - 28,
                   },
                 ]}>
                 <View
@@ -848,8 +924,9 @@ export const FamilyCommandCenter: React.FC = () => {
             {displayMembers.map((member, idx) => {
               const presence = getMemberPresence(member, isDark);
               const isFocused = selectedMember?.id === member.id;
-              const posX = member.coords?.x ?? 50;
-              const posY = member.coords?.y ?? 50;
+              const isSelf = member.isSelf || member.id === activeUser?.id;
+              const posX = isSelf ? centerX : centerX + (idx % 2 === 0 ? 55 : -55) * idx;
+              const posY = isSelf ? centerY : centerY + (idx % 2 === 0 ? -38 : 42) * idx;
               const memberName = (member?.name || 'Member').split(' ')[0];
 
               return (
@@ -859,8 +936,8 @@ export const FamilyCommandCenter: React.FC = () => {
                   style={[
                     styles.markerPinWrap,
                     {
-                      left: `${posX}%`,
-                      top: `${posY}%`,
+                      left: posX,
+                      top: posY,
                       zIndex: isFocused ? 50 : 20,
                     },
                   ]}>
@@ -971,28 +1048,90 @@ export const FamilyCommandCenter: React.FC = () => {
             <Text style={[styles.overlayLiveText, { color: isDark ? '#34D399' : '#059669' }]}>
               LIVE
             </Text>
+            {isGpsLive && (
+              <Text style={{ fontSize: 9, color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
+                • GPS Live
+              </Text>
+            )}
           </View>
           <Text style={[styles.overlaySubText, { color: colors.text }]}>
-            {statusSummary.broadcastingCount} member broadcasting
+            {statusSummary.broadcastingCount} {statusSummary.broadcastingCount === 1 ? 'member' : 'members'} broadcasting
           </Text>
         </View>
 
-        {/* Top-Right Overlay: ⛶ Full screen */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/family')}
-          style={({ pressed }) => [
-            styles.overlayFullScreenBtn,
-            {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}>
-          <Ionicons name="expand" size={13} color={colors.text} />
-          <Text style={[styles.overlayFullScreenText, { color: colors.text }]}>
-            Full screen
-          </Text>
-        </Pressable>
+        {/* Top-Right Controls Row: Mode Toggle & Full Screen */}
+        <View style={styles.overlayControlsRow}>
+          {/* Map Style Toggle: Canvas vs Satellite */}
+          <Pressable
+            onPress={() => {
+              triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+              setMapMode((m) => (m === 'streets' ? 'satellite' : 'streets'));
+            }}
+            style={({ pressed }) => [
+              styles.overlayMapModeBtn,
+              {
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons
+              name={mapMode === 'satellite' ? 'map-outline' : 'earth-outline'}
+              size={13}
+              color={colors.text}
+            />
+            <Text style={[styles.overlayMapModeText, { color: colors.text }]}>
+              {mapMode === 'satellite' ? 'Canvas' : 'Satellite'}
+            </Text>
+          </Pressable>
+
+          {/* Full screen button if not in full screen mode */}
+          {!isFullScreen && (
+            <Pressable
+              onPress={() => router.push('/(tabs)/family')}
+              style={({ pressed }) => [
+                styles.overlayFullScreenBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}>
+              <Ionicons name="expand" size={13} color={colors.text} />
+              <Text style={[styles.overlayFullScreenText, { color: colors.text }]}>
+                Full screen
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
+        {/* Zoom Controls (Right cluster) */}
+        <View style={styles.mapZoomCluster}>
+          <Pressable
+            onPress={handleZoomIn}
+            style={({ pressed }) => [
+              styles.mapZoomBtn,
+              {
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons name="add" size={16} color={colors.text} />
+          </Pressable>
+          <Pressable
+            onPress={handleZoomOut}
+            style={({ pressed }) => [
+              styles.mapZoomBtn,
+              {
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons name="remove" size={16} color={colors.text} />
+          </Pressable>
+        </View>
 
         {/* Bottom-Right Overlay: ⊙ Recenter */}
         <Pressable
@@ -1680,10 +1819,34 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '600',
   },
-  overlayFullScreenBtn: {
+  overlayControlsRow: {
     position: 'absolute',
     top: 10,
     right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 10,
+  },
+  overlayMapModeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  overlayMapModeText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  overlayFullScreenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -1700,6 +1863,26 @@ const styles = StyleSheet.create({
   overlayFullScreenText: {
     fontSize: 10.5,
     fontWeight: '600',
+  },
+  mapZoomCluster: {
+    position: 'absolute',
+    right: 10,
+    top: 52,
+    gap: 6,
+    zIndex: 10,
+  },
+  mapZoomBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 2,
   },
   overlayRecenterBtn: {
     position: 'absolute',
