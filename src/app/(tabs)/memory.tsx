@@ -7,6 +7,7 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -15,15 +16,21 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
-import { Header } from '@/components/ui/Header';
-import { MemoryCard } from '@/components/cards/MemoryCard';
-import { MemoryCategory } from '@/types';
+import { initialMemories } from '@/data/mockFamilyData';
+import { MemoryItem } from '@/types';
+
+// Vault Components
+import { VaultHeader } from '@/components/vault/VaultHeader';
+import { VaultSearchBar } from '@/components/vault/VaultSearchBar';
+import { VaultSuggestionChips } from '@/components/vault/VaultSuggestionChips';
+import { VaultCategoryFilters } from '@/components/vault/VaultCategoryFilters';
+import { VaultEmptyStateCard } from '@/components/vault/VaultEmptyStateCard';
+import { VaultItemCard } from '@/components/vault/VaultItemCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function MemoryScreen() {
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const { memories, searchMemories, addMemory, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
@@ -34,36 +41,44 @@ export default function MemoryScreen() {
 
   if (!isAuthenticated) return null;
 
+  // Search and filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [addModalVisible, setAddModalVisible] = useState<boolean>(false);
+  
+  // State preview toggle: true = preview Empty state, false = preview Populated state
+  const [isPreviewEmpty, setIsPreviewEmpty] = useState<boolean>(false);
 
-  // New Memory Form State
+  // Add Location Modal State
+  const [addModalVisible, setAddModalVisible] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState('');
   const [newLocation, setNewLocation] = useState('');
-  const [newNotes, setNewNotes] = useState('');
+  const [newCategory, setNewCategory] = useState<'documents' | 'household' | 'health'>('household');
+  const [selectedDetailItem, setSelectedDetailItem] = useState<MemoryItem | null>(null);
 
-  const filteredMemories = searchMemories(searchQuery).filter((m) => {
-    if (selectedCategory === 'all') return true;
-    return m.category === selectedCategory;
+  // Use live memories if available, otherwise fallback to initialMemories for demonstration
+  const baseMemories = memories && memories.length > 0 ? memories : initialMemories;
+
+  // Filter items by category and query
+  const filteredMemories = baseMemories.filter((m) => {
+    const matchesCategory =
+      selectedCategory === 'all' || m.category === selectedCategory;
+    const query = searchQuery.trim().toLowerCase();
+    const matchesQuery =
+      !query ||
+      m.title.toLowerCase().includes(query) ||
+      m.savedLocation.toLowerCase().includes(query) ||
+      m.notes.toLowerCase().includes(query) ||
+      m.tags.some((t) => t.toLowerCase().includes(query));
+    return matchesCategory && matchesQuery;
   });
 
   const handleVoiceSearch = () => {
     startListening((recognized) => {
       if (recognized) {
         setSearchQuery(recognized);
-        speak(`Searching memories for ${recognized}`);
+        speak(`Searching vault for ${recognized}`);
       }
     });
-  };
-
-  const handleQuickChip = (term: string) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (e) {}
-    }
-    setSearchQuery(term);
   };
 
   const handleSaveMemory = () => {
@@ -77,182 +92,245 @@ export default function MemoryScreen() {
 
     addMemory({
       title: newTitle.trim(),
-      category: 'household',
+      category: newCategory,
       savedLocation: newLocation.trim(),
       lastVerified: 'Just now',
-      notes: newNotes.trim() || 'Saved to family vault',
-      tags: ['saved', 'location'],
-      relatedMemberIds: [activeUser.id],
-      emoji: '📦',
+      notes: `Saved by ${activeUser?.name || 'Asmita'} to family vault`,
+      tags: ['saved', newCategory],
+      relatedMemberIds: [activeUser?.id || 'self'],
+      emoji: newCategory === 'documents' ? '📄' : newCategory === 'health' ? '🩺' : '📦',
     });
 
-    speak(`Saved ${newTitle} to Family Memory.`);
+    speak(`Saved ${newTitle} to Family Hub.`);
     setNewTitle('');
     setNewLocation('');
-    setNewNotes('');
     setAddModalVisible(false);
+    setIsPreviewEmpty(false);
   };
-
-  const categories: Array<{ id: string; label: string }> = [
-    { id: 'all', label: 'All Saved' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'household', label: 'Household' },
-    { id: 'health', label: 'Health' },
-  ];
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Header title="Family Memory" subtitle="Searchable physical locations & knowledge" />
+      {/* 1. Header: Avatar "A" with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
+      <VaultHeader
+        onOpenSettings={() => router.push('/modal/family-settings')}
+      />
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {/* Natural Language Search Bar */}
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}>
-          <Ionicons name="search" size={20} color={colors.brandAccent} />
-          <TextInput
-            placeholder="Ask e.g. 'Where is Dad's passport?' or 'Wi-Fi'"
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={[
-              styles.searchInput,
-              {
-                color: colors.text,
-                fontSize: isElderly ? 18 : 14,
-              },
-            ]}
+        {/* 2. Search Bar: Rounded Glass Field, Placeholder, Blue Mic Voice Button */}
+        <VaultSearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmit={() => {}}
+          onVoicePress={handleVoiceSearch}
+        />
+
+        {/* 3. Suggestion Chips: Single Horizontally Scrollable Row ("Dad's Passport", "Wi-Fi Password", "Dadi's Glasses") */}
+        <VaultSuggestionChips
+          activeQuery={searchQuery}
+          onSelectSuggestion={(term) => setSearchQuery(term)}
+        />
+
+        {/* 4. Category Filter Chips: "All Saved" (filled blue gradient), "Documents", "Household", "+ Save Location", State Preview Toggle */}
+        <VaultCategoryFilters
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+          onSaveLocationPress={() => setAddModalVisible(true)}
+          isPreviewEmpty={isPreviewEmpty}
+          onTogglePreview={() => setIsPreviewEmpty(!isPreviewEmpty)}
+        />
+
+        {/* 5 & 6. Empty State Card / Populated State Items List */}
+        {isPreviewEmpty ? (
+          /* Empty State Card matching reference */
+          <VaultEmptyStateCard
+            onSaveFirstLocation={() => setAddModalVisible(true)}
           />
-          {searchQuery ? (
-            <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-            </Pressable>
-          ) : (
-            <Pressable onPress={handleVoiceSearch} hitSlop={8}>
-              <Ionicons name="mic" size={18} color={colors.textSecondary} />
-            </Pressable>
-          )}
-        </View>
-
-        {/* Quick Suggested Search Queries */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestedChipsRow}>
-          {['Dad\'s Passport', 'Wi-Fi Password', 'Dadi\'s Glasses', 'Car Insurance', 'Spare Keys'].map((chip) => (
-            <Pressable
-              key={chip}
-              onPress={() => handleQuickChip(chip)}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Text style={{ fontSize: 13 }}>🔍</Text>
-              <Text
-                style={[
-                  styles.chipText,
-                  { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
-                ]}>
-                {chip}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Categories Pills & Add Button */}
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {categories.map((cat) => {
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <Pressable
-                  key={cat.id}
-                  onPress={() => setSelectedCategory(cat.id)}
-                  style={({ pressed }) => [
-                    styles.categoryPill,
-                    {
-                      backgroundColor: isSelected ? colors.brand : colors.cardBackground,
-                      borderColor: isSelected ? colors.brand : colors.border,
-                      opacity: pressed ? 0.75 : 1,
-                    },
-                  ]}>
-                  <Text
-                    style={[
-                      styles.categoryPillText,
-                      {
-                        color: isSelected ? '#FFFFFF' : colors.textSecondary,
-                        fontSize: isElderly ? 15 : 12,
-                      },
-                    ]}>
-                    {cat.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          <Pressable
-            onPress={() => setAddModalVisible(true)}
-            style={({ pressed }) => [
-              styles.addMemoryButton,
-              {
-                backgroundColor: colors.brand,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}>
-            <Ionicons name="add" size={16} color="#FFFFFF" />
-            <Text style={styles.addMemoryText}>Save Location</Text>
-          </Pressable>
-        </View>
-
-        {/* Memory Items List */}
-        <View style={styles.memoriesList}>
-          {filteredMemories.length > 0 ? (
-            filteredMemories.map((mem) => (
-              <MemoryCard key={mem.id} memory={mem} />
-            ))
-          ) : (
-            <EmptyState
-              icon={searchQuery ? 'search-outline' : 'folder-open-outline'}
-              badge={searchQuery ? 'Search Query' : 'Vault Ready'}
-              title={searchQuery ? `No results for "${searchQuery}"` : 'No Saved Memories'}
-              description={
-                searchQuery
-                  ? 'Try searching for passports, Wi-Fi password, car keys, or medical documents.'
-                  : 'Start by cataloging physical drawers, important documents, or home supplies.'
+        ) : filteredMemories.length === 0 ? (
+          /* Search yielded no matches */
+          <VaultEmptyStateCard
+            title={searchQuery ? `No matches for "${searchQuery}"` : 'No Saved Memories'}
+            body={
+              searchQuery
+                ? 'Try searching for passports, Wi-Fi password, car keys, or medical papers.'
+                : 'Start by cataloging physical drawers, important documents, or home supplies.'
+            }
+            badgeLabel={searchQuery ? 'SEARCH' : 'VAULT READY'}
+            buttonLabel={searchQuery ? 'Clear Search' : 'Save First Location'}
+            isSearchEmpty={Boolean(searchQuery)}
+            onSaveFirstLocation={() => {
+              if (searchQuery) {
+                setSearchQuery('');
+              } else {
+                setAddModalVisible(true);
               }
-              actionLabel={searchQuery ? 'Clear Search' : 'Save First Location'}
-              onAction={
-                searchQuery
-                  ? () => setSearchQuery('')
-                  : () => setAddModalVisible(true)
-              }
-            />
-          )}
-        </View>
+            }}
+          />
+        ) : (
+          /* Populated State List of Item Cards */
+          <View style={styles.itemsListContainer}>
+            {filteredMemories.map((item) => (
+              <VaultItemCard
+                key={item.id}
+                item={item}
+                onPress={() => setSelectedDetailItem(item)}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* Bottom spacer for floating navigation bar */}
+        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
-      {/* Quick Add Memory Modal */}
-      <ConfirmationModal
+      {/* Save Location Custom Modal */}
+      <Modal
         visible={addModalVisible}
-        title="Save New Location or Memory"
-        description="Record physical cupboard, drawer, or household info so any family member can find it instantly."
-        confirmLabel="Save to Family Memory"
-        onConfirm={handleSaveMemory}
-        onCancel={() => setAddModalVisible(false)}
-      />
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAddModalVisible(false)}>
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setAddModalVisible(false)}>
+          <Pressable
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: isDark ? '#0F1A3A' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(20, 32, 58, 0.12)',
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalTitleGroup}>
+                <Ionicons name="folder" size={20} color={colors.blue} />
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Save New Location
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setAddModalVisible(false)}
+                hitSlop={8}>
+                <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+              </Pressable>
+            </View>
+
+            <Text style={[styles.modalSubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+              Catalog physical drawers, documents, or household items so your circle can find them instantly.
+            </Text>
+
+            {/* Input: Item Name */}
+            <View style={styles.inputStack}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Item Name</Text>
+              <TextInput
+                value={newTitle}
+                onChangeText={setNewTitle}
+                placeholder="e.g. Dad's Passport, Extra Car Keys, Wi-Fi"
+                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+                style={[
+                  styles.formInput,
+                  {
+                    color: colors.text,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Input: Physical Location */}
+            <View style={styles.inputStack}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Physical Location</Text>
+              <TextInput
+                value={newLocation}
+                onChangeText={setNewLocation}
+                placeholder="e.g. Master Bedroom > Top left drawer"
+                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+                style={[
+                  styles.formInput,
+                  {
+                    color: colors.text,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Category Selector */}
+            <View style={styles.inputStack}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Category</Text>
+              <View style={styles.categorySelectRow}>
+                {(['documents', 'household', 'health'] as const).map((cat) => {
+                  const isSel = newCategory === cat;
+                  return (
+                    <Pressable
+                      key={cat}
+                      onPress={() => setNewCategory(cat)}
+                      style={[
+                        styles.catSelectBtn,
+                        {
+                          backgroundColor: isSel
+                            ? colors.blue
+                            : isDark
+                            ? 'rgba(255, 255, 255, 0.06)'
+                            : '#F1F5F9',
+                          borderColor: isSel
+                            ? colors.blue
+                            : isDark
+                            ? 'rgba(255, 255, 255, 0.1)'
+                            : '#E2E8F0',
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.catSelectText,
+                          {
+                            color: isSel ? (isDark ? '#000000' : '#FFFFFF') : colors.text,
+                            fontWeight: isSel ? '800' : '600',
+                          },
+                        ]}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Save Button */}
+            <Pressable
+              onPress={handleSaveMemory}
+              disabled={!newTitle.trim() || !newLocation.trim()}
+              style={({ pressed }) => [
+                styles.saveSubmitBtn,
+                {
+                  backgroundColor: colors.blue,
+                  opacity: !newTitle.trim() || !newLocation.trim() ? 0.45 : pressed ? 0.88 : 1,
+                },
+              ]}>
+              <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000000' : '#FFFFFF'} />
+              <Text style={[styles.saveSubmitBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>
+                Save to Family Vault
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Item Details Modal */}
+      {selectedDetailItem && (
+        <ConfirmationModal
+          visible={Boolean(selectedDetailItem)}
+          title={selectedDetailItem.title}
+          description={`📍 Location: ${selectedDetailItem.savedLocation}\n\n📝 Notes: ${selectedDetailItem.notes}\n\nLast verified: ${selectedDetailItem.lastVerified}`}
+          confirmLabel="Done"
+          onConfirm={() => setSelectedDetailItem(null)}
+          onCancel={() => setSelectedDetailItem(null)}
+        />
+      )}
     </View>
   );
 }
@@ -265,88 +343,99 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 40,
-    gap: 12,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontWeight: '500',
-  },
-  suggestedChipsRow: {
+    paddingTop: 4,
+    paddingBottom: 110,
     gap: 8,
-    paddingVertical: 2,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
   },
-  chip: {
-    flexDirection: 'row',
+  itemsListContainer: {
+    gap: 4,
+  },
+  floatingNavSpacer: {
+    height: Platform.select({ ios: 36, default: 24 }),
+  },
+
+  // Modal Styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 26,
     borderWidth: 1,
-    gap: 5,
+    padding: 22,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  chipText: {
-    fontWeight: '600',
-  },
-  filterSection: {
+  modalHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    marginTop: 4,
   },
-  categoryPill: {
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categoryPillText: {
-    fontWeight: '700',
-  },
-  addMemoryButton: {
+  modalTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    gap: 4,
+    gap: 8,
   },
-  addMemoryText: {
-    color: '#FFFFFF',
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  inputStack: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 12.5,
     fontWeight: '700',
-    fontSize: 12,
   },
-  memoriesList: {
-    gap: 4,
+  formInput: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 13.5,
   },
-  emptyBox: {
-    padding: 32,
-    borderRadius: 20,
+  categorySelectRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  catSelectBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    gap: 8,
   },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+  catSelectText: {
+    fontSize: 12,
   },
-  emptySub: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
+  saveSubmitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 13,
+    borderRadius: 16,
+    marginTop: 6,
+  },
+  saveSubmitBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
