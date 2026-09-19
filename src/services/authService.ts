@@ -18,6 +18,7 @@ export interface SignUpPayload {
   dateOfBirth?: string;
   password: string;
   inviteCode?: string;
+  mode?: 'elderly' | 'default';
 }
 
 export interface IAuthService {
