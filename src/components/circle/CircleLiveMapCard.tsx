@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView,
   Animated,
+  PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,16 +19,33 @@ import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
 
+function lon2tile(lon: number, zoom: number) {
+  return Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
+}
+function lat2tile(lat: number, zoom: number) {
+  return Math.floor(
+    ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) *
+      Math.pow(2, zoom)
+  );
+}
+
 interface CircleLiveMapCardProps {
   onFullScreen?: () => void;
 }
 
 export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScreen }) => {
   const { colors, isDark, isElderly } = useAppTheme();
-  const { members, activeUser } = useFamily();
+  const { members, activeUser, places, updateFamilyMember } = useFamily();
 
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [mapMode, setMapMode] = useState<'streets' | 'satellite'>('streets');
+
+  // Real GPS & Layout State
+  const [realUserCoords, setRealUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isGpsLive, setIsGpsLive] = useState<boolean>(false);
+  const [mapLayout, setMapLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Radar / Beacon continuous animation
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -37,12 +55,12 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 2000,
+          duration: 1800,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0,
-          duration: 2000,
+          duration: 1800,
           useNativeDriver: true,
         }),
       ])
@@ -59,26 +77,132 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
     }
   };
 
+  // Live Continuous GPS Watch
+  useEffect(() => {
+    let watchId: number | null = null;
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setIsGpsLive(true);
+          setRealUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
+        },
+        (err) => {
+          console.log('Map GPS initial location error:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setIsGpsLive(true);
+          setRealUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
+        },
+        (err) => {
+          console.log('Map GPS watch position error:', err.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      );
+    }
+
+    return () => {
+      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [activeUser?.id, updateFamilyMember]);
+
+  // Pan gesture responder
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        setPanOffset((prev) => ({
+          x: Math.min(Math.max(prev.x + gestureState.dx * 0.35, -240), 240),
+          y: Math.min(Math.max(prev.y + gestureState.dy * 0.35, -240), 240),
+        }));
+      },
+      onPanResponderRelease: () => {},
+    })
+  ).current;
+
+  // Zoom controls
   const handleZoomIn = () => {
     triggerHaptic();
-    setZoomLevel((z) => Math.min(z + 0.15, 1.45));
+    setZoomLevel((z) => Math.min(Number((z + 0.2).toFixed(2)), 2.0));
   };
 
   const handleZoomOut = () => {
     triggerHaptic();
-    setZoomLevel((z) => Math.max(z - 0.15, 0.85));
+    setZoomLevel((z) => Math.max(Number((z - 0.2).toFixed(2)), 0.8));
   };
 
   const handleRecenter = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMemberId(null);
     setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
   };
 
   const broadcastingCount = members.length > 0 ? members.length : 1;
 
+  // Coordinates and dimensions
+  const baseLat = realUserCoords?.latitude ?? 28.5498;
+  const baseLon = realUserCoords?.longitude ?? 77.2005;
+  const tileZoom = 14;
+  const centerTileX = lon2tile(baseLon, tileZoom);
+  const centerTileY = lat2tile(baseLat, tileZoom);
+
+  const containerW = mapLayout.width > 0 ? mapLayout.width : 400;
+  const containerH = mapLayout.height > 0 ? mapLayout.height : 240;
+  const centerX = Math.round(containerW / 2);
+  const centerY = Math.round(containerH / 2);
+
+  const halfSpanX = Math.max(2, Math.ceil(containerW / 512) + 1);
+  const halfSpanY = Math.max(1, Math.ceil(containerH / 512) + 1);
+
+  // Free, ultra-crisp ArcGIS tiles without watermarks or API keys
+  const mapTiles = useMemo(() => {
+    const tiles: Array<{ x: number; y: number; url: string; key: string }> = [];
+    for (let dy = -halfSpanY; dy <= halfSpanY; dy++) {
+      for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
+        const tx = (centerTileX + dx + 16384) % 16384;
+        const ty = (centerTileY + dy + 16384) % 16384;
+        const url =
+          mapMode === 'satellite'
+            ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tileZoom}/${ty}/${tx}`
+            : isDark
+            ? `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`
+            : `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`;
+        tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
+      }
+    }
+    return tiles;
+  }, [centerTileX, centerTileY, mapMode, isDark, halfSpanX, halfSpanY]);
+
   // Selected member for highlight
-  const activeFocusMember = members.find((m) => m.id === selectedMemberId);
+  const displayMembers = members.length > 0 ? members : (activeUser ? [activeUser] : []);
+  const homePlace = places.find((p) => p.type === 'home' || p.name.toLowerCase().includes('home'));
 
   return (
     <GlassCard
@@ -86,7 +210,6 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
       glowColor={isDark ? colors.blue : undefined}
       style={styles.cardWrapper}
       contentStyle={styles.cardContent}>
-      
       {/* 1. Header: Map Icon, Title "LIVE FAMILY MAP", "Full Screen →" */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
@@ -118,166 +241,172 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
 
       {/* 2. Rounded Map Container with Overlays */}
       <View
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width > 0 && height > 0) {
+            setMapLayout((prev) =>
+              prev.width === width && prev.height === height ? prev : { width, height }
+            );
+          }
+        }}
         style={[
           styles.mapContainer,
           {
+            backgroundColor: isDark ? '#0B1120' : '#EFF6FF',
             borderColor: isDark ? 'rgba(59, 111, 240, 0.3)' : 'rgba(20, 32, 58, 0.1)',
           },
-        ]}>
-        {/* Real Tile Background Image */}
-        <Image
-          source={{
-            uri: isDark
-              ? 'https://a.basemaps.cartocdn.com/dark_all/14/9889/6249@2x.png'
-              : 'https://a.basemaps.cartocdn.com/rastertiles/voyager/14/9889/6249@2x.png',
-          }}
+        ]}
+        {...panResponder.panHandlers}>
+        {/* Animated Map Surface Canvas */}
+        <Animated.View
           style={[
-            styles.mapImageBackground,
+            styles.mapCanvasPlane,
             {
-              transform: [{ scale: zoomLevel }],
+              transform: [
+                { translateX: panOffset.x },
+                { translateY: panOffset.y },
+                { scale: zoomLevel },
+              ],
             },
-          ]}
-          resizeMode="cover"
-        />
-
-        {/* Vector Roadways Overlay */}
-        <View style={styles.vectorOverlay}>
-          <View
-            style={[
-              styles.roadLine1,
-              { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.25)' : 'rgba(255, 255, 255, 0.7)' },
-            ]}
-          />
-          <View
-            style={[
-              styles.roadLine2,
-              { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(255, 255, 255, 0.6)' },
-            ]}
-          />
-        </View>
-
-        {/* Light Mode Soft Lavender Map Overlay */}
-        {!isDark && (
-          <View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: 'rgba(238, 235, 252, 0.35)' },
-            ]}
-          />
-        )}
-
-        {/* HOME MARKER: Blue circle with house icon */}
-        <View style={[styles.homeMarkerWrap, { left: '32%', top: '48%' }]}>
-          <View
-            style={[
-              styles.homeGlowHalo,
-              { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)' },
-            ]}
-          />
-          <View style={[styles.homeCirclePin, { backgroundColor: colors.blue }]}>
-            <Ionicons name="home" size={13} color="#FFFFFF" />
-          </View>
-          <View
-            style={[
-              styles.homeLabelTag,
-              {
-                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
-              },
-            ]}>
-            <Text style={[styles.homeLabelText, { color: colors.text }]}>Home</Text>
-          </View>
-        </View>
-
-        {/* FAMILY MEMBER MARKERS: Circular avatars with glow and name label */}
-        {members.map((member, idx) => {
-          const isSelected = selectedMemberId === member.id;
-          const fallbackX = 54 + (idx % 2 === 0 ? 12 : -18);
-          const fallbackY = 40 + (idx % 2 === 0 ? -10 : 20);
-          const coordsX = member.coords?.x ?? fallbackX;
-          const coordsY = member.coords?.y ?? fallbackY;
-
-          return (
-            <Pressable
-              key={member.id}
-              onPress={() => {
-                triggerHaptic();
-                setSelectedMemberId(isSelected ? null : member.id);
-              }}
-              style={[
-                styles.memberMarkerWrap,
-                {
-                  left: `${coordsX}%`,
-                  top: `${coordsY}%`,
-                  zIndex: isSelected ? 20 : 10,
-                },
-              ]}>
-              {/* Pulsing Outer Glow Ring */}
-              <Animated.View
+          ]}>
+          {/* Real Free High-Performance ArcGIS Tiles */}
+          <View style={styles.tileGridContainer}>
+            {mapTiles.map((tile) => (
+              <Image
+                key={tile.key}
+                source={{ uri: tile.url }}
                 style={[
-                  styles.markerPulseHalo,
+                  styles.mapRasterTile,
                   {
-                    backgroundColor: isDark ? 'rgba(34, 197, 139, 0.30)' : 'rgba(46, 191, 142, 0.20)',
-                    transform: [
-                      {
-                        scale: pulseAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 1.4],
-                        }),
-                      },
-                    ],
-                    opacity: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.8, 0.2],
-                    }),
+                    left: centerX + tile.x * 256 - 128,
+                    top: centerY + tile.y * 256 - 128,
                   },
                 ]}
+                resizeMode="cover"
               />
+            ))}
+          </View>
 
-              {/* Avatar Wrap */}
-              <View
+          {/* HOME MARKER: Blue circle with house icon */}
+          <View
+            style={[
+              styles.homeMarkerWrap,
+              {
+                left: centerX - 60,
+                top: centerY - 40,
+              },
+            ]}>
+            <View
+              style={[
+                styles.homeGlowHalo,
+                { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)' },
+              ]}
+            />
+            <View style={[styles.homeCirclePin, { backgroundColor: colors.blue }]}>
+              <Ionicons name="home" size={13} color="#FFFFFF" />
+            </View>
+            <View
+              style={[
+                styles.homeLabelTag,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
+                },
+              ]}>
+              <Text style={[styles.homeLabelText, { color: colors.text }]}>
+                {homePlace?.name || 'Home'}
+              </Text>
+            </View>
+          </View>
+
+          {/* FAMILY MEMBER MARKERS */}
+          {displayMembers.map((member, idx) => {
+            const isSelected = selectedMemberId === member.id;
+            const isSelf = member.isSelf || member.id === activeUser?.id;
+            const posX = isSelf ? centerX : centerX + (idx % 2 === 0 ? 55 : -55) * idx;
+            const posY = isSelf ? centerY : centerY + (idx % 2 === 0 ? -35 : 40) * idx;
+
+            return (
+              <Pressable
+                key={member.id}
+                onPress={() => {
+                  triggerHaptic();
+                  setSelectedMemberId(isSelected ? null : member.id);
+                }}
                 style={[
-                  styles.avatarMarkerCircle,
+                  styles.memberMarkerWrap,
                   {
-                    borderColor: isSelected ? colors.blue : colors.green,
-                    shadowColor: isSelected ? colors.blue : colors.green,
+                    left: posX,
+                    top: posY,
+                    zIndex: isSelected ? 30 : 15,
                   },
                 ]}>
-                <FamilyAvatar member={member} size="sm" showStatus={false} />
-              </View>
-
-              {/* Member Name Label */}
-              <View
-                style={[
-                  styles.markerLabelWrap,
-                  {
-                    backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : '#FFFFFF',
-                    borderColor: isSelected
-                      ? colors.blue
-                      : isDark
-                      ? 'rgba(34, 197, 139, 0.40)'
-                      : 'rgba(124, 92, 224, 0.18)',
-                  },
-                ]}>
-                <View style={[styles.inlineGreenDot, { backgroundColor: colors.green }]} />
-                <Text
+                {/* Pulsing Outer Glow Ring */}
+                <Animated.View
                   style={[
-                    styles.markerNameText,
+                    styles.markerPulseHalo,
                     {
-                      color: colors.text,
-                      fontWeight: isSelected ? '800' : '700',
+                      backgroundColor: isDark ? 'rgba(34, 197, 139, 0.30)' : 'rgba(46, 191, 142, 0.20)',
+                      transform: [
+                        {
+                          scale: pulseAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 1.4],
+                          }),
+                        },
+                      ],
+                      opacity: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.8, 0.2],
+                      }),
+                    },
+                  ]}
+                />
+
+                {/* Avatar Wrap */}
+                <View
+                  style={[
+                    styles.avatarMarkerCircle,
+                    {
+                      borderColor: isSelected ? colors.blue : colors.green,
+                      shadowColor: isSelected ? colors.blue : colors.green,
                     },
                   ]}>
-                  {member.name}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+                  <FamilyAvatar member={member} size="sm" showStatus={false} />
+                </View>
+
+                {/* Member Name Label */}
+                <View
+                  style={[
+                    styles.markerLabelWrap,
+                    {
+                      backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : '#FFFFFF',
+                      borderColor: isSelected
+                        ? colors.blue
+                        : isDark
+                        ? 'rgba(34, 197, 139, 0.40)'
+                        : 'rgba(124, 92, 224, 0.18)',
+                    },
+                  ]}>
+                  <View style={[styles.inlineGreenDot, { backgroundColor: colors.green }]} />
+                  <Text
+                    style={[
+                      styles.markerNameText,
+                      {
+                        color: colors.text,
+                        fontWeight: isSelected ? '800' : '700',
+                      },
+                    ]}>
+                    {member.name.split(' ')[0]}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </Animated.View>
 
         {/* OVERLAYS: */}
-        {/* Top-Left: Green "LIVE" Pill + "1 member broadcasting" */}
+        {/* Top-Left: Green "LIVE" Pill + "GPS Live" + broadcasting count */}
         <View
           style={[
             styles.liveStatusPill,
@@ -289,33 +418,45 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           <View style={styles.liveBadgeTag}>
             <View style={[styles.liveInnerDot, { backgroundColor: colors.green }]} />
             <Text style={[styles.liveBadgeText, { color: colors.green }]}>LIVE</Text>
+            {isGpsLive && (
+              <Text style={{ fontSize: 9, color: colors.blue, fontWeight: '700', marginLeft: 2 }}>
+                • GPS
+              </Text>
+            )}
           </View>
           <Text
             style={[
               styles.broadcastingText,
               { color: isDark ? colors.textMuted : colors.textSecondary },
             ]}>
-            {broadcastingCount} {broadcastingCount === 1 ? 'member' : 'members'} broadcasting
+            {broadcastingCount} {broadcastingCount === 1 ? 'broadcasting' : 'broadcasting'}
           </Text>
         </View>
 
-        {/* Top-Right: "Last updated 20:07" Pill */}
-        <View
-          style={[
-            styles.updatedPill,
-            {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.92)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.14)',
-            },
-          ]}>
-          <Ionicons name="time-outline" size={11} color={isDark ? colors.textMuted : colors.textSecondary} />
-          <Text
-            style={[
-              styles.updatedPillText,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+        {/* Top-Right Controls: Satellite / Canvas Toggle */}
+        <View style={styles.topRightRow}>
+          <Pressable
+            onPress={() => {
+              triggerHaptic();
+              setMapMode((m) => (m === 'streets' ? 'satellite' : 'streets'));
+            }}
+            style={({ pressed }) => [
+              styles.mapModeBtn,
+              {
+                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.90)' : 'rgba(255, 255, 255, 0.92)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 92, 224, 0.14)',
+                opacity: pressed ? 0.8 : 1,
+              },
             ]}>
-            Last updated 20:07
-          </Text>
+            <Ionicons
+              name={mapMode === 'satellite' ? 'map-outline' : 'earth-outline'}
+              size={12}
+              color={colors.text}
+            />
+            <Text style={[styles.mapModeText, { color: colors.text }]}>
+              {mapMode === 'satellite' ? 'Canvas' : 'Satellite'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Right Controls: Zoom +/- and Locate Target Buttons */}
@@ -347,7 +488,10 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           <Pressable
             onPress={() => {
               triggerHaptic();
-              if (activeUser) setSelectedMemberId(activeUser.id);
+              if (activeUser) {
+                setSelectedMemberId(activeUser.id);
+                setPanOffset({ x: 0, y: 0 });
+              }
             }}
             style={[
               styles.controlCircleBtn,
@@ -385,6 +529,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           onPress={() => {
             triggerHaptic();
             setSelectedMemberId(null);
+            setPanOffset({ x: 0, y: 0 });
           }}
           style={[
             styles.filterChip,
@@ -429,7 +574,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
         </Pressable>
 
         {/* Member Chips with Green Dot */}
-        {members.map((m) => {
+        {displayMembers.map((m) => {
           const isSelected = selectedMemberId === m.id;
           return (
             <Pressable
@@ -437,6 +582,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
               onPress={() => {
                 triggerHaptic();
                 setSelectedMemberId(isSelected ? null : m.id);
+                setPanOffset({ x: 0, y: 0 });
               }}
               style={[
                 styles.filterChip,
@@ -486,7 +632,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
                     fontWeight: isSelected ? '800' : '600',
                   },
                 ]}>
-                {m.name}
+                {m.name.split(' ')[0]}
               </Text>
             </Pressable>
           );
@@ -531,33 +677,22 @@ const styles = StyleSheet.create({
 
   // Map Container
   mapContainer: {
-    height: 220,
+    height: 240,
     borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
   },
-  mapImageBackground: {
-    ...StyleSheet.absoluteFill,
-    opacity: 0.85,
-  },
-  vectorOverlay: {
+  mapCanvasPlane: {
     ...StyleSheet.absoluteFill,
   },
-  roadLine1: {
-    position: 'absolute',
-    top: '42%',
-    left: 0,
-    right: 0,
-    height: 6,
-    transform: [{ rotate: '-12deg' }],
+  tileGridContainer: {
+    ...StyleSheet.absoluteFill,
   },
-  roadLine2: {
+  mapRasterTile: {
     position: 'absolute',
-    left: '52%',
-    top: 0,
-    bottom: 0,
-    width: 6,
+    width: 256,
+    height: 256,
   },
 
   // Home Marker
@@ -682,26 +817,31 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '600',
   },
-  updatedPill: {
+  topRightRow: {
     position: 'absolute',
     top: 10,
     right: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+  },
+  mapModeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4.5,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
   },
-  updatedPillText: {
+  mapModeText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rightControlsCluster: {
     position: 'absolute',
     right: 10,
-    top: 48,
+    top: 46,
     gap: 6,
   },
   controlCircleBtn: {
