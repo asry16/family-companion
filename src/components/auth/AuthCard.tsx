@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
+import { useAuth } from '@/context/AuthContext';
 import { FrontPageTokens, Colors } from '@/constants/theme';
 import { authService } from '@/services/authService';
 import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
@@ -33,7 +34,7 @@ export interface AuthCardProps {
   showSocialSignIn?: boolean;
   onSuccess: () => void;
   onJoinWithCode: () => void;
-  onForgotPassword?: (email?: string) => void;
+  onForgotPassword?: (prefilledIdentifier?: string) => void;
   onOpenTerms?: () => void;
   onOpenPrivacy?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -53,6 +54,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 }) => {
   const { colors, isDark } = useAppTheme();
   const { setSimpleMode } = useFamily();
+  const { signIn, signUp } = useAuth();
 
   // State Management
   const [cardState, setCardState] = useState<AuthCardState>(initialState);
@@ -136,7 +138,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setLoading(true);
 
     try {
-      const res = await authService.signIn(cleanEmail, signInPassword);
+      const res = await signIn(cleanEmail, signInPassword);
       if (res.success) {
         if (Platform.OS !== 'web') {
           try {
@@ -270,7 +272,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
     try {
       const isEmail = cleanContact.includes('@');
-      const res = await authService.signUp({
+      const res = await signUp({
         name: cleanName,
         email: isEmail ? cleanContact : undefined,
         phone: !isEmail ? cleanContact : undefined,

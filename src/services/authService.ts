@@ -32,9 +32,14 @@ export interface IAuthService {
 // Simulated in-memory store for OTP reset verification
 const pendingPasswordResetOtps: Record<string, { code: string; expiresAt: number }> = {};
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const AUTH_STORAGE_KEY = '@kinly_auth_user_v1';
+const REGISTERED_ACCOUNTS_KEY = '@kinly_accounts_vault_v1';
+
 class MockAuthService implements IAuthService {
   async signIn(emailOrPhone: string, password: string): Promise<AuthServiceResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const trimmed = emailOrPhone.trim().toLowerCase();
     if (!trimmed) {
@@ -45,11 +50,29 @@ class MockAuthService implements IAuthService {
       return { success: false, error: 'Password must be at least 6 characters.' };
     }
 
+    // Persist session so route gating succeeds
+    try {
+      const isEmail = trimmed.includes('@');
+      const authUser = {
+        id: `user_${Date.now()}`,
+        name: isEmail ? trimmed.split('@')[0] : 'Family Member',
+        email: isEmail ? trimmed : `${trimmed.replace(/\D/g, '')}@kinly.local`,
+        phone: !isEmail ? trimmed : undefined,
+        provider: 'email',
+        familyMemberId: `member_${Date.now()}`,
+        familyName: 'KinLy Family',
+        relation: 'Self',
+        isEmailVerified: true,
+        rememberMe: true,
+      };
+      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authUser));
+    } catch {}
+
     return { success: true };
   }
 
   async signUp(payload: SignUpPayload): Promise<AuthServiceResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     const { name, email, phone, password, inviteCode } = payload;
 
@@ -87,7 +110,26 @@ class MockAuthService implements IAuthService {
       return { success: false, error: 'Invalid invite code format.' };
     }
 
-    return { success: true, familyName: inviteCode ? 'Connected Family' : undefined };
+    const familyName = inviteCode ? 'Connected Family' : `${name.trim()}'s Family`;
+
+    // Persist session so route gating succeeds
+    try {
+      const authUser = {
+        id: `user_${Date.now()}`,
+        name: name.trim(),
+        email: cleanEmail || `${cleanPhone.replace(/\D/g, '')}@kinly.local`,
+        phone: cleanPhone || undefined,
+        provider: 'email',
+        familyMemberId: `member_${Date.now()}`,
+        familyName,
+        relation: 'Self',
+        isEmailVerified: true,
+        rememberMe: true,
+      };
+      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authUser));
+    } catch {}
+
+    return { success: true, familyName };
   }
 
   async joinWithCode(code: string): Promise<AuthServiceResponse> {

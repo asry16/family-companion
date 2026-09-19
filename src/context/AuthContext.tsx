@@ -29,12 +29,15 @@ interface StoredUserAccount {
   name: string;
   username?: string;
   email: string;
+  phone?: string;
+  dateOfBirth?: string;
   passwordHash: string; // SHA-256 hashed, NEVER plain text
   familyMemberId: string;
   familyName?: string;
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   verificationCode?: string;
+  mode?: 'elderly' | 'default';
 }
 
 interface AuthContextValue {
@@ -43,6 +46,16 @@ interface AuthContextValue {
   isLoading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  signIn: (identifier: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
+  signUp: (payload: {
+    name: string;
+    email?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    password: string;
+    inviteCode?: string;
+    mode?: 'elderly' | 'default';
+  }) => Promise<{ success: boolean; error?: string; familyName?: string }>;
   signInWithEmail: (email: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (
     name: string,
@@ -132,19 +145,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
-  // Sign In with Email & Password with Brute-Force Rate Limiter
-  const signInWithEmail = useCallback(
-    async (email: string, pass: string, rememberMe: boolean = true) => {
+  // Sign In with Email or Phone with Brute-Force Rate Limiter & Demo Account Support
+  const signIn = useCallback(
+    async (identifier: string, pass: string, rememberMe: boolean = true) => {
       try {
-        const cleanEmail = email.trim().toLowerCase();
+        const rawId = identifier.trim();
         const cleanPass = pass.trim();
 
-        if (!cleanEmail || !cleanPass) {
-          return { success: false, error: 'Email and password are required.' };
+        if (!rawId || !cleanPass) {
+          return { success: false, error: 'Email address or phone number and password are required.' };
         }
 
+        const isEmail = rawId.includes('@');
+        const cleanEmail = isEmail ? rawId.toLowerCase() : '';
+        const cleanPhoneDigits = !isEmail ? rawId.replace(/\D/g, '') : '';
+        const lockoutKey = cleanEmail || cleanPhoneDigits || rawId;
+
         // Check Lockout
-        const attemptRecord = failedAttemptsMap[cleanEmail];
+        const attemptRecord = failedAttemptsMap[lockoutKey];
         if (attemptRecord && attemptRecord.lockedUntil) {
           if (Date.now() < attemptRecord.lockedUntil) {
             const remainingSec = Math.ceil((attemptRecord.lockedUntil - Date.now()) / 1000);
@@ -153,22 +171,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               error: `Too many failed attempts. Account temporarily locked for ${remainingSec}s to protect your vault.`,
             };
           } else {
-            // Lockout expired, reset counter
-            delete failedAttemptsMap[cleanEmail];
+            delete failedAttemptsMap[lockoutKey];
           }
         }
 
         // 1. Try Backend API first
         try {
-          const apiRes = await apiClient.auth.login(cleanEmail, cleanPass);
+          const apiRes = await apiClient.auth.login(cleanEmail || rawId, cleanPass);
           if (apiRes.success && apiRes.data?.user) {
-            delete failedAttemptsMap[cleanEmail];
+            delete failedAttemptsMap[lockoutKey];
             const sUser = apiRes.data.user;
             const authenticatedUser: AuthUser = {
               id: sUser.id,
               name: sUser.name,
               username: sUser.username || undefined,
               email: sUser.email,
+              phone: sUser.phone || undefined,
               provider: 'email',
               familyMemberId: sUser.familyMemberId || `member_${sUser.id}`,
               familyName: sUser.familyName || `${sUser.name}'s Family`,
@@ -180,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return { success: true };
           }
         } catch {
-          // Network error or server offline: check local/legacy accounts
+          // Network error or server offline: proceed to local accounts
         }
 
         // 2. Check local accounts (AsyncStorage)
@@ -196,31 +214,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (e) {}
         }
 
-        const found = accounts.find((a) => a.email.toLowerCase() === cleanEmail);
+        // Seed demo account if no accounts exist or if logging in as demo
+        if (accounts.length === 0 || rawId.toLowerCase() === 'demo@kinly.app') {
+          const demoHashed = await hashPassword('password123');
+          const demoAccount: StoredUserAccount = {
+            id: 'user_demo_chen',
+            name: 'Sarah Chen',
+            username: 'sarah_chen',
+            email: 'demo@kinly.app',
+            phone: '+1 555-0100',
+            passwordHash: demoHashed,
+            familyMemberId: 'member_demo_sarah',
+            familyName: "Chen Family",
+            relation: 'Mother',
+            isEmailVerified: true,
+          };
+          if (!accounts.some((a) => a.email.toLowerCase() === 'demo@kinly.app')) {
+            accounts.push(demoAccount);
+            await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
+          }
+        }
+
+        // Match by email, phone, or username
+        const found = accounts.find((a) => {
+          if (cleanEmail && a.email && a.email.toLowerCase() === cleanEmail) return true;
+          if (cleanPhoneDigits && a.phone && a.phone.replace(/\D/g, '') === cleanPhoneDigits) return true;
+          if (a.username && a.username.toLowerCase() === rawId.toLowerCase()) return true;
+          return false;
+        });
 
         if (found) {
           const isPasswordCorrect = found.passwordHash === hashed;
-
           if (isPasswordCorrect) {
-            delete failedAttemptsMap[cleanEmail];
-
-            // Automatically sync/migrate this local account to SQLite backend
-            try {
-              await apiClient.auth.register({
-                name: found.name,
-                email: found.email,
-                password: cleanPass,
-                username: found.username,
-                familyName: found.familyName,
-                relation: found.relation,
-              });
-            } catch {}
+            delete failedAttemptsMap[lockoutKey];
 
             const authenticatedUser: AuthUser = {
               id: found.id,
               name: found.name,
               username: found.username,
               email: found.email,
+              phone: found.phone,
               provider: 'email',
               familyMemberId: found.familyMemberId || `member_${found.id}`,
               familyName: found.familyName || `${found.name}'s Family`,
@@ -232,10 +265,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await saveUserSession(authenticatedUser, rememberMe);
             return { success: true };
           } else {
-            // Password did not match
-            const currentAttempts = (failedAttemptsMap[cleanEmail]?.count || 0) + 1;
+            const currentAttempts = (failedAttemptsMap[lockoutKey]?.count || 0) + 1;
             if (currentAttempts >= 5) {
-              failedAttemptsMap[cleanEmail] = {
+              failedAttemptsMap[lockoutKey] = {
                 count: currentAttempts,
                 lockedUntil: Date.now() + 30000,
               };
@@ -244,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 error: 'Too many incorrect passwords. Account locked for 30 seconds.',
               };
             } else {
-              failedAttemptsMap[cleanEmail] = { count: currentAttempts };
+              failedAttemptsMap[lockoutKey] = { count: currentAttempts };
               return {
                 success: false,
                 error: `Incorrect password. (${5 - currentAttempts} attempts remaining before lockout)`,
@@ -253,9 +285,218 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        return { success: false, error: 'No account found with this email. Please sign up.' };
+        return {
+          success: false,
+          error: isEmail
+            ? 'No account found with this email. Please sign up.'
+            : 'No account found with this phone number. Please sign up.',
+        };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Authentication failed.' };
+      }
+    },
+    []
+  );
+
+  // Sign In with Email (backwards compatibility wrapper)
+  const signInWithEmail = useCallback(
+    async (email: string, pass: string, rememberMe: boolean = true) => {
+      return signIn(email, pass, rememberMe);
+    },
+    [signIn]
+  );
+
+  // Sign Up / Create Account with Email or Phone, DOB, Mode, and Immediate Session Activation
+  const signUp = useCallback(
+    async (payload: {
+      name: string;
+      email?: string;
+      phone?: string;
+      dateOfBirth?: string;
+      password: string;
+      inviteCode?: string;
+      mode?: 'elderly' | 'default';
+    }) => {
+      try {
+        const cleanName = payload.name.trim();
+        const cleanEmail = payload.email?.trim().toLowerCase() || '';
+        const cleanPhone = payload.phone?.trim() || '';
+        const cleanPhoneDigits = cleanPhone.replace(/\D/g, '');
+        const cleanDob = payload.dateOfBirth?.trim() || '';
+        const cleanPass = payload.password.trim();
+        const inviteCode = payload.inviteCode?.trim();
+        const mode = payload.mode || 'default';
+
+        if (!cleanName) {
+          return { success: false, error: 'Full name is required.' };
+        }
+
+        if (!cleanEmail && !cleanPhone) {
+          return { success: false, error: 'Please enter an email address or phone number.' };
+        }
+
+        if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+          return { success: false, error: 'Please enter a valid email address.' };
+        }
+
+        if (cleanPhone && (cleanPhoneDigits.length < 7 || cleanPhoneDigits.length > 15)) {
+          return { success: false, error: 'Please enter a valid phone number (at least 7 digits).' };
+        }
+
+        if (cleanPass.length < 8) {
+          return { success: false, error: 'Password must be at least 8 characters long.' };
+        }
+
+        const hashed = await hashPassword(cleanPass);
+
+        // Fetch stored accounts
+        const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
+        let accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : [];
+
+        // Check duplicate email
+        if (cleanEmail && accounts.some((a) => a.email && a.email.toLowerCase() === cleanEmail)) {
+          return { success: false, error: 'An account with this email already exists. Please sign in.' };
+        }
+
+        // Check duplicate phone
+        if (cleanPhoneDigits && accounts.some((a) => a.phone && a.phone.replace(/\D/g, '') === cleanPhoneDigits)) {
+          return { success: false, error: 'An account with this phone number already exists. Please sign in.' };
+        }
+
+        const customFamilyName = inviteCode ? 'Connected Family' : `${cleanName}'s Family`;
+        const userId = `user_${Date.now()}`;
+        const memberId = `member_${Date.now()}`;
+        const fallbackEmail = cleanEmail || `${cleanPhoneDigits || userId}@kinly.local`;
+
+        // Try backend registration in background (non-blocking)
+        try {
+          await apiClient.auth.register({
+            name: cleanName,
+            email: fallbackEmail,
+            password: cleanPass,
+            familyName: customFamilyName,
+            relation: 'Self',
+          });
+        } catch {}
+
+        const newAccount: StoredUserAccount = {
+          id: userId,
+          name: cleanName,
+          email: fallbackEmail,
+          phone: cleanPhone || undefined,
+          dateOfBirth: cleanDob || undefined,
+          passwordHash: hashed,
+          familyMemberId: memberId,
+          familyName: customFamilyName,
+          relation: 'Self',
+          isEmailVerified: true,
+          mode,
+        };
+
+        accounts.push(newAccount);
+        await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
+
+        // Create initial personalized user member and family profile in family storage
+        const userMember: FamilyMember = {
+          id: memberId,
+          name: cleanName,
+          relation: 'Self',
+          initials: cleanName
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          avatarColor: '#3B82F6',
+          isSelf: true,
+          statusMessage: 'Just joined KinLy!',
+          currentPlaceId: 'place_home',
+          humanLocation: 'At Home',
+          batteryLevel: 98,
+          isCharging: false,
+          isSharingLocation: true,
+          sharingDuration: 'always',
+          lastUpdated: 'Just now',
+          availability: 'available',
+          phone: cleanPhone || '+1 555-0100',
+          ringerMode: 'sound',
+          deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
+          coords: {
+            x: 50,
+            y: 45,
+            latitude: 28.4595,
+            longitude: 77.0266,
+          },
+        };
+
+        const userProfile: FamilyProfile = {
+          id: `family_${Date.now()}`,
+          name: customFamilyName,
+          code: inviteCode || `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
+          address: 'Home Address',
+          homeCity: 'Family Home',
+          membersCount: 1,
+        };
+
+        const initialUserState = {
+          profile: userProfile,
+          members: [userMember],
+          places: [
+            {
+              id: 'place_home',
+              name: 'Home',
+              address: 'Family Residence',
+              type: 'home',
+              isSafeZone: true,
+              coordinates: { latitude: 28.4595, longitude: 77.0266 },
+              iconName: 'home',
+              color: '#3B82F6',
+            },
+          ],
+          tasks: [],
+          events: [],
+          reminders: [],
+          memories: [],
+          documents: [],
+          notifications: [
+            {
+              id: `notif_${Date.now()}`,
+              title: `Welcome to ${customFamilyName}!`,
+              body: `Your private family vault is active. Tap Circle to invite or add members.`,
+              priority: 'important',
+              timestamp: 'Just now',
+              isRead: false,
+              category: 'ai',
+            },
+          ],
+          simpleMode: mode === 'elderly',
+        };
+
+        await AsyncStorage.setItem(`@kinly_family_state_${newAccount.id}`, JSON.stringify(initialUserState));
+        await AsyncStorage.setItem('@kinly_family_state_v1', JSON.stringify(initialUserState));
+
+        // Create authenticated user session and activate
+        const authenticatedUser: AuthUser = {
+          id: userId,
+          name: cleanName,
+          email: fallbackEmail,
+          phone: cleanPhone || undefined,
+          provider: 'email',
+          familyMemberId: memberId,
+          familyName: customFamilyName,
+          relation: 'Self',
+          isEmailVerified: true,
+          rememberMe: true,
+        };
+
+        await saveUserSession(authenticatedUser, true);
+
+        return {
+          success: true,
+          familyName: customFamilyName,
+        };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Registration failed.' };
       }
     },
     []
@@ -772,6 +1013,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         signInWithGoogle,
         signInWithApple,
+        signIn,
+        signUp,
         signInWithEmail,
         signUpWithEmail,
         verifyEmailCode,
