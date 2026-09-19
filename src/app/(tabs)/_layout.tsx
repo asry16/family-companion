@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View, StyleSheet, Text } from 'react-native';
+import { Platform, View, StyleSheet, Text, Keyboard } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -10,6 +10,20 @@ import { useFamily } from '@/context/FamilyContext';
 export default function TabsLayout() {
   const { colors, isElderly, isDark } = useAppTheme();
   const { suggestions, tasks } = useFamily();
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setIsKeyboardVisible(false));
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const pendingCount = tasks.filter((t) => !t.isCompleted).length;
   const activeSuggestions = suggestions.filter((s) => s.status === 'active').length;
@@ -29,6 +43,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: isDark ? colors.textMuted : colors.textSecondary,
         tabBarStyle: {
+          display: isKeyboardVisible ? 'none' : 'flex',
           position: 'absolute',
           bottom: Platform.select({ ios: 20, default: 14 }),
           left: 14,
@@ -131,7 +146,7 @@ export default function TabsLayout() {
                 fontSize: 10,
                 fontWeight: '700',
                 color: focused
-                  ? colors.purple
+                  ? colors.blue
                   : isDark
                   ? colors.textMuted
                   : colors.textSecondary,
@@ -140,13 +155,22 @@ export default function TabsLayout() {
               Assistant
             </Text>
           ),
-          tabBarIcon: () => (
+          tabBarIcon: ({ focused }) => (
             <View style={styles.centerAssistantWrap}>
               <LinearGradient
                 colors={['#3B6FF0', '#7C5CE0']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.centerAssistantCircle}>
+                style={[
+                  styles.centerAssistantCircle,
+                  focused && {
+                    borderColor: '#FFFFFF',
+                    shadowColor: colors.blue,
+                    shadowOpacity: 0.65,
+                    shadowRadius: 16,
+                    elevation: 10,
+                  },
+                ]}>
                 <Ionicons
                   name="sparkles"
                   size={21}
