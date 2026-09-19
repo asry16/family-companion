@@ -112,7 +112,7 @@ export default function MemoryScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* 1. Header: Avatar "A" with Green Check Badge, "Family Hub", Elderly Pill, Theme Toggle, Bell, Settings */}
       <VaultHeader
-        onOpenSettings={() => router.push('/modal/family-settings')}
+        onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'vault' } })}
       />
 
       <ScrollView

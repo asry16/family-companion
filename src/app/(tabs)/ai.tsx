@@ -195,7 +195,7 @@ export default function AIScreen({
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         {/* 1. Header: Avatar 'A' with green online dot, 'Kinly AI', 'Right by your side', Theme, Bell, Settings */}
         <ChatHeader
-          onOpenSettings={() => router.push('/modal/family-settings')}
+          onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'ai' } })}
         />
 
         {/* 2. Suggested Prompts: Horizontally scrollable row, collapses after first user message */}

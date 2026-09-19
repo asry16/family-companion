@@ -225,7 +225,7 @@ export default function PlansScreen({
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* 1. Header: Avatar 'A' with green online dot, title, subtitle, Bell, Theme toggle, Settings */}
       <PlansHeader
-        onOpenSettings={() => router.push('/modal/family-settings')}
+        onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'plans' } })}
       />
 
       <ScrollView

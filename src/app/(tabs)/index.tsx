@@ -72,7 +72,7 @@ export default function HomeScreen() {
       ]}>
       {/* 1. Personalized Header (Deco greeting, User avatar, Safety status, Action icons) */}
       <PersonalizedHeader
-        onOpenSettings={() => router.push('/modal/family-settings')}
+        onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'home' } })}
       />
 
       <ScrollView
