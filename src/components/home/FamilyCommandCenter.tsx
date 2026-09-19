@@ -95,16 +95,7 @@ export function getMemberPresence(member?: FamilyMember | null, isDark: boolean 
   };
 }
 
-// Convert lon/lat to tile numbers for real map raster layer
-function lon2tile(lon: number, zoom: number) {
-  return Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
-}
-function lat2tile(lat: number, zoom: number) {
-  return Math.floor(
-    ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) *
-      Math.pow(2, zoom)
-  );
-}
+import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
 
 export interface FamilyCommandCenterProps {
   isFullScreen?: boolean;
@@ -123,6 +114,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
 
   // Real GPS & Location State
+  const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
   const [locationPermissionNeeded, setLocationPermissionNeeded] = useState<boolean>(false);
   const [realUserCoords, setRealUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
@@ -190,6 +182,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   }, [sheetVisible, sheetTranslateY]);
 
   // Request real device location
+  // Request real device location
   const handleRequestLocation = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
@@ -202,16 +195,9 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
-          if (activeUser?.id && updateFamilyMember) {
-            updateFamilyMember(activeUser.id, {
-              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
-              lastUpdated: 'Just now',
-            });
-          }
         },
-        (error) => {
-          console.log('Location request error:', error.message);
-          setLocationPermissionNeeded(true);
+        () => {
+          setLocationPermissionNeeded(false);
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
@@ -220,66 +206,27 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
     }
   };
 
-  // Live GPS tracking on mount and continuous watch
+  // Live Location continuous watch via unified locationService
   useEffect(() => {
-    let watchId: number | null = null;
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocationPermissionNeeded(false);
-          setIsGpsLive(true);
-          setGpsAccuracy(Math.round(position.coords.accuracy || 10));
-          setRealUserCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          if (activeUser?.id && updateFamilyMember) {
-            updateFamilyMember(activeUser.id, {
-              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
-              lastUpdated: 'Just now',
-            });
-          }
-        },
-        (error) => {
-          if (error.code === 1) {
-            setLocationPermissionNeeded(true);
-          }
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setLocationPermissionNeeded(false);
-          setIsGpsLive(true);
-          setGpsAccuracy(Math.round(position.coords.accuracy || 10));
-          setRealUserCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          if (activeUser?.id && updateFamilyMember) {
-            updateFamilyMember(activeUser.id, {
-              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
-              lastUpdated: 'Just now',
-            });
-          }
-        },
-        (error) => {
-          if (error.code === 1) {
-            setLocationPermissionNeeded(true);
-          }
-        },
-        { enableHighAccuracy: true, maximumAge: 4000, timeout: 12000 }
-      );
-    }
-
-    return () => {
-      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
-        try {
-          navigator.geolocation.clearWatch(watchId);
-        } catch (e) {}
+    const unsub = watchLocation((loc) => {
+      setLiveLoc(loc);
+      setIsGpsLive(loc.source === 'gps');
+      setGpsAccuracy(loc.accuracy || null);
+      setRealUserCoords({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      });
+      setLocationPermissionNeeded(false);
+      if (activeUser?.id && updateFamilyMember) {
+        updateFamilyMember(activeUser.id, {
+          coords: { x: 50, y: 50, latitude: loc.latitude, longitude: loc.longitude },
+          humanLocation: loc.humanLocation,
+          lastUpdated: 'Just now',
+        });
       }
-    };
+    });
+
+    return () => unsub();
   }, [activeUser?.id, updateFamilyMember]);
 
   // Ensure active user is displayed if members list is empty
@@ -345,8 +292,10 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   }, [displayMembers, isDark]);
 
   // Real base coordinates for map tiles (User live coordinates or default)
-  const baseLat = realUserCoords?.latitude ?? 28.5498;
-  const baseLon = realUserCoords?.longitude ?? 77.2005;
+  // Real base coordinates for map tiles (User live coordinates or default)
+  const baseLat = liveLoc?.latitude ?? realUserCoords?.latitude ?? activeUser?.coords?.latitude ?? 28.5498;
+  const baseLon = liveLoc?.longitude ?? realUserCoords?.longitude ?? activeUser?.coords?.longitude ?? 77.2005;
+  const humanPlace = liveLoc?.humanLocation || activeUser?.humanLocation || 'Live Safe Zone';
   const tileZoom = 14;
   const centerTileX = lon2tile(baseLon, tileZoom);
   const centerTileY = lat2tile(baseLat, tileZoom);
@@ -368,12 +317,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
       for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
         const tx = (centerTileX + dx + 16384) % 16384;
         const ty = (centerTileY + dy + 16384) % 16384;
-        const url =
-          mapMode === 'satellite'
-            ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tileZoom}/${ty}/${tx}`
-            : isDark
-            ? `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`
-            : `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`;
+        const url = getTileUrl(tx, ty, tileZoom, mapMode, isDark);
         tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
       }
     }
@@ -927,8 +871,26 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               const presence = getMemberPresence(member, isDark);
               const isFocused = selectedMember?.id === member.id;
               const isSelf = member.isSelf || member.id === activeUser?.id;
-              const posX = isSelf ? centerX : centerX + (idx % 2 === 0 ? 55 : -55) * idx;
-              const posY = isSelf ? centerY : centerY + (idx % 2 === 0 ? -38 : 42) * idx;
+              let posX = centerX;
+              let posY = centerY;
+              if (isSelf) {
+                posX = centerX;
+                posY = centerY;
+              } else if (
+                member.coords?.latitude &&
+                member.coords?.longitude &&
+                (member.coords.latitude !== baseLat || member.coords.longitude !== baseLon)
+              ) {
+                const memTileX = lon2tile(member.coords.longitude, tileZoom);
+                const memTileY = lat2tile(member.coords.latitude, tileZoom);
+                const deltaX = (memTileX - centerTileX) * 256;
+                const deltaY = (memTileY - centerTileY) * 256;
+                posX = centerX + Math.max(-200, Math.min(200, deltaX));
+                posY = centerY + Math.max(-120, Math.min(120, deltaY));
+              } else {
+                posX = centerX + (idx % 2 === 0 ? 55 : -55) * idx;
+                posY = centerY + (idx % 2 === 0 ? -38 : 42) * idx;
+              }
               const memberName = (member?.name || 'Member').split(' ')[0];
 
               return (
@@ -1050,14 +1012,18 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             <Text style={[styles.overlayLiveText, { color: isDark ? '#34D399' : '#059669' }]}>
               LIVE
             </Text>
-            {isGpsLive && (
+            {isGpsLive ? (
               <Text style={{ fontSize: 9, color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
                 • GPS Live
               </Text>
+            ) : (
+              <Text style={{ fontSize: 9, color: isDark ? '#38BDF8' : '#2563EB', fontWeight: '700', marginLeft: 4 }}>
+                • Network Live
+              </Text>
             )}
           </View>
-          <Text style={[styles.overlaySubText, { color: colors.text }]}>
-            {statusSummary.broadcastingCount} {statusSummary.broadcastingCount === 1 ? 'member' : 'members'} broadcasting
+          <Text style={[styles.overlaySubText, { color: colors.text, maxWidth: 170 }]} numberOfLines={1}>
+            {humanPlace}
           </Text>
         </View>
 
@@ -1331,7 +1297,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                         styles.sheetLiveStatusText,
                         { color: isDark ? '#34D399' : '#059669' },
                       ]}>
-                      Live · Home
+                      Live · {selectedMember.humanLocation || 'Sanctuary'}
                     </Text>
                   </View>
                 </View>
@@ -1344,12 +1310,12 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                 </Pressable>
               </View>
 
-              {/* Details: Updated 2 min ago, Battery 87% */}
+              {/* Details: Location + Updated + Battery */}
               <View style={styles.sheetDetailsBlock}>
                 <View style={styles.sheetDetailLine}>
                   <Ionicons name="location-sharp" size={15} color={colors.textSecondary} />
                   <Text style={[styles.sheetDetailText, { color: colors.textSecondary }]}>
-                    Updated {selectedMember.lastUpdated || '2 min ago'}
+                    📍 {selectedMember.humanLocation || humanPlace} • {selectedMember.lastUpdated || 'Just now'}
                   </Text>
                 </View>
 

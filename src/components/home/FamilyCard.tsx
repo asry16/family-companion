@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
+import { lon2tile, lat2tile, getTileUrl } from '@/services/locationService';
 import { HomeCardTokens } from '@/constants/theme';
 
 interface FamilyCardProps {
@@ -38,6 +39,12 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
     photoUrl: undefined,
     lastUpdated: 'Just now',
   };
+
+  const memberLat = primaryMember.coords?.latitude ?? 28.5498;
+  const memberLon = primaryMember.coords?.longitude ?? 77.2005;
+  const tileX = lon2tile(memberLon, 14);
+  const tileY = lat2tile(memberLat, 14);
+  const tileUrl = getTileUrl(tileX, tileY, 14, 'streets', isDark);
 
   // Accessibility: reduced motion
   const [isReducedMotion, setIsReducedMotion] = useState(false);
@@ -342,7 +349,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           </View>
         </View>
 
-        {/* Map Thumbnail (~40% width, height 64, radius 24) */}
+        {/* Live Map Thumbnail (~40% width, height 64, radius 24) */}
         <View
           style={[
             styles.mapThumbnailWrap,
@@ -350,40 +357,17 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               borderColor: isDark ? 'rgba(56, 189, 248, 0.30)' : 'rgba(124, 92, 224, 0.16)',
             },
           ]}>
-          {/* Stylized Vector Map Illustration (no live tiles, no watermark) */}
-          <View
-            style={[
-              styles.staticMapCanvas,
-              { backgroundColor: isDark ? '#0A1432' : '#EAE8FC' },
-            ]}>
-            {/* Street Line 1 */}
-            <View
-              style={[
-                styles.mapRoad1,
-                { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.22)' : 'rgba(124, 92, 224, 0.22)' },
-              ]}
-            />
-            {/* Street Line 2 */}
-            <View
-              style={[
-                styles.mapRoad2,
-                { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.18)' : 'rgba(79, 142, 247, 0.25)' },
-              ]}
-            />
-            {/* Street Line 3 */}
-            <View
-              style={[
-                styles.mapRoad3,
-                { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.14)' : 'rgba(138, 107, 242, 0.20)' },
-              ]}
-            />
+          <Image
+            source={{ uri: tileUrl }}
+            style={styles.staticMapCanvas}
+            resizeMode="cover"
+          />
 
-            {/* Glowing Green Pin */}
-            <View style={styles.mapPinWrap}>
-              <View style={styles.pinGlowHalo} />
-              <View style={styles.pinCoreCircle}>
-                <Ionicons name="location" size={11} color="#FFFFFF" />
-              </View>
+          {/* Glowing Green Live GPS Beacon */}
+          <View style={styles.mapPinWrap}>
+            <View style={[styles.pinGlowHalo, { backgroundColor: 'rgba(34, 197, 139, 0.45)' }]} />
+            <View style={[styles.pinCoreCircle, { backgroundColor: '#22C58B' }]}>
+              <Ionicons name="location" size={11} color="#FFFFFF" />
             </View>
           </View>
 

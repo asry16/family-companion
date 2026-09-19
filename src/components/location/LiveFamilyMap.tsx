@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Platform,
   Linking,
   ScrollView,
+  Image,
+  DimensionValue,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +16,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
+import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
 
 interface LiveFamilyMapProps {
   onMemberPress?: (member: FamilyMember) => void;
@@ -30,11 +33,22 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
   // Selected or focused member on map
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
-  // Map mode: 'live' or 'places'
+  // Map mode: 'streets' or 'satellite'
   const [mapStyle, setMapStyle] = useState<'streets' | 'satellite'>('streets');
+
+  // Live Location & Layout State
+  const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
+  const [mapLayout, setMapLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Simulated live pulse animation state
   const [pulseTick, setPulseTick] = useState(0);
+
+  useEffect(() => {
+    const unsub = watchLocation((loc) => {
+      setLiveLoc(loc);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -74,6 +88,34 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
     alert(`Ping sent to ${name}!`);
   };
 
+  const baseLat = liveLoc?.latitude ?? activeUser?.coords?.latitude ?? 28.5498;
+  const baseLon = liveLoc?.longitude ?? activeUser?.coords?.longitude ?? 77.2005;
+  const humanPlace = liveLoc?.humanLocation || activeUser?.humanLocation || 'Live Safe Zone';
+  const tileZoom = 14;
+  const centerTileX = lon2tile(baseLon, tileZoom);
+  const centerTileY = lat2tile(baseLat, tileZoom);
+
+  const containerW = mapLayout.width > 0 ? mapLayout.width : 400;
+  const containerH = mapLayout.height > 0 ? mapLayout.height : 240;
+  const centerX = Math.round(containerW / 2);
+  const centerY = Math.round(containerH / 2);
+
+  const halfSpanX = Math.max(2, Math.ceil(containerW / 512) + 1);
+  const halfSpanY = Math.max(1, Math.ceil(containerH / 512) + 1);
+
+  const mapTiles = useMemo(() => {
+    const tiles: Array<{ x: number; y: number; url: string; key: string }> = [];
+    for (let dy = -halfSpanY; dy <= halfSpanY; dy++) {
+      for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
+        const tx = (centerTileX + dx + 16384) % 16384;
+        const ty = (centerTileY + dy + 16384) % 16384;
+        const url = getTileUrl(tx, ty, tileZoom, mapStyle, isDark);
+        tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapStyle}_${isDark ? 'dark' : 'light'}` });
+      }
+    }
+    return tiles;
+  }, [centerTileX, centerTileY, mapStyle, isDark, halfSpanX, halfSpanY]);
+
   return (
     <View
       style={[
@@ -94,7 +136,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
               Real-Time Family Live Map
             </Text>
             <Text style={[styles.mapSub, { color: colors.textSecondary }]}>
-              {members.length} members broadcasting live GPS & telemetry
+              {humanPlace} • {members.length} broadcasting
             </Text>
           </View>
         </View>
@@ -232,6 +274,12 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
 
       {/* Live Map Canvas */}
       <View
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width > 0 && height > 0) {
+            setMapLayout((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
+          }
+        }}
         style={[
           styles.canvas,
           {
@@ -244,19 +292,46 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
             borderColor: colors.borderSubtle,
           },
         ]}>
-        {/* Map Roads & Waterway Accents */}
-        <View style={[styles.riverBand, { backgroundColor: mapStyle === 'satellite' ? '#1E293B' : '#E0F2FE' }]} />
-        <View style={[styles.roadHorizontal, { backgroundColor: mapStyle === 'satellite' ? '#334155' : '#E2E8F0' }]} />
-        <View style={[styles.roadVertical, { backgroundColor: mapStyle === 'satellite' ? '#334155' : '#E2E8F0' }]} />
-        <View style={[styles.roadDiagonal, { backgroundColor: mapStyle === 'satellite' ? '#334155' : '#E2E8F0' }]} />
-        <View style={[styles.parkPatch, { backgroundColor: mapStyle === 'satellite' ? 'rgba(16, 185, 129, 0.08)' : '#DCFCE7' }]} />
+        {/* Real Free ArcGIS Raster Tiles */}
+        <View style={StyleSheet.absoluteFill}>
+          {mapTiles.map((tile) => (
+            <Image
+              key={tile.key}
+              source={{ uri: tile.url }}
+              style={[
+                styles.mapRasterTile,
+                {
+                  left: centerX + tile.x * 256 - 128,
+                  top: centerY + tile.y * 256 - 128,
+                },
+              ]}
+              resizeMode="cover"
+            />
+          ))}
+        </View>
 
         {/* Live Pins for ALL Family Members */}
         {members.map((member, idx) => {
-          const fallbackX = 50 + ((idx * 28 + 15) % 60) - 30;
-          const fallbackY = 48 + ((idx * 34 + 10) % 50) - 25;
-          const coordsX = member.coords?.x ?? fallbackX;
-          const coordsY = member.coords?.y ?? fallbackY;
+          const isSelf = member.isSelf || member.id === activeUser?.id;
+          let pinLeft: DimensionValue = `${member.coords?.x ?? (50 + ((idx * 28 + 15) % 60) - 30)}%`;
+          let pinTop: DimensionValue = `${member.coords?.y ?? (48 + ((idx * 34 + 10) % 50) - 25)}%`;
+
+          if (isSelf) {
+            pinLeft = centerX;
+            pinTop = centerY;
+          } else if (
+            member.coords?.latitude &&
+            member.coords?.longitude &&
+            (member.coords.latitude !== baseLat || member.coords.longitude !== baseLon)
+          ) {
+            const memTileX = lon2tile(member.coords.longitude, tileZoom);
+            const memTileY = lat2tile(member.coords.latitude, tileZoom);
+            const deltaX = (memTileX - centerTileX) * 256;
+            const deltaY = (memTileY - centerTileY) * 256;
+            pinLeft = centerX + Math.max(-160, Math.min(160, deltaX));
+            pinTop = centerY + Math.max(-100, Math.min(100, deltaY));
+          }
+
           const isSelected = selectedMemberId === member.id;
           const isTransit = member.availability === 'in_transit';
 
@@ -273,8 +348,8 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
               style={[
                 styles.liveMemberPinWrap,
                 {
-                  left: `${coordsX}%`,
-                  top: `${coordsY}%`,
+                  left: pinLeft,
+                  top: pinTop,
                   zIndex: isSelected ? 30 : 10,
                   transform: [
                     { translateX: -24 },
@@ -677,43 +752,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
-  riverBand: {
+  mapRasterTile: {
     position: 'absolute',
-    top: '35%',
-    left: 0,
-    right: 0,
-    height: 22,
-    transform: [{ rotate: '-8deg' }],
-  },
-  roadHorizontal: {
-    position: 'absolute',
-    top: '55%',
-    left: 0,
-    right: 0,
-    height: 6,
-  },
-  roadVertical: {
-    position: 'absolute',
-    left: '48%',
-    top: 0,
-    bottom: 0,
-    width: 6,
-  },
-  roadDiagonal: {
-    position: 'absolute',
-    left: '20%',
-    top: 0,
-    bottom: 0,
-    width: 4,
-    transform: [{ rotate: '45deg' }],
-  },
-  parkPatch: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-    width: 80,
-    height: 60,
-    borderRadius: 12,
+    width: 256,
+    height: 256,
   },
 
   // Member Live Pins

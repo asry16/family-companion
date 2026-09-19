@@ -31,6 +31,7 @@ import { generateContextSuggestions } from '@/context/ContextEngine';
 import { processFamilyAIQuery, AIResponse } from '@/services/aiService';
 import { apiClient } from '@/services/apiClient';
 import { websocketClient } from '@/services/websocketClient';
+import { watchLocation } from '@/services/locationService';
 
 const STORAGE_KEY = '@kinly_family_state_v1';
 
@@ -486,8 +487,44 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     });
 
+    // Continuous Live GPS & IP Geolocation Watcher for Authenticated User
+    const unwatchLocation = watchLocation((loc) => {
+      if (!isSubscribed) return;
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.isSelf || m.id === user?.familyMemberId
+            ? {
+                ...m,
+                coords: {
+                  x: 50,
+                  y: 50,
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                },
+                humanLocation: loc.humanLocation || m.humanLocation,
+                lastUpdated: 'Just now',
+              }
+            : m
+        )
+      );
+
+      // Broadcast real location update to backend SQLite & other family devices via websocket
+      if (user?.familyMemberId) {
+        websocketClient.send({
+          type: 'LOCATION_UPDATE',
+          memberId: user.familyMemberId,
+          coordsX: 50,
+          coordsY: 50,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          humanLocation: loc.humanLocation,
+        });
+      }
+    });
+
     return () => {
       isSubscribed = false;
+      unwatchLocation();
       removeWs();
       websocketClient.disconnect();
     };

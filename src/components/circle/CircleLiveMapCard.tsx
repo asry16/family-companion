@@ -19,15 +19,7 @@ import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
 
-function lon2tile(lon: number, zoom: number) {
-  return Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
-}
-function lat2tile(lat: number, zoom: number) {
-  return Math.floor(
-    ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) *
-      Math.pow(2, zoom)
-  );
-}
+import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
 
 interface CircleLiveMapCardProps {
   onFullScreen?: () => void;
@@ -43,6 +35,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
   const [mapMode, setMapMode] = useState<'streets' | 'satellite'>('streets');
 
   // Real GPS & Layout State
+  const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
   const [realUserCoords, setRealUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isGpsLive, setIsGpsLive] = useState<boolean>(false);
   const [mapLayout, setMapLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -77,56 +70,25 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
     }
   };
 
-  // Live Continuous GPS Watch
+  // Live Location Watch (GPS + Instant IP Fallback + ArcGIS Reverse Geocoding)
   useEffect(() => {
-    let watchId: number | null = null;
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setIsGpsLive(true);
-          setRealUserCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          if (activeUser?.id && updateFamilyMember) {
-            updateFamilyMember(activeUser.id, {
-              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
-              lastUpdated: 'Just now',
-            });
-          }
-        },
-        (err) => {
-          console.log('Map GPS initial location error:', err.message);
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setIsGpsLive(true);
-          setRealUserCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          if (activeUser?.id && updateFamilyMember) {
-            updateFamilyMember(activeUser.id, {
-              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
-              lastUpdated: 'Just now',
-            });
-          }
-        },
-        (err) => {
-          console.log('Map GPS watch position error:', err.message);
-        },
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
-      );
-    }
-
-    return () => {
-      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.clearWatch(watchId);
+    const unsub = watchLocation((loc) => {
+      setLiveLoc(loc);
+      setIsGpsLive(loc.source === 'gps');
+      setRealUserCoords({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      });
+      if (activeUser?.id && updateFamilyMember) {
+        updateFamilyMember(activeUser.id, {
+          coords: { x: 50, y: 50, latitude: loc.latitude, longitude: loc.longitude },
+          humanLocation: loc.humanLocation,
+          lastUpdated: 'Just now',
+        });
       }
-    };
+    });
+
+    return () => unsub();
   }, [activeUser?.id, updateFamilyMember]);
 
   // Pan gesture responder
@@ -167,8 +129,9 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
   const broadcastingCount = members.length > 0 ? members.length : 1;
 
   // Coordinates and dimensions
-  const baseLat = realUserCoords?.latitude ?? 28.5498;
-  const baseLon = realUserCoords?.longitude ?? 77.2005;
+  const baseLat = liveLoc?.latitude ?? realUserCoords?.latitude ?? activeUser?.coords?.latitude ?? 28.5498;
+  const baseLon = liveLoc?.longitude ?? realUserCoords?.longitude ?? activeUser?.coords?.longitude ?? 77.2005;
+  const humanPlace = liveLoc?.humanLocation || activeUser?.humanLocation || 'Live Safe Zone';
   const tileZoom = 14;
   const centerTileX = lon2tile(baseLon, tileZoom);
   const centerTileY = lat2tile(baseLat, tileZoom);
@@ -188,12 +151,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
       for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
         const tx = (centerTileX + dx + 16384) % 16384;
         const ty = (centerTileY + dy + 16384) % 16384;
-        const url =
-          mapMode === 'satellite'
-            ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tileZoom}/${ty}/${tx}`
-            : isDark
-            ? `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`
-            : `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${tileZoom}/${ty}/${tx}`;
+        const url = getTileUrl(tx, ty, tileZoom, mapMode, isDark);
         tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
       }
     }
@@ -202,6 +160,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
 
   // Selected member for highlight
   const displayMembers = members.length > 0 ? members : (activeUser ? [activeUser] : []);
+  const selectedMember = displayMembers.find((m) => m.id === selectedMemberId);
   const homePlace = places.find((p) => p.type === 'home' || p.name.toLowerCase().includes('home'));
 
   return (
@@ -323,8 +282,26 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           {displayMembers.map((member, idx) => {
             const isSelected = selectedMemberId === member.id;
             const isSelf = member.isSelf || member.id === activeUser?.id;
-            const posX = isSelf ? centerX : centerX + (idx % 2 === 0 ? 55 : -55) * idx;
-            const posY = isSelf ? centerY : centerY + (idx % 2 === 0 ? -35 : 40) * idx;
+            let posX = centerX;
+            let posY = centerY;
+            if (isSelf) {
+              posX = centerX;
+              posY = centerY;
+            } else if (
+              member.coords?.latitude &&
+              member.coords?.longitude &&
+              (member.coords.latitude !== baseLat || member.coords.longitude !== baseLon)
+            ) {
+              const memTileX = lon2tile(member.coords.longitude, tileZoom);
+              const memTileY = lat2tile(member.coords.latitude, tileZoom);
+              const deltaX = (memTileX - centerTileX) * 256;
+              const deltaY = (memTileY - centerTileY) * 256;
+              posX = centerX + Math.max(-160, Math.min(160, deltaX));
+              posY = centerY + Math.max(-90, Math.min(90, deltaY));
+            } else {
+              posX = centerX + (idx % 2 === 0 ? 55 : -55) * idx;
+              posY = centerY + (idx % 2 === 0 ? -35 : 40) * idx;
+            }
 
             return (
               <Pressable
@@ -406,7 +383,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
         </Animated.View>
 
         {/* OVERLAYS: */}
-        {/* Top-Left: Green "LIVE" Pill + "GPS Live" + broadcasting count */}
+        {/* Top-Left: Green "LIVE" Pill + "GPS Live" / "IP Live" + live place */}
         <View
           style={[
             styles.liveStatusPill,
@@ -418,18 +395,23 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           <View style={styles.liveBadgeTag}>
             <View style={[styles.liveInnerDot, { backgroundColor: colors.green }]} />
             <Text style={[styles.liveBadgeText, { color: colors.green }]}>LIVE</Text>
-            {isGpsLive && (
+            {isGpsLive ? (
               <Text style={{ fontSize: 9, color: colors.blue, fontWeight: '700', marginLeft: 2 }}>
                 • GPS
+              </Text>
+            ) : (
+              <Text style={{ fontSize: 9, color: colors.blue, fontWeight: '700', marginLeft: 2 }}>
+                • IP
               </Text>
             )}
           </View>
           <Text
+            numberOfLines={1}
             style={[
               styles.broadcastingText,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+              { color: isDark ? colors.textMuted : colors.textSecondary, maxWidth: 160 },
             ]}>
-            {broadcastingCount} {broadcastingCount === 1 ? 'broadcasting' : 'broadcasting'}
+            {humanPlace}
           </Text>
         </View>
 
@@ -505,18 +487,48 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
         </View>
 
         {/* Bottom-Right: "Recenter" Pill */}
-        <Pressable
-          onPress={handleRecenter}
-          style={[
-            styles.recenterPill,
-            {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : 'rgba(255, 255, 255, 0.94)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
-            },
-          ]}>
-          <Ionicons name="compass-outline" size={13} color={isDark ? colors.blue : '#7C5CE0'} />
-          <Text style={[styles.recenterText, { color: isDark ? colors.blue : '#7C5CE0' }]}>Recenter</Text>
-        </Pressable>
+        {!selectedMember && (
+          <Pressable
+            onPress={handleRecenter}
+            style={[
+              styles.recenterPill,
+              {
+                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : 'rgba(255, 255, 255, 0.94)',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
+              },
+            ]}>
+            <Ionicons name="compass-outline" size={13} color={isDark ? colors.blue : '#7C5CE0'} />
+            <Text style={[styles.recenterText, { color: isDark ? colors.blue : '#7C5CE0' }]}>Recenter</Text>
+          </Pressable>
+        )}
+
+        {/* Selected Member Floating Telemetry Card */}
+        {selectedMember && (
+          <View
+            style={[
+              styles.selectedTelemetryBar,
+              {
+                backgroundColor: isDark ? 'rgba(11, 17, 32, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+                borderColor: isDark ? 'rgba(59, 111, 240, 0.45)' : 'rgba(124, 92, 224, 0.25)',
+              },
+            ]}>
+            <FamilyAvatar member={selectedMember} size="sm" showStatus={false} />
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={[styles.selectedBarName, { color: colors.text }]} numberOfLines={1}>
+                {selectedMember.name} • <Text style={{ color: colors.green, fontWeight: '700' }}>Live</Text>
+              </Text>
+              <Text style={[styles.selectedBarLoc, { color: colors.textSecondary }]} numberOfLines={1}>
+                📍 {selectedMember.humanLocation || humanPlace}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => setSelectedMemberId(null)}
+              hitSlop={8}
+              style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* 3. Below Map: Member Filter Chips ("All (1)" + One chip per member with green dot) */}
@@ -902,5 +914,30 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 12,
+  },
+  selectedTelemetryBar: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  selectedBarName: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  selectedBarLoc: {
+    fontSize: 10.5,
+    marginTop: 2,
   },
 });
