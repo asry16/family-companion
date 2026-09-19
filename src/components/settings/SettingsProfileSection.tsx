@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +16,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 export interface SettingsProfileSectionProps {
   name: string;
   email: string;
+  photoUrl?: string;
   phone?: string;
   relation?: string;
   statusMessage?: string;
@@ -24,6 +26,7 @@ export interface SettingsProfileSectionProps {
 export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
   name = 'Asmita Roy',
   email = 'asmita@kinly.family',
+  photoUrl,
   phone = '+1 555-0100',
   relation = 'Self (Family Organizer)',
   statusMessage = 'Online and safe',
@@ -73,19 +76,29 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
               style={[
                 styles.avatarCircle,
                 {
-                  backgroundColor: isDark ? '#2563EB' : undefined,
+                  backgroundColor: photoUrl ? 'transparent' : isDark ? '#2563EB' : undefined,
                   overflow: 'hidden',
                 },
               ]}>
-              {!isDark && (
-                <LinearGradient
-                  colors={['#4F8EF7', '#8A6BF2']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
+              {photoUrl ? (
+                <Image
+                  source={{ uri: photoUrl }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
                 />
+              ) : (
+                <>
+                  {!isDark && (
+                    <LinearGradient
+                      colors={['#4F8EF7', '#8A6BF2']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  )}
+                  <Text style={styles.avatarText}>{initial}</Text>
+                </>
               )}
-              <Text style={styles.avatarText}>{initial}</Text>
             </View>
             <View
               style={[
@@ -263,6 +276,11 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   avatarText: {
     fontSize: 22,

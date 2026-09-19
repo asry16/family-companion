@@ -124,35 +124,55 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
                 shadowColor: isDark ? act.accent : '#6E5ADC',
               },
             ]}>
-            {/* Glowing circular icon backdrop with subtle inner highlight */}
+            {/* Transparent bubble with light colour */}
             <View
               style={[
-                styles.iconCircle,
+                styles.iconBubble,
                 {
-                  backgroundColor: act.glowBg,
-                  borderColor: isDark ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                  backgroundColor: isDark
+                    ? 'rgba(255, 255, 255, 0.07)'
+                    : 'rgba(255, 255, 255, 0.50)',
+                  borderColor: isDark
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : 'rgba(124, 92, 224, 0.16)',
                 },
               ]}>
               <Ionicons name={act.icon} size={20} color={act.accent} />
             </View>
 
-            {/* Title & Short Subtitle in clean geometric sans */}
+            {/* Title & Rounded Glassmorphism Subtitle Card */}
             <View style={styles.textStack}>
               <Text
+                numberOfLines={1}
                 style={[
                   styles.cardTitle,
                   { color: colors.text, fontSize: isElderly ? 16 : 14.5 },
                 ]}>
                 {act.title}
               </Text>
-              <Text
-                numberOfLines={1}
+
+              {/* Subtitle inside rounded-corner glassmorphism-style card */}
+              <View
                 style={[
-                  styles.cardSubtitle,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
+                  styles.glassSubtitleCard,
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(255, 255, 255, 0.70)',
+                    borderColor: isDark
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(124, 92, 224, 0.12)',
+                  },
                 ]}>
-                {act.subtitle}
-              </Text>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.cardSubtitle,
+                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                  ]}>
+                  {act.subtitle}
+                </Text>
+              </View>
             </View>
           </Pressable>
         ))}
@@ -196,12 +216,21 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  iconCircle: {
+  iconBubble: {
     width: 42,
     height: 42,
     borderRadius: 21,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  glassSubtitleCard: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
   textStack: {
     gap: 2,

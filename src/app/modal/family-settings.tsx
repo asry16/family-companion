@@ -112,6 +112,7 @@ export default function FamilySettingsScreen({
   const selfMember = memberList.find((m) => m.isSelf || m.id === user?.familyMemberId) || memberList[0];
   const userName = user?.name || selfMember?.name || 'Asmita Roy';
   const userEmail = user?.email || 'asmita@kinly.family';
+  const userPhotoUrl = user?.photoUrl || selfMember?.photoUrl;
   const userPhone = user?.phone || selfMember?.phone || '+1 555-0100';
   const userRelation = (user?.relation || selfMember?.relation || 'Self') as MemberRelation;
   const userStatus = selfMember?.statusMessage || 'Online and safe';
@@ -212,6 +213,7 @@ export default function FamilySettingsScreen({
   // Save Profile Changes
   const handleSaveProfile = async (data: {
     name: string;
+    photoUrl?: string;
     phone: string;
     relation: MemberRelation;
     statusMessage: string;
@@ -219,6 +221,7 @@ export default function FamilySettingsScreen({
     // 1. Update Auth Context
     await updateUserProfile({
       name: data.name,
+      photoUrl: data.photoUrl,
       phone: data.phone,
       relation: data.relation,
     });
@@ -231,6 +234,7 @@ export default function FamilySettingsScreen({
           ? {
               ...m,
               name: data.name,
+              photoUrl: data.photoUrl,
               phone: data.phone,
               relation: data.relation,
               statusMessage: data.statusMessage,
@@ -243,6 +247,7 @@ export default function FamilySettingsScreen({
     // 3. Sync to Family Context
     updateFamilyMember(targetId, {
       name: data.name,
+      photoUrl: data.photoUrl,
       phone: data.phone,
       relation: data.relation,
       statusMessage: data.statusMessage,
@@ -285,6 +290,7 @@ export default function FamilySettingsScreen({
         <SettingsProfileSection
           name={userName}
           email={userEmail}
+          photoUrl={userPhotoUrl}
           phone={userPhone}
           relation={userRelation === 'Self' ? 'Self (Family Organizer)' : userRelation}
           statusMessage={userStatus}
@@ -331,6 +337,7 @@ export default function FamilySettingsScreen({
       <SettingsProfileEditModal
         visible={profileEditModalVisible}
         initialName={userName}
+        initialPhotoUrl={userPhotoUrl}
         initialPhone={userPhone}
         initialRelation={userRelation}
         initialStatusMessage={userStatus}

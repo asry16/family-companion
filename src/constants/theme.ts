@@ -404,3 +404,50 @@ export const TabBarTokens = {
   },
 } as const;
 
+export const HomeCardTokens = {
+  familyPulse: {
+    height: 160,
+    radius: 28,
+    padding: 16,
+    headerIconSize: 48,
+    memberPanelHeight: 64,
+    memberPanelRadius: 32,
+    avatarSize: 40,
+    mapThumbnailRadius: 24,
+    viewLiveMapHeight: 32,
+    viewLiveMapPaddingH: 14,
+    viewLiveMapFontSize: 13,
+  },
+  needHelp: {
+    height: 112,
+    radius: 28,
+    padding: 16,
+    warningIconSize: 36,
+    rightColumnWidth: 88,
+    sosSize: 56, // core diameter 56px (range 52-60)
+    holdDurationMs: 2000,
+    cancelSheetTimeoutMs: 5000,
+  },
+  colors: {
+    sosLightBg: ['#FFEDEE', '#FFE3E6'] as const,
+    sosLightBorder: '#F7C6CF',
+    sosLightTitle: '#7A1230',
+    sosLightSubtitle: '#8A4A5A',
+    sosLightCore: ['#FF7A7A', '#EF4444'] as const,
+
+    sosDarkBg: 'rgba(30, 10, 20, 0.90)',
+    sosDarkBorder: 'rgba(255, 92, 108, 0.60)',
+    sosDarkTitle: '#FF8A8A',
+    sosDarkSubtitle: '#F0D0D8',
+    sosDarkCore: '#0F172A',
+    sosDarkRing: '#FF5C6C',
+    sosDarkGlow: 'rgba(255, 92, 108, 0.50)',
+
+    pulseGreenGlow: 'rgba(46, 191, 142, 0.40)',
+    pulseDotHalo: 'rgba(46, 191, 142, 0.50)',
+    roseRing1: 'rgba(244, 63, 94, 0.35)',
+    roseRing2: 'rgba(244, 63, 94, 0.22)',
+  },
+} as const;
+
+

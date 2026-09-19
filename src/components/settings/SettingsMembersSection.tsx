@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -111,11 +112,22 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
                   style={[
                     styles.avatarCircle,
                     {
-                      backgroundColor: member.avatarColor || (isDark ? '#1E293B' : '#7C5CE0'),
+                      backgroundColor: member.photoUrl
+                        ? 'transparent'
+                        : member.avatarColor || (isDark ? '#1E293B' : '#7C5CE0'),
                       borderColor: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(124, 92, 224, 0.20)',
+                      overflow: 'hidden',
                     },
                   ]}>
-                  <Text style={styles.avatarText}>{initial}</Text>
+                  {member.photoUrl ? (
+                    <Image
+                      source={{ uri: member.photoUrl }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{initial}</Text>
+                  )}
                 </View>
                 {/* Green Online Dot */}
                 <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
@@ -266,10 +278,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
   avatarText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
+    color: '#FFFFFF',
   },
   onlineDot: {
     position: 'absolute',

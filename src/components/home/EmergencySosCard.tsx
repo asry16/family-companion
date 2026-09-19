@@ -1,110 +1,238 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Platform,
+  Animated,
+  Easing,
+  Modal,
+  AccessibilityInfo,
+  AppState,
+  AppStateStatus,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { HomeCardTokens } from '@/constants/theme';
 
 interface EmergencySosCardProps {
   onTriggerSos: (reason: string, details: string) => void;
   onOpenSosModal?: () => void;
+  accuracy?: string;
 }
 
 export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
   onTriggerSos,
+  accuracy = '1m',
 }) => {
-  const { colors, isDark, isElderly } = useAppTheme();
+  const { isDark, isElderly } = useAppTheme();
 
-  // Hold-to-confirm animation state (2 seconds hold)
+  // Accessibility: reduced motion
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  // Holding state (2 seconds hold)
   const [isHolding, setIsHolding] = useState(false);
-  const [holdSuccess, setHoldSuccess] = useState(false);
+  // 5-second countdown sheet state
+  const [showCountdownSheet, setShowCountdownSheet] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(5);
+  const [alertSentSuccess, setAlertSentSuccess] = useState(false);
 
+  // Animated values
+  // Dual concentric rose pulse rings
+  const ring1Anim = useRef(new Animated.Value(0)).current;
+  const ring2Anim = useRef(new Animated.Value(0)).current;
+  // Core breathing: scale 1 to 1.04 over 1600ms
+  const coreBreatheAnim = useRef(new Animated.Value(0)).current;
+  // Hold progress: 0 to 1 over 2000ms
   const holdProgress = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Hold button scale: 1 to 0.96
+  const holdScaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Concentric ambient pulse rings around SOS button
+  // Timers
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hapticTickRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const ring1LoopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const ring2LoopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const breatheLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => setIsReducedMotion(enabled))
+      .catch(() => {});
+
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) =>
+      setIsReducedMotion(enabled)
+    );
+    return () => {
+      if (sub && typeof sub.remove === 'function') sub.remove();
+    };
+  }, []);
+
+  const startPulse = () => {
+    if (isReducedMotion) {
+      ring1Anim.setValue(0.5);
+      ring2Anim.setValue(0.5);
+      coreBreatheAnim.setValue(0.5);
+      return;
+    }
+
+    // Ring 1: 2000ms loop
+    ring1Anim.setValue(0);
+    ring1LoopRef.current = Animated.loop(
+      Animated.timing(ring1Anim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    ring1LoopRef.current.start();
+
+    // Ring 2: 2000ms loop with 700ms initial delay
+    ring2Anim.setValue(0);
+    setTimeout(() => {
+      ring2LoopRef.current = Animated.loop(
+        Animated.timing(ring2Anim, {
           toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
+          duration: 2000,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        })
+      );
+      ring2LoopRef.current.start();
+    }, 700);
+
+    // Core breathing: scale 1 to 1.04 over 1600ms loop
+    coreBreatheAnim.setValue(0);
+    breatheLoopRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(coreBreatheAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.timing(pulseAnim, {
+        Animated.timing(coreBreatheAnim, {
           toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );
-    loop.start();
-    return () => loop.stop();
-  }, [pulseAnim]);
+    breatheLoopRef.current.start();
+  };
 
-  // Press In: starts 2s hold timer and progress animation
-  const handlePressIn = () => {
-    setIsHolding(true);
-    setHoldSuccess(false);
+  const stopPulse = () => {
+    if (ring1LoopRef.current) ring1LoopRef.current.stop();
+    if (ring2LoopRef.current) ring2LoopRef.current.stop();
+    if (breatheLoopRef.current) breatheLoopRef.current.stop();
+  };
 
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch (e) {}
+  useEffect(() => {
+    if (!isHolding && !showCountdownSheet) {
+      startPulse();
+    } else {
+      stopPulse();
     }
 
-    // Repeated haptic pulses while holding
-    let ticks = 0;
-    hapticIntervalRef.current = setInterval(() => {
-      ticks++;
-      if (Platform.OS !== 'web') {
-        try {
-          Haptics.impactAsync(
-            ticks > 3
-              ? Haptics.ImpactFeedbackStyle.Heavy
-              : Haptics.ImpactFeedbackStyle.Light
-          );
-        } catch (e) {}
+    const handleAppState = (state: AppStateStatus) => {
+      if (state === 'active' && !isHolding && !showCountdownSheet) {
+        startPulse();
+      } else {
+        stopPulse();
       }
-    }, 400);
+    };
 
-    // Progress animation 0 -> 1 over exactly 2000ms
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => {
+      stopPulse();
+      sub.remove();
+    };
+  }, [isHolding, showCountdownSheet, isReducedMotion]);
+
+  // Press In: start 2-second hold
+  const handlePressIn = () => {
+    setIsHolding(true);
+    stopPulse();
+
+    // Scale to 0.96
+    Animated.timing(holdScaleAnim, {
+      toValue: 0.96,
+      duration: 100,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+
+    // Progress 0 to 1 over 2000ms
+    holdProgress.setValue(0);
     Animated.timing(holdProgress, {
       toValue: 1,
-      duration: 2000,
+      duration: HomeCardTokens.needHelp.holdDurationMs,
       easing: Easing.linear,
       useNativeDriver: false,
     }).start();
 
-    // Trigger confirmation after 2000ms
+    // Light haptic ticks every 500ms
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {}
+    }
+    let ticks = 0;
+    hapticTickRef.current = setInterval(() => {
+      ticks++;
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch (e) {}
+      }
+    }, 500);
+
+    // Trigger after 2000ms
     holdTimerRef.current = setTimeout(() => {
-      clearTimers();
-      setHoldSuccess(true);
+      clearHoldTimers();
+      setIsHolding(false);
+      holdProgress.setValue(0);
+      Animated.spring(holdScaleAnim, {
+        toValue: 1,
+        friction: 5,
+        tension: 80,
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+
+      // Strong haptic on trigger
       if (Platform.OS !== 'web') {
         try {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         } catch (e) {}
       }
-      onTriggerSos('Urgent Emergency', '2s Hold-to-confirm triggered from Home Screen');
-      setTimeout(() => {
-        setHoldSuccess(false);
-        setIsHolding(false);
-        holdProgress.setValue(0);
-      }, 3500);
-    }, 2000);
+
+      // Show 5-second "Sending alert… Cancel" sheet
+      triggerCountdownSheet();
+    }, HomeCardTokens.needHelp.holdDurationMs);
   };
 
-  // Press Out: A tap alone does NOTHING. If released before 2s, cancel hold and reset smoothly.
+  // Press Out: cancel if released before 2s
   const handlePressOut = () => {
-    if (holdSuccess) return;
-    clearTimers();
+    if (!isHolding) return;
+    clearHoldTimers();
     setIsHolding(false);
+
+    // Spring back
+    Animated.spring(holdScaleAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 80,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
 
     Animated.timing(holdProgress, {
       toValue: 0,
-      duration: 200,
+      duration: 180,
       useNativeDriver: false,
     }).start();
 
@@ -115,297 +243,559 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
     }
   };
 
-  const clearTimers = () => {
+  const clearHoldTimers = () => {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
-    if (hapticIntervalRef.current) {
-      clearInterval(hapticIntervalRef.current);
-      hapticIntervalRef.current = null;
+    if (hapticTickRef.current) {
+      clearInterval(hapticTickRef.current);
+      hapticTickRef.current = null;
     }
   };
 
-  // SVG circular progress calculations (Radius 36 -> circumference ~226)
+  // 5-second countdown sheet logic
+  const triggerCountdownSheet = () => {
+    setShowCountdownSheet(true);
+    setCountdownSeconds(5);
+    setAlertSentSuccess(false);
 
+    let remaining = 5;
+    countdownTimerRef.current = setInterval(() => {
+      remaining--;
+      setCountdownSeconds(remaining);
+      if (remaining <= 0) {
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        // Alert is actually sent!
+        setAlertSentSuccess(true);
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } catch (e) {}
+        }
+        onTriggerSos('Emergency SOS', 'Hold-to-confirm triggered from Home Screen');
+        setTimeout(() => {
+          setShowCountdownSheet(false);
+          setAlertSentSuccess(false);
+        }, 2000);
+      }
+    }, 1000);
+  };
+
+  const handleCancelCountdown = () => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setShowCountdownSheet(false);
+    setAlertSentSuccess(false);
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (e) {}
+    }
+  };
+
+  // Interpolated animation values
+  const ring1Scale = isReducedMotion
+    ? 1.15
+    : ring1Anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.5],
+      });
+  const ring1Opacity = isReducedMotion
+    ? 0.25
+    : ring1Anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.35, 0],
+      });
+
+  const ring2Scale = isReducedMotion
+    ? 1.25
+    : ring2Anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.5],
+      });
+  const ring2Opacity = isReducedMotion
+    ? 0.18
+    : ring2Anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.22, 0],
+      });
+
+  const coreScale = isReducedMotion
+    ? 1
+    : coreBreatheAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.04],
+      });
+
+  const progressStroke = holdProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
 
   return (
-    <LinearGradient
-      colors={
-        isDark
-          ? ['rgba(240, 82, 77, 0.18)', 'rgba(120, 20, 30, 0.22)', 'rgba(15, 26, 58, 0.85)']
-          : ['#FFEFF4', '#FFE6F0']
-      }
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[
-        styles.cardContainer,
-        {
-          borderColor: isDark ? 'rgba(240, 82, 77, 0.35)' : '#F9CFE0',
-          shadowColor: isDark ? colors.red : '#FF4D7A',
-        },
-      ]}>
-      <View style={styles.cardInnerRow}>
-        {/* Left Content Column */}
-        <View style={styles.leftCol}>
-          {/* Header Row: Red Warning-Triangle Icon + "Need Help?" */}
-          <View style={styles.titleRow}>
-            <View style={[styles.triangleBadge, { backgroundColor: isDark ? 'rgba(240, 82, 77, 0.22)' : '#FFE4E6' }]}>
-              <Ionicons name="warning" size={15} color={colors.red} />
+    <>
+      <View
+        style={[
+          styles.cardContainer,
+          {
+            borderColor: isDark
+              ? HomeCardTokens.colors.sosDarkBorder
+              : HomeCardTokens.colors.sosLightBorder,
+            shadowColor: isDark ? '#FF5C6C' : '#FF4D7A',
+            shadowOpacity: isDark ? 0.35 : 0.12,
+          },
+        ]}>
+        {/* Background Gradient */}
+        <LinearGradient
+          colors={
+            isDark
+              ? ['rgba(32, 10, 22, 0.95)', 'rgba(22, 8, 16, 0.92)']
+              : HomeCardTokens.colors.sosLightBg
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        {/* Left Column */}
+        <View style={styles.leftColumn}>
+          <View style={styles.headerStack}>
+            {/* 36px circle with warning triangle */}
+            <View style={styles.titleRow}>
+              <View
+                style={[
+                  styles.warningIconCircle,
+                  {
+                    backgroundColor: isDark ? '#FF8A80' : '#E5384F',
+                  },
+                ]}>
+                <Ionicons
+                  name="warning"
+                  size={18}
+                  color={isDark ? '#1E0A14' : '#FFFFFF'}
+                />
+              </View>
+
+              {/* Title "Need Help?" bold 18 */}
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.titleText,
+                  {
+                    color: isDark
+                      ? HomeCardTokens.colors.sosDarkTitle
+                      : HomeCardTokens.colors.sosLightTitle,
+                    fontSize: isElderly ? 20 : 18,
+                  },
+                ]}>
+                Need Help?
+              </Text>
             </View>
-            <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#9F1239', fontSize: isElderly ? 20 : 17.5 }]}>
-              Need Help?
+
+            {/* Subtitle: switches to "Keep holding to send alert" during hold */}
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.subtitleText,
+                {
+                  color: isHolding
+                    ? '#E11D48'
+                    : isDark
+                    ? HomeCardTokens.colors.sosDarkSubtitle
+                    : HomeCardTokens.colors.sosLightSubtitle,
+                  fontWeight: isHolding ? '700' : '500',
+                },
+              ]}>
+              {isHolding
+                ? 'Keep holding to send alert…'
+                : 'Hold for 2 seconds to alert your circle'}
             </Text>
           </View>
 
-          {/* Subtitle */}
-          <Text style={[styles.subtitleText, { color: isDark ? 'rgba(255, 255, 255, 0.75)' : '#E11D48' }]}>
-            Hold for 2 seconds to alert your circle
-          </Text>
-
-          {/* Bottom Row of Small Icon Chips: GPS • 1m accuracy • Circle notified */}
-          <View style={styles.bottomChipsRow}>
-            <View style={styles.chipItem}>
-              <Ionicons name="navigate" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
+          {/* Bottom row: GPS • 1m accuracy • Circle notified */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="location-sharp"
+                size={12}
+                color={isDark ? '#FF8A8A' : '#64748B'}
+              />
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.metaText,
+                  { color: isDark ? '#FFB4B4' : '#64748B' },
+                ]}>
                 GPS
               </Text>
             </View>
 
-            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#F472B6' }]}>•</Text>
+            <View style={styles.dotSeparator} />
 
-            <View style={styles.chipItem}>
-              <Ionicons name="locate" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
-                1m accuracy
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="locate"
+                size={12}
+                color={isDark ? '#FF8A8A' : '#64748B'}
+              />
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.metaText,
+                  { color: isDark ? '#FFB4B4' : '#64748B' },
+                ]}>
+                {accuracy} accuracy
               </Text>
             </View>
 
-            <Text style={[styles.dotSeparator, { color: isDark ? '#FDA4AF' : '#F472B6' }]}>•</Text>
+            <View style={styles.dotSeparator} />
 
-            <View style={styles.chipItem}>
-              <Ionicons name="people" size={11} color={colors.red} />
-              <Text style={[styles.chipText, { color: isDark ? '#FDA4AF' : '#9F1239' }]}>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="people"
+                size={12}
+                color={isDark ? '#FF8A8A' : '#64748B'}
+              />
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.metaText,
+                  { color: isDark ? '#FFB4B4' : '#64748B' },
+                ]}>
                 Circle notified
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Right Content Column: Large Red Circular "SOS" Button with Two Soft Concentric Glow Rings */}
-        <View style={styles.sosButtonArea}>
-          {/* Ring 1 (Outer Glow Ring) */}
-          <Animated.View
-            style={[
-              styles.outerGlowRing,
-              {
-                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.16)' : 'rgba(255, 77, 122, 0.16)',
-                transform: [
+        {/* Right Column: Fixed Width 88px, Vertically Centered SOS Button */}
+        <View style={styles.rightColumn}>
+          {/* Pulsing Dual Rings (Active only when NOT holding) */}
+          {!isHolding && (
+            <>
+              {/* Ring 1 */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.haloRing,
                   {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.28],
-                    }),
+                    transform: [{ scale: ring1Scale }],
+                    opacity: ring1Opacity,
                   },
-                ],
-                opacity: pulseAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.7, 0.15],
-                }),
-              },
-            ]}
-          />
-
-          {/* Ring 2 (Inner Glow Ring) */}
-          <Animated.View
-            style={[
-              styles.innerGlowRing,
-              {
-                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.26)' : 'rgba(255, 77, 122, 0.26)',
-                transform: [
+                ]}
+              />
+              {/* Ring 2 (delayed 700ms) */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.haloRing,
                   {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.95, 1.15],
-                    }),
+                    transform: [{ scale: ring2Scale }],
+                    opacity: ring2Opacity,
                   },
-                ],
-                opacity: pulseAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.8, 0.3],
-                }),
-              },
-            ]}
-          />
+                ]}
+              />
+            </>
+          )}
 
-          {/* Animated Progress Ring (Active on hold) */}
-          <Animated.View
-            style={[
-              styles.progressRing,
-              {
-                borderColor: holdSuccess ? '#2EBF8E' : '#FFFFFF',
-                opacity: holdProgress.interpolate({
-                  inputRange: [0, 0.05, 1],
-                  outputRange: [0, 0.85, 1],
-                }),
-                borderWidth: holdProgress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1.5, 3.5],
-                }),
-                transform: [
-                  {
-                    scale: holdProgress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.98, 1.15],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
+          {/* Active Hold Progress Ring (4px stroke around 56px core) */}
+          {isHolding && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.holdProgressRing,
+                {
+                  opacity: progressStroke,
+                  transform: [
+                    {
+                      scale: holdProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.96, 1.12],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          )}
 
-          {/* The Circular Button Pressable */}
+          {/* SOS Core Button */}
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Emergency SOS button, press and hold for 2 seconds"
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            accessibilityRole="button"
-            accessibilityLabel="Emergency SOS button. Hold for 2 seconds."
             style={({ pressed }) => [
-              styles.sosCoreButton,
+              styles.sosPressArea,
               {
-                backgroundColor: holdSuccess ? '#2EBF8E' : colors.red,
-                transform: [{ scale: pressed || isHolding ? 0.94 : 1 }],
+                opacity: pressed ? 0.96 : 1,
               },
             ]}>
-            <LinearGradient
-              colors={
-                holdSuccess
-                  ? ['#2EBF8E', '#22C58B']
-                  : isDark
-                  ? [colors.red, '#DC2626']
-                  : ['#FF4D7A', '#E11D48']
-              }
-              style={styles.sosButtonGradient}>
-              {holdSuccess ? (
-                <Ionicons name="checkmark" size={26} color="#FFFFFF" />
+            <Animated.View
+              style={{
+                transform: [
+                  { scale: isHolding ? holdScaleAnim : coreScale },
+                ],
+              }}>
+              {isDark ? (
+                // Dark mode: Dark navy fill with 3px rose ring (#FF5C6C), white "SOS", and rose glow
+                <View style={styles.darkSosCore}>
+                  <Text style={styles.sosText}>SOS</Text>
+                </View>
               ) : (
-                <Text style={styles.sosText}>SOS</Text>
+                // Light mode: filled coral-red radial gradient (#FF7A7A center to #EF4444 edge) with soft red shadow
+                <LinearGradient
+                  colors={HomeCardTokens.colors.sosLightCore}
+                  start={{ x: 0.2, y: 0.2 }}
+                  end={{ x: 0.9, y: 0.9 }}
+                  style={styles.lightSosCore}>
+                  <Text style={styles.sosText}>SOS</Text>
+                </LinearGradient>
               )}
-            </LinearGradient>
+            </Animated.View>
           </Pressable>
         </View>
       </View>
-    </LinearGradient>
+
+      {/* 5-Second "Sending alert… Cancel" Sheet Modal */}
+      <Modal
+        visible={showCountdownSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelCountdown}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.countdownSheet,
+              {
+                backgroundColor: isDark ? '#1E0A14' : '#FFFFFF',
+                borderColor: '#FF5C6C',
+              },
+            ]}>
+            <View style={styles.countdownWarningIcon}>
+              <Ionicons
+                name={alertSentSuccess ? 'checkmark-circle' : 'alert-circle'}
+                size={40}
+                color={alertSentSuccess ? '#22C58B' : '#FF5C6C'}
+              />
+            </View>
+
+            <Text
+              style={[
+                styles.countdownTitle,
+                { color: isDark ? '#FFFFFF' : '#1E293B' },
+              ]}>
+              {alertSentSuccess
+                ? 'Alert Sent to Your Circle!'
+                : `Sending SOS in ${countdownSeconds}s…`}
+            </Text>
+
+            <Text
+              style={[
+                styles.countdownSubtitle,
+                { color: isDark ? '#94A3B8' : '#64748B' },
+              ]}>
+              {alertSentSuccess
+                ? 'Emergency GPS and telemetry dispatched.'
+                : 'Broadcasting emergency GPS to family members and emergency contacts.'}
+            </Text>
+
+            {!alertSentSuccess && (
+              <Pressable
+                onPress={handleCancelCountdown}
+                style={styles.cancelAlertButton}>
+                <Text style={styles.cancelAlertButtonText}>Cancel SOS</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 26,
+    height: HomeCardTokens.needHelp.height,
+    borderRadius: HomeCardTokens.needHelp.radius,
+    padding: HomeCardTokens.needHelp.padding,
     borderWidth: 1,
-    padding: 16,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  cardInnerRow: {
+    overflow: 'visible',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 20,
+    elevation: 3,
   },
-  leftCol: {
+  leftColumn: {
     flex: 1,
-    gap: 5,
+    justifyContent: 'space-between',
+    height: '100%',
+    paddingRight: 8,
+  },
+  headerStack: {
+    gap: 4,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  triangleBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  warningIconCircle: {
+    width: HomeCardTokens.needHelp.warningIconSize,
+    height: HomeCardTokens.needHelp.warningIconSize,
+    borderRadius: HomeCardTokens.needHelp.warningIconSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   titleText: {
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   subtitleText: {
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
+    fontSize: 13,
+    letterSpacing: -0.1,
   },
-  bottomChipsRow: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginTop: 4,
-    flexWrap: 'wrap',
+    gap: 6,
   },
-  chipItem: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
   },
-  chipText: {
-    fontSize: 10.5,
+  metaText: {
+    fontSize: 12,
     fontWeight: '600',
   },
   dotSeparator: {
-    fontSize: 9,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(148, 163, 184, 0.6)',
   },
 
-  // SOS button right area
-  sosButtonArea: {
-    width: 80,
-    height: 80,
+  // Right Column & SOS
+  rightColumn: {
+    width: HomeCardTokens.needHelp.rightColumnWidth,
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    overflow: 'visible',
+    flexShrink: 0,
   },
-  outerGlowRing: {
+  haloRing: {
     position: 'absolute',
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+    width: HomeCardTokens.needHelp.sosSize + 28,
+    height: HomeCardTokens.needHelp.sosSize + 28,
+    borderRadius: (HomeCardTokens.needHelp.sosSize + 28) / 2,
+    backgroundColor: 'rgba(244, 63, 94, 0.35)',
   },
-  innerGlowRing: {
+  holdProgressRing: {
     position: 'absolute',
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: HomeCardTokens.needHelp.sosSize + 14,
+    height: HomeCardTokens.needHelp.sosSize + 14,
+    borderRadius: (HomeCardTokens.needHelp.sosSize + 14) / 2,
+    borderWidth: 4,
+    borderColor: '#FF5C6C',
   },
-  progressRing: {
-    position: 'absolute',
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-  },
-  sosCoreButton: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  sosButtonGradient: {
-    flex: 1,
+  sosPressArea: {
+    width: HomeCardTokens.needHelp.sosSize,
+    height: HomeCardTokens.needHelp.sosSize,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 5,
+  },
+  lightSosCore: {
+    width: HomeCardTokens.needHelp.sosSize,
+    height: HomeCardTokens.needHelp.sosSize,
+    borderRadius: HomeCardTokens.needHelp.sosSize / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  darkSosCore: {
+    width: HomeCardTokens.needHelp.sosSize,
+    height: HomeCardTokens.needHelp.sosSize,
+    borderRadius: HomeCardTokens.needHelp.sosSize / 2,
+    backgroundColor: '#0F172A',
+    borderWidth: 3,
+    borderColor: '#FF5C6C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF5C6C',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 8,
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+  },
+
+  // Countdown Sheet Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.70)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  countdownSheet: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    padding: 24,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#FF5C6C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.40,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  countdownWarningIcon: {
+    marginBottom: 4,
+  },
+  countdownTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  countdownSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  cancelAlertButton: {
+    marginTop: 8,
+    backgroundColor: '#FF5C6C',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelAlertButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
