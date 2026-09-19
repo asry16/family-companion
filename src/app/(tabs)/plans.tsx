@@ -24,7 +24,6 @@ import {
   PlansPopulatedList,
   PlanItem,
 } from '@/components/plans';
-import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
 
 const MOCK_DEFAULT_PLANS: PlanItem[] = [
   {
@@ -104,7 +103,7 @@ export default function PlansScreen({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
-  const { sendEmergencySos, addTask } = useFamily();
+  const { addTask } = useFamily();
   const { startListening, speak, isListening } = useVoice();
 
   // Redirect if unauthenticated
@@ -118,7 +117,6 @@ export default function PlansScreen({
   const [plans, setPlans] = useState<PlanItem[]>(initialPlans);
   const [quickAddText, setQuickAddText] = useState<string>('');
   const [isPreviewEmpty, setIsPreviewEmpty] = useState<boolean>(initialEmptyState);
-  const [sosModalVisible, setSosModalVisible] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'event' | 'task' | 'reminder'>('all');
 
   const displayedPlans = categoryFilter === 'all'
@@ -225,9 +223,8 @@ export default function PlansScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* 1. Header: Avatar 'A' with green online dot, title, subtitle, SOS chip, Bell, Theme toggle, Settings */}
+      {/* 1. Header: Avatar 'A' with green online dot, title, subtitle, Bell, Theme toggle, Settings */}
       <PlansHeader
-        onOpenSos={() => setSosModalVisible(true)}
         onOpenSettings={() => router.push('/modal/family-settings')}
       />
 
@@ -339,15 +336,6 @@ export default function PlansScreen({
           onPressReminders={() => handleCategoryPress('reminder')}
         />
       </ScrollView>
-
-      {/* Emergency SOS Confirmation Flow Modal */}
-      <EmergencySosModal
-        visible={sosModalVisible}
-        onClose={() => setSosModalVisible(false)}
-        onTriggerSos={async (reason, details) => {
-          await sendEmergencySos(reason, details);
-        }}
-      />
     </View>
   );
 }

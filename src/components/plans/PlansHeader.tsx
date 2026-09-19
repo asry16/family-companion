@@ -16,12 +16,10 @@ import { useAuth } from '@/context/AuthContext';
 import { IconCircleButton } from '@/components/ui/IconCircleButton';
 
 interface PlansHeaderProps {
-  onOpenSos?: () => void;
   onOpenSettings?: () => void;
 }
 
 export const PlansHeader: React.FC<PlansHeaderProps> = ({
-  onOpenSos,
   onOpenSettings,
 }) => {
   const router = useRouter();
@@ -86,28 +84,8 @@ export const PlansHeader: React.FC<PlansHeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Actions (Red Outlined SOS, Bell with Badge '1', Theme Toggle, Settings Gear) */}
+        {/* Right: Actions (Bell with Badge '1', Theme Toggle, Settings Gear) */}
         <View style={styles.rightActionCluster}>
-          {/* Red Outlined "SOS" Chip */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-              if (onOpenSos) onOpenSos();
-            }}
-            hitSlop={6}
-            accessibilityLabel="SOS Emergency Flow"
-            style={({ pressed }) => [
-              styles.sosChip,
-              {
-                borderColor: isDark ? 'rgba(240, 82, 77, 0.70)' : colors.red,
-                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.14)' : 'rgba(240, 82, 77, 0.08)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons name="warning-outline" size={13} color={colors.red} />
-            <Text style={[styles.sosChipText, { color: colors.red }]}>SOS</Text>
-          </Pressable>
-
           {/* Bell with Red Badge "1" */}
           <IconCircleButton
             name="notifications-outline"
@@ -207,19 +185,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  sosChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1.2,
-  },
-  sosChipText: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.3,
   },
 });
