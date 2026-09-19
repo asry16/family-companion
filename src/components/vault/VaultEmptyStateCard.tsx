@@ -12,7 +12,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui';
 
 interface VaultEmptyStateCardProps {
   onSaveFirstLocation: () => void;
@@ -198,17 +197,45 @@ export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
           {body}
         </Text>
 
-        {/* Primary Gradient Button: "Save First Location" (primary large) */}
-        <Button
-          variant="primary"
-          size="lg"
-          icon={isSearchEmpty ? 'refresh' : 'folder'}
-          title={buttonLabel}
-          onPress={onSaveFirstLocation}
-        />
+        {/* Primary Gradient Button: "Save First Location" with Folder Icon */}
+        <Pressable
+          onPress={() => {
+            triggerHaptic();
+            onSaveFirstLocation();
+          }}
+          style={({ pressed }) => [
+            styles.gradientButtonWrap,
+            {
+              opacity: pressed ? 0.88 : 1,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
+          ]}>
+          <LinearGradient
+            colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.gradientButtonInner,
+              {
+                shadowColor: isDark ? colors.purple : '#6E5ADC',
+              },
+            ]}>
+            <Ionicons
+              name={isSearchEmpty ? 'refresh' : 'folder'}
+              size={17}
+              color={isDark ? '#000000' : '#FFFFFF'}
+            />
+            <Text
+              style={[
+                styles.gradientButtonText,
+                { color: '#FFFFFF' },
+              ]}>
+              {buttonLabel}
+            </Text>
+          </LinearGradient>
+        </Pressable>
       </View>
     </GlassCard>
-
   );
 };
 

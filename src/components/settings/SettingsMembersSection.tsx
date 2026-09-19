@@ -10,7 +10,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui';
 import { FamilyMember } from '@/types';
 
 export interface SettingsMembersSectionProps {
@@ -55,16 +54,40 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
           </Text>
         </View>
 
-        {/* "Add Member" Button (tonal) */}
-        <Button
-          variant="tonal"
-          size="sm"
-          icon="person-add-outline"
-          title="Add Member"
-          onPress={onAddMember}
-        />
+        {/* "Add Member" Pill Button */}
+        <Pressable
+          onPress={() => {
+            triggerHaptic();
+            onAddMember();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Add Family Member"
+          style={({ pressed }) => [
+            styles.addMemberPill,
+            {
+              backgroundColor: isDark
+                ? 'rgba(59, 111, 240, 0.20)'
+                : 'rgba(124, 92, 224, 0.08)',
+              borderColor: isDark
+                ? 'rgba(59, 111, 240, 0.40)'
+                : 'rgba(124, 92, 224, 0.22)',
+              opacity: pressed ? 0.75 : 1,
+            },
+          ]}>
+          <Ionicons
+            name="person-add-outline"
+            size={13}
+            color={isDark ? '#38BDF8' : '#7C5CE0'}
+          />
+          <Text
+            style={[
+              styles.addMemberText,
+              { color: isDark ? '#38BDF8' : '#7C5CE0' },
+            ]}>
+            Add Member
+          </Text>
+        </Pressable>
       </View>
-
 
       {/* Member Cards */}
       <View style={styles.cardsList}>

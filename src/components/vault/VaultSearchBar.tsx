@@ -10,7 +10,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Button } from '@/components/ui';
 
 interface VaultSearchBarProps {
   value: string;
@@ -87,15 +86,32 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         </Pressable>
       )}
 
-      {/* Mic Button with Primary Gradient (circular primary) */}
-      <Button
-        variant="primary"
-        size="sm"
-        circular
-        icon="mic"
-        onPress={onVoicePress}
-        accessibilityLabel="Voice Search"
-      />
+      {/* Mic Button with Primary Gradient in Light Mode */}
+      <Pressable
+        onPress={() => {
+          triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+          if (onVoicePress) onVoicePress();
+        }}
+        hitSlop={6}
+        style={({ pressed }) => [
+          styles.micButton,
+          {
+            backgroundColor: isDark ? colors.blue : undefined,
+            opacity: pressed ? 0.85 : 1,
+            shadowColor: isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
+          },
+        ]}>
+        {!isDark && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <Ionicons name="mic" size={15} color={isDark ? '#000000' : '#FFFFFF'} />
+      </Pressable>
     </View>
   );
 };
@@ -126,5 +142,16 @@ const styles = StyleSheet.create({
   },
   clearBtn: {
     padding: 2,
+  },
+  micButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3,
   },
 });

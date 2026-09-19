@@ -10,7 +10,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Button } from '@/components/ui';
 
 export interface PlansQuickAddFieldProps {
   value: string;
@@ -97,18 +96,43 @@ export const PlansQuickAddField: React.FC<PlansQuickAddFieldProps> = ({
         </Pressable>
       )}
 
-      {/* Mic Button for Voice Input (circular primary) */}
-      <Button
-        variant={isListening ? 'danger' : 'primary'}
-        size="sm"
-        circular
-        icon={isListening ? 'mic' : 'mic-outline'}
-        onPress={onVoicePress}
+      {/* Mic Button for Voice Input */}
+      <Pressable
+        onPress={() => {
+          triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+          if (onVoicePress) onVoicePress();
+        }}
+        hitSlop={6}
         accessibilityLabel="Voice Input"
-      />
+        style={({ pressed }) => [
+          styles.micButton,
+          {
+            backgroundColor: isListening
+              ? colors.red
+              : isDark
+              ? colors.blue
+              : undefined,
+            opacity: pressed ? 0.85 : 1,
+            shadowColor: isListening ? colors.red : isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
+          },
+        ]}>
+        {!isDark && !isListening && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <Ionicons
+          name={isListening ? 'mic' : 'mic-outline'}
+          size={16}
+          color={isDark ? '#000000' : '#FFFFFF'}
+        />
+      </Pressable>
     </View>
   );
-
 };
 
 const styles = StyleSheet.create({

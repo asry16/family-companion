@@ -12,7 +12,6 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Button, StatusDot } from '@/components/ui';
 
 interface CircleMemberCardProps {
   member: FamilyMember;
@@ -110,12 +109,7 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
           {/* Avatar with Online Dot */}
           <View style={styles.avatarContainer}>
             <FamilyAvatar member={member} size={isElderly ? 'lg' : 'md'} showStatus={false} />
-            <StatusDot
-              size={10}
-              color={colors.green}
-              style={styles.onlineDot}
-              dotStyle={{ borderWidth: 1.5, borderColor: '#FFFFFF' }}
-            />
+            <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
           </View>
 
           {/* Name, YOU badge, Relation */}
@@ -257,32 +251,48 @@ export const CircleMemberCard: React.FC<CircleMemberCardProps> = ({
 
         {/* Right: Call & Ask Buttons */}
         <View style={styles.actionButtonsCluster}>
-          <Button
-            variant="success"
-            size="sm"
-            icon="call"
-            title="Call"
+          {/* "Call" (Teal / Green filled pill with phone icon) */}
+          <Pressable
             onPress={() => {
+              triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
               if (onCall) {
                 onCall(member.phone || '+1 555-0100', member.name);
               }
             }}
-          />
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="chatbubble-ellipses-outline"
-            title="Ask"
+            style={({ pressed }) => [
+              styles.callButton,
+              {
+                backgroundColor: isDark ? '#14B8A6' : '#2EBF8E',
+                shadowColor: isDark ? '#14B8A6' : '#2EBF8E',
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}>
+            <Ionicons name="call" size={12} color="#FFFFFF" />
+            <Text style={styles.callButtonText}>Call</Text>
+          </Pressable>
+
+          {/* "Ask" (Outlined blue/violet pill with chat icon) */}
+          <Pressable
             onPress={() => {
+              triggerHaptic();
               if (onAsk) {
                 onAsk(member);
               }
             }}
-          />
+            style={({ pressed }) => [
+              styles.askButton,
+              {
+                borderColor: colors.blue,
+                backgroundColor: isDark ? 'rgba(59, 111, 240, 0.12)' : 'rgba(79, 142, 247, 0.08)',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons name="chatbubble-ellipses-outline" size={13} color={colors.blue} />
+            <Text style={[styles.askButtonText, { color: colors.blue }]}>Ask</Text>
+          </Pressable>
         </View>
       </View>
     </GlassCard>
-
   );
 };
 

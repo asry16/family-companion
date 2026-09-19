@@ -10,7 +10,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Button } from '@/components/ui';
 
 export interface ChatInputBarProps {
   value: string;
@@ -83,20 +82,44 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         ]}
       />
 
-      {/* Circular Send Button: Primary Circular */}
-      <Button
-        variant="primary"
-        size="sm"
-        circular
-        icon="arrow-up"
-        disabled={!canSend}
+      {/* Circular Send Button */}
+      <Pressable
         onPress={handleSendPress}
+        disabled={!canSend}
+        accessibilityRole="button"
         accessibilityLabel="Send message"
-      />
+        style={({ pressed }) => [
+          styles.sendButton,
+          {
+            backgroundColor: canSend
+              ? isDark
+                ? colors.blue
+                : undefined
+              : isDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(124, 92, 224, 0.08)',
+            opacity: !canSend ? 0.45 : pressed ? 0.85 : 1,
+            shadowColor: isDark ? colors.blue : '#6E5ADC',
+            overflow: 'hidden',
+          },
+        ]}>
+        {!isDark && canSend && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <Ionicons
+          name="arrow-up"
+          size={18}
+          color={canSend ? (isDark ? '#000000' : '#FFFFFF') : colors.textMuted}
+        />
+      </Pressable>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -121,5 +144,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontWeight: '500',
     paddingVertical: 6,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
 });

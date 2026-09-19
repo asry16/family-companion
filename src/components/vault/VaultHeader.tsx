@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { Button, HeaderIconCapsule } from '@/components/ui';
+import { IconCircleButton } from '@/components/ui/IconCircleButton';
 
 interface VaultHeaderProps {
   onOpenSettings?: () => void;
@@ -90,54 +90,81 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
         </View>
 
         {/* Right: Actions (Elderly Outlined Pill, Theme Toggle, Bell, Settings) */}
-        {/* Right: Actions (Elderly Secondary Pill + HeaderIconCapsule) */}
         <View style={styles.rightActionCluster}>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="people-outline"
-            title={simpleMode ? 'Elderly Active' : 'Elderly'}
+          {/* "Elderly" Outlined Pill (people icon; toggles elderly mode) */}
+          <Pressable
             onPress={handleToggleElderly}
+            style={({ pressed }) => [
+              styles.elderlyPill,
+              {
+                borderColor: simpleMode
+                  ? isDark ? colors.blue : '#7C5CE0'
+                  : isDark
+                  ? 'rgba(59, 111, 240, 0.45)'
+                  : 'rgba(124, 92, 224, 0.25)',
+                backgroundColor: simpleMode
+                  ? isDark
+                    ? 'rgba(59, 111, 240, 0.25)'
+                    : 'rgba(124, 92, 224, 0.12)'
+                  : isDark
+                  ? 'rgba(59, 111, 240, 0.08)'
+                  : 'rgba(124, 92, 224, 0.06)',
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}>
+            <Ionicons
+              name={simpleMode ? 'people' : 'people-outline'}
+              size={13}
+              color={isDark ? colors.blue : '#7C5CE0'}
+            />
+            <Text style={[styles.elderlyPillText, { color: isDark ? colors.blue : '#7C5CE0' }]}>
+              Elderly
+            </Text>
+          </Pressable>
+
+          {/* Theme Toggle Button (sun in light mode, moon in dark mode) */}
+          <IconCircleButton
+            name={isDark ? 'moon' : 'sunny'}
+            size={36}
+            iconSize={17}
+            color={isDark ? '#FBBF24' : '#7C5CE0'}
+            glowColor={isDark ? '#FBBF24' : undefined}
+            onPress={toggleTheme}
+            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
           />
 
-          <HeaderIconCapsule
-            items={[
-              {
-                id: 'theme',
-                name: isDark ? 'sunny' : 'moon',
-                accessibilityLabel: `Switch to ${isDark ? 'Light' : 'Dark'} mode`,
-                isActive: !isDark,
-                color: isDark ? '#FBBF24' : '#4B3FBF',
-                onPress: toggleTheme,
-              },
-              {
-                id: 'notifications',
-                name: 'notifications-outline',
-                accessibilityLabel: 'Notifications',
-                badgeCount: unreadCount > 0 ? unreadCount : 1,
-                badgeColor: colors.red,
-                onPress: () => router.push('/modal/notifications'),
-              },
-              {
-                id: 'settings',
-                name: 'settings-outline',
-                accessibilityLabel: 'Settings',
-                onPress: () => {
-                  if (onOpenSettings) {
-                    onOpenSettings();
-                  } else {
-                    router.push('/modal/family-settings');
-                  }
-                },
-              },
-            ]}
+          {/* Bell with Red Badge "1" */}
+          <IconCircleButton
+            name="notifications-outline"
+            size={36}
+            iconSize={17}
+            color={isDark ? colors.text : '#6D5BD0'}
+            badgeCount={unreadCount > 0 ? unreadCount : 1}
+            badgeColor={colors.red}
+            onPress={() => router.push('/modal/notifications')}
+            accessibilityLabel="Notifications"
+          />
+
+          {/* Settings Gear */}
+          <IconCircleButton
+            name="settings-outline"
+            size={36}
+            iconSize={17}
+            color={isDark ? colors.text : '#6D5BD0'}
+            onPress={() => {
+              if (onOpenSettings) {
+                onOpenSettings();
+              } else {
+                router.push('/modal/family-settings');
+              }
+            }}
+            accessibilityLabel="Settings"
           />
         </View>
       </View>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -199,5 +226,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  elderlyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1.2,
+  },
+  elderlyPillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
   },
 });

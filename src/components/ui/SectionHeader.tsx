@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Button } from './Button';
 
 export interface SectionHeaderProps {
   title: string;
@@ -77,11 +76,23 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         {rightElement ? (
           rightElement
         ) : onActionPress && actionText ? (
-          <Button
-            variant="link"
-            title={actionText.replace(/\s*→\s*$/, '')}
+          <Pressable
             onPress={handleAction}
-          />
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={({ pressed }) => [
+              styles.actionPressable,
+              { opacity: pressed ? 0.75 : 1 },
+            ]}>
+            <Text
+              style={[
+                styles.actionText,
+                {
+                  color: isDark ? colors.blue : '#6D5BD0',
+                },
+              ]}>
+              {actionText}
+            </Text>
+          </Pressable>
         ) : null}
       </View>
     </View>

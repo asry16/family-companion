@@ -19,7 +19,6 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember, FamilyPlace } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
-import { StatusDot } from '@/components/ui';
 import { FamilyInviteModal } from '@/components/modals/FamilyInviteModal';
 
 export type MemberPresenceStatus = 'HOME' | 'AWAY' | 'MOVING' | 'OFFLINE';
@@ -968,7 +967,7 @@ export const FamilyCommandCenter: React.FC = () => {
             },
           ]}>
           <View style={styles.overlayLiveRow}>
-            <StatusDot size={7} color={isDark ? '#34D399' : '#10B981'} />
+            <View style={[styles.liveMiniDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
             <Text style={[styles.overlayLiveText, { color: isDark ? '#34D399' : '#059669' }]}>
               LIVE
             </Text>

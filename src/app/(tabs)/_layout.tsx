@@ -6,7 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
-import { BreathingGlow } from '@/components/ui/PulseRing';
 
 export default function TabsLayout() {
   const { colors, isElderly, isDark } = useAppTheme();
@@ -158,13 +157,6 @@ export default function TabsLayout() {
           ),
           tabBarIcon: ({ focused }) => (
             <View style={styles.centerAssistantWrap}>
-              <BreathingGlow
-                color={isDark ? colors.violetOrbGlow : colors.violetOrbGlow}
-                size={56}
-                minOpacity={0.5}
-                maxOpacity={0.9}
-                duration={3000}
-              />
               <LinearGradient
                 colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}

@@ -7,7 +7,6 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { FamilyAvatar } from './FamilyAvatar';
-import { StatusDot } from './StatusDot';
 import { PrimaryButton } from './PrimaryButton';
 import { SecondaryButton } from './SecondaryButton';
 import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
@@ -100,12 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
           ]}>
           <View style={styles.avatarHaloWrapper}>
             <FamilyAvatar member={activeUser} size="md" />
-            <StatusDot
-              size={11}
-              color={colors.green}
-              style={styles.avatarOnlineDot}
-              dotStyle={{ borderWidth: 2, borderColor: '#FFFFFF' }}
-            />
+            <View style={[styles.avatarOnlineDot, { backgroundColor: colors.green }]} />
           </View>
 
           <View style={styles.textContainer}>

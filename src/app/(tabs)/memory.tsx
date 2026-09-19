@@ -13,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
@@ -30,7 +29,6 @@ import { VaultCategoryFilters } from '@/components/vault/VaultCategoryFilters';
 import { VaultEmptyStateCard } from '@/components/vault/VaultEmptyStateCard';
 import { VaultItemCard } from '@/components/vault/VaultItemCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { LayoutTokens } from '@/constants/theme';
 
 export default function MemoryScreen() {
   const router = useRouter();
@@ -38,7 +36,6 @@ export default function MemoryScreen() {
   const { isAuthenticated } = useAuth();
   const { memories, searchMemories, addMemory, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/login');
@@ -123,7 +120,7 @@ export default function MemoryScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: LayoutTokens.tabBarHeight + LayoutTokens.tabBarBottomOffset + insets.bottom + 8 }]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         {/* 2. Search Bar: Rounded Glass Field, Placeholder, Blue Mic Voice Button */}
         <VaultSearchBar
@@ -187,7 +184,8 @@ export default function MemoryScreen() {
           </View>
         )}
 
-
+        {/* Bottom spacer for floating navigation bar */}
+        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
       {/* Save Location Custom Modal */}
@@ -349,6 +347,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 4,
+    paddingBottom: 110,
     gap: 8,
     maxWidth: 500,
     width: '100%',
@@ -356,6 +355,9 @@ const styles = StyleSheet.create({
   },
   itemsListContainer: {
     gap: 4,
+  },
+  floatingNavSpacer: {
+    height: Platform.select({ ios: 36, default: 24 }),
   },
 
   // Modal Styles

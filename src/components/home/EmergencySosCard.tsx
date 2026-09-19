@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Platform, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Button } from '@/components/ui';
-import { ButtonTokens } from '@/constants/theme';
 
 interface EmergencySosCardProps {
   onTriggerSos: (reason: string, details: string) => void;
@@ -15,6 +14,119 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
   onTriggerSos,
 }) => {
   const { colors, isDark, isElderly } = useAppTheme();
+
+  // Hold-to-confirm animation state (2 seconds hold)
+  const [isHolding, setIsHolding] = useState(false);
+  const [holdSuccess, setHoldSuccess] = useState(false);
+
+  const holdProgress = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Concentric ambient pulse rings around SOS button
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
+
+  // Press In: starts 2s hold timer and progress animation
+  const handlePressIn = () => {
+    setIsHolding(true);
+    setHoldSuccess(false);
+
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (e) {}
+    }
+
+    // Repeated haptic pulses while holding
+    let ticks = 0;
+    hapticIntervalRef.current = setInterval(() => {
+      ticks++;
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.impactAsync(
+            ticks > 3
+              ? Haptics.ImpactFeedbackStyle.Heavy
+              : Haptics.ImpactFeedbackStyle.Light
+          );
+        } catch (e) {}
+      }
+    }, 400);
+
+    // Progress animation 0 -> 1 over exactly 2000ms
+    Animated.timing(holdProgress, {
+      toValue: 1,
+      duration: 2000,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+
+    // Trigger confirmation after 2000ms
+    holdTimerRef.current = setTimeout(() => {
+      clearTimers();
+      setHoldSuccess(true);
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        } catch (e) {}
+      }
+      onTriggerSos('Urgent Emergency', '2s Hold-to-confirm triggered from Home Screen');
+      setTimeout(() => {
+        setHoldSuccess(false);
+        setIsHolding(false);
+        holdProgress.setValue(0);
+      }, 3500);
+    }, 2000);
+  };
+
+  // Press Out: A tap alone does NOTHING. If released before 2s, cancel hold and reset smoothly.
+  const handlePressOut = () => {
+    if (holdSuccess) return;
+    clearTimers();
+    setIsHolding(false);
+
+    Animated.timing(holdProgress, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {}
+    }
+  };
+
+  const clearTimers = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (hapticIntervalRef.current) {
+      clearInterval(hapticIntervalRef.current);
+      hapticIntervalRef.current = null;
+    }
+  };
+
+  // SVG circular progress calculations (Radius 36 -> circumference ~226)
 
 
   return (
@@ -80,17 +192,108 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           </View>
         </View>
 
-        {/* Right Content Column: Large Circular "SOS" Button with Two Soft Concentric Glow Rings */}
+        {/* Right Content Column: Large Red Circular "SOS" Button with Two Soft Concentric Glow Rings */}
         <View style={styles.sosButtonArea}>
-          <Button
-            variant="sos"
-            title="SOS"
-            onHoldComplete={() => {
-              onTriggerSos('Urgent Emergency', '2s Hold-to-confirm triggered from Home Screen');
-            }}
+          {/* Ring 1 (Outer Glow Ring) */}
+          <Animated.View
+            style={[
+              styles.outerGlowRing,
+              {
+                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.16)' : 'rgba(255, 77, 122, 0.16)',
+                transform: [
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.28],
+                    }),
+                  },
+                ],
+                opacity: pulseAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.7, 0.15],
+                }),
+              },
+            ]}
           />
-        </View>
 
+          {/* Ring 2 (Inner Glow Ring) */}
+          <Animated.View
+            style={[
+              styles.innerGlowRing,
+              {
+                backgroundColor: isDark ? 'rgba(240, 82, 77, 0.26)' : 'rgba(255, 77, 122, 0.26)',
+                transform: [
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.95, 1.15],
+                    }),
+                  },
+                ],
+                opacity: pulseAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 0.3],
+                }),
+              },
+            ]}
+          />
+
+          {/* Animated Progress Ring (Active on hold) */}
+          <Animated.View
+            style={[
+              styles.progressRing,
+              {
+                borderColor: holdSuccess ? '#2EBF8E' : '#FFFFFF',
+                opacity: holdProgress.interpolate({
+                  inputRange: [0, 0.05, 1],
+                  outputRange: [0, 0.85, 1],
+                }),
+                borderWidth: holdProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1.5, 3.5],
+                }),
+                transform: [
+                  {
+                    scale: holdProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.98, 1.15],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+
+          {/* The Circular Button Pressable */}
+          <Pressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            accessibilityRole="button"
+            accessibilityLabel="Emergency SOS button. Hold for 2 seconds."
+            style={({ pressed }) => [
+              styles.sosCoreButton,
+              {
+                backgroundColor: holdSuccess ? '#2EBF8E' : colors.red,
+                transform: [{ scale: pressed || isHolding ? 0.94 : 1 }],
+              },
+            ]}>
+            <LinearGradient
+              colors={
+                holdSuccess
+                  ? ['#2EBF8E', '#22C58B']
+                  : isDark
+                  ? [colors.red, '#DC2626']
+                  : ['#FF4D7A', '#E11D48']
+              }
+              style={styles.sosButtonGradient}>
+              {holdSuccess ? (
+                <Ionicons name="checkmark" size={26} color="#FFFFFF" />
+              ) : (
+                <Text style={styles.sosText}>SOS</Text>
+              )}
+            </LinearGradient>
+          </Pressable>
+        </View>
       </View>
     </LinearGradient>
   );
@@ -98,14 +301,13 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 22,
+    borderRadius: 26,
     borderWidth: 1,
-    padding: 14,
-    overflow: 'visible',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
-    elevation: 3,
+    padding: 16,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
   cardInnerRow: {
     flexDirection: 'row',
@@ -115,7 +317,7 @@ const styles = StyleSheet.create({
   },
   leftCol: {
     flex: 1,
-    gap: 3,
+    gap: 5,
   },
   titleRow: {
     flexDirection: 'row',
@@ -160,8 +362,50 @@ const styles = StyleSheet.create({
 
   // SOS button right area
   sosButtonArea: {
-    width: ButtonTokens.sosColumnWidth,
+    width: 80,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  outerGlowRing: {
+    position: 'absolute',
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+  },
+  innerGlowRing: {
+    position: 'absolute',
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+  },
+  progressRing: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  sosCoreButton: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  sosButtonGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sosText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
 });
