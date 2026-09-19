@@ -2,10 +2,12 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { BottomTabBar } from '@/components/navigation';
 
+const renderTabBar = (props: any) => <BottomTabBar {...props} />;
+
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <BottomTabBar {...props} />}
+      tabBar={renderTabBar}
       screenOptions={{
         headerShown: false,
       }}>
