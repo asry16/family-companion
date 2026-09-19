@@ -212,7 +212,7 @@ export default function CircleScreen() {
             </View>
           </Pressable>
           <ScrollView contentContainerStyle={{ padding: 16 }}>
-            <FamilyCommandCenter />
+            <FamilyCommandCenter isFullScreen={true} />
           </ScrollView>
         </View>
       </Modal>

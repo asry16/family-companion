@@ -798,13 +798,15 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
           LIVE FAMILY MAP
         </Text>
 
-        <Pressable
-          onPress={() => router.push('/(tabs)/family')}
-          hitSlop={10}>
-          <Text style={[styles.fullScreenLinkText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
-            Full screen →
-          </Text>
-        </Pressable>
+        {!isFullScreen && (
+          <Pressable
+            onPress={() => router.push('/(tabs)/family')}
+            hitSlop={10}>
+            <Text style={[styles.fullScreenLinkText, { color: isDark ? '#38BDF8' : colors.brandAccent }]}>
+              Full screen →
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Interactive Map Card */}
