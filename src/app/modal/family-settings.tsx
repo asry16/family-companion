@@ -23,9 +23,9 @@ import {
   SettingsSecuritySection,
   SettingsAccountSection,
   SettingsMemberEditModal,
-  SettingsFloatingTabBar,
-  SettingsTabKey,
 } from '@/components/settings';
+import { BottomTabBar, TabKey } from '@/components/navigation';
+import { TabBarTokens } from '@/constants/theme';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -61,7 +61,7 @@ export interface FamilySettingsScreenProps {
     email: string;
     signInMethod: string;
   };
-  fromTab?: SettingsTabKey;
+  fromTab?: TabKey;
 }
 
 export default function FamilySettingsScreen({
@@ -84,9 +84,9 @@ export default function FamilySettingsScreen({
   } = useFamily();
 
   // Tab caller source: default to 'circle' if opened from Circle, or 'home', etc.
-  const callerTab: SettingsTabKey = (
+  const callerTab: TabKey = (
     fromTabProp ||
-    (params.fromTab as SettingsTabKey) ||
+    (params.fromTab as TabKey) ||
     'circle'
   );
 
@@ -278,7 +278,7 @@ export default function FamilySettingsScreen({
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 95, 115) },
+          { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
         ]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Section: YOUR PROFILE DETAILS & EDITING */}
@@ -324,7 +324,7 @@ export default function FamilySettingsScreen({
       </ScrollView>
 
       {/* 8. Fixed Bottom Tab Bar: Highlight caller tab */}
-      <SettingsFloatingTabBar activeTab={callerTab} />
+      <BottomTabBar activeTab={callerTab} />
 
       {/* Modals */}
       {/* 1. Profile Edit Modal */}

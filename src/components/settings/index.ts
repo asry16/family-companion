@@ -7,4 +7,4 @@ export * from './SettingsMembersSection';
 export * from './SettingsSecuritySection';
 export * from './SettingsAccountSection';
 export * from './SettingsMemberEditModal';
-export * from './SettingsFloatingTabBar';
+

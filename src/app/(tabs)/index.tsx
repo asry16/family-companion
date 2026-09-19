@@ -9,7 +9,9 @@ import {
   Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { PersonalizedHeader } from '@/components/home/PersonalizedHeader';
@@ -26,6 +28,7 @@ import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const {
@@ -81,7 +84,10 @@ export default function HomeScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
+        ]}
         showsVerticalScrollIndicator={false}>
 
         {/* 2. Family Card (Shield icon, Family heading, Live Presence, Member avatar & status, Mini map preview, View Live Map button) */}
@@ -107,9 +113,6 @@ export default function HomeScreen() {
 
         {/* 5. Activity / Timeline Card ("Today in your Circle" vertical timeline with glowing nodes, timestamps, status pills) */}
         <CircleTimelineCard />
-
-        {/* Bottom spacer for floating navigation bar */}
-        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
       {/* Confirmation Modal */}

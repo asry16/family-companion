@@ -354,3 +354,53 @@ export const Shadows = Platform.select({
     }
   },
 });
+
+export const TabBarTokens = {
+  height: 58,
+  sideMargin: 16,
+  bottomOffsetBase: 8, // bottom offset = safe-area inset + 8
+  borderRadius: 29,    // fully rounded capsule (58 / 2)
+  backdropBlur: 20,
+  minTouchTarget: 48,
+  iconSize: 22,
+  labelFontSize: 11,
+
+  // Assistant Orb Geometry
+  orbSize: 50,
+  orbOverlap: 17,       // ~1/3 of 50px sits above the bar
+  orbHaloPadding: 6,    // 6px halo ring
+
+  light: {
+    barBg: 'rgba(255, 255, 255, 0.80)',
+    barBorder: 'rgba(124, 92, 224, 0.14)',
+    barShadow: 'rgba(110, 90, 220, 0.14)',
+    activeColor: '#5B7CF6',
+    inactiveColor: '#7A7DB0',
+    orbGradient: ['#4F8EF7', '#8A6BF2'] as const,
+    orbHalo: 'rgba(138, 107, 242, 0.18)',
+    orbGlow: 'rgba(138, 107, 242, 0.35)',
+    orbGlowActive: 'rgba(91, 124, 246, 0.55)',
+  },
+  dark: {
+    barBg: 'rgba(10, 20, 50, 0.85)',
+    barBorder: 'rgba(80, 140, 255, 0.35)',
+    barShadow: 'rgba(56, 130, 255, 0.25)',
+    barTopHighlight: 'rgba(255, 255, 255, 0.12)',
+    activeColor: '#38BDF8',
+    activeGlow: 'rgba(56, 189, 248, 0.60)',
+    inactiveColor: '#9AA6C4',
+    orbBorderGradient: ['#4F8EF7', '#8A6BF2', '#EC4899'] as const,
+    orbRadialBg: ['#1E1B4B', '#0A1432'] as const,
+    orbGlow: 'rgba(99, 102, 241, 0.55)',
+    orbGlowActive: 'rgba(56, 189, 248, 0.75)',
+  },
+
+  /**
+   * Layout calculation helper:
+   * bar height (58) + orb overlap (17) + bottom offset (insets.bottom + 8) + 16
+   */
+  getScrollBottomPadding: (insetsBottom: number = 0) => {
+    return TabBarTokens.height + TabBarTokens.orbOverlap + (insetsBottom + TabBarTokens.bottomOffsetBase) + 16;
+  },
+} as const;
+

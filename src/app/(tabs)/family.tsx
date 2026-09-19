@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -33,8 +35,9 @@ import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 
-export default function FamilyScreen() {
+export default function CircleScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const { profile, members, activeUser, sendFamilyPing, sendEmergencySos } = useFamily();
@@ -111,7 +114,10 @@ export default function FamilyScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
+        ]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Safety Banner (Tappable, Chevron, Glowing green shield, Leaf accent / Dark glow) */}
         <CircleSafetyBanner
@@ -151,9 +157,6 @@ export default function FamilyScreen() {
         <CircleLiveMapCard
           onFullScreen={() => setFullMapModalVisible(true)}
         />
-
-        {/* Bottom spacer for floating navigation bar */}
-        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
       {/* Confirmation Modal */}

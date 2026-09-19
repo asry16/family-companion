@@ -13,7 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +34,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 
 export default function MemoryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const { memories, searchMemories, addMemory, activeUser } = useFamily();
@@ -120,7 +123,10 @@ export default function MemoryScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
+        ]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Search Bar: Rounded Glass Field, Placeholder, Blue Mic Voice Button */}
         <VaultSearchBar
@@ -183,9 +189,6 @@ export default function MemoryScreen() {
             ))}
           </View>
         )}
-
-        {/* Bottom spacer for floating navigation bar */}
-        <View style={styles.floatingNavSpacer} />
       </ScrollView>
 
       {/* Save Location Custom Modal */}

@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -279,10 +280,7 @@ export default function AIScreen({
                 ? Platform.OS === 'ios'
                   ? 10
                   : 8
-                : Platform.select({
-                    ios: Math.max(insets.bottom + 65, 84),
-                    default: 76,
-                  }),
+                : TabBarTokens.getScrollBottomPadding(insets.bottom) - 16,
             },
           ]}>
           <ChatInputBar

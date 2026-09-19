@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -234,7 +235,7 @@ export default function PlansScreen({
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 90, 110) },
+          { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
         ]}
         showsVerticalScrollIndicator={false}>
         {/* 2. Quick-add field: Rounded glass bar with search icon & blue mic voice button */}
