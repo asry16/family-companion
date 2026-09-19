@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { Button } from '@/components/ui';
 
 export interface PlansSuggestionChipsProps {
   suggestions?: string[];
@@ -38,54 +39,24 @@ export const PlansSuggestionChips: React.FC<PlansSuggestionChipsProps> = ({
   };
 
   return (
+
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={[styles.container, { gap: 8 }]}>
       {suggestions.map((item) => {
         const isSelected = activeQuery.toLowerCase().includes(item.toLowerCase());
 
         return (
-          <Pressable
+          <Button
             key={item}
-            onPress={() => {
-              triggerHaptic();
-              onSelectSuggestion(item);
-            }}
-            style={({ pressed }) => [
-              styles.chipPill,
-              {
-                backgroundColor: isSelected
-                  ? isDark
-                    ? 'rgba(59, 111, 240, 0.22)'
-                    : 'rgba(59, 111, 240, 0.12)'
-                  : isDark
-                  ? 'rgba(15, 26, 58, 0.80)'
-                  : 'rgba(255, 255, 255, 0.80)',
-                borderColor: isSelected
-                  ? colors.blue
-                  : isDark
-                  ? 'rgba(59, 111, 240, 0.22)'
-                  : 'rgba(20, 32, 58, 0.08)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons
-              name="search-outline"
-              size={12}
-              color={isSelected ? colors.blue : isDark ? colors.textMuted : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.chipText,
-                {
-                  color: isSelected ? colors.blue : colors.text,
-                  fontWeight: isSelected ? '700' : '600',
-                },
-              ]}>
-              {item}
-            </Text>
-          </Pressable>
+            variant="chip"
+            size="sm"
+            icon="search-outline"
+            title={item}
+            selected={isSelected}
+            onPress={() => onSelectSuggestion(item)}
+          />
         );
       })}
     </ScrollView>

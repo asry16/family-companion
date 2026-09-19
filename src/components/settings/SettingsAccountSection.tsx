@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui';
 
 export interface SettingsAccountSectionProps {
   userName?: string;
@@ -73,32 +74,13 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
             </Text>
           </View>
 
-          {/* Small non-tappable "Email" chip with envelope icon */}
-          <View
-            style={[
-              styles.methodChip,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(255, 255, 255, 0.08)'
-                  : 'rgba(124, 92, 224, 0.08)',
-                borderColor: isDark
-                  ? 'rgba(255, 255, 255, 0.12)'
-                  : 'rgba(124, 92, 224, 0.16)',
-              },
-            ]}>
-            <Ionicons
-              name="mail-outline"
-              size={12}
-              color={isDark ? colors.textMuted : '#7C5CE0'}
-            />
-            <Text
-              style={[
-                styles.methodChipText,
-                { color: isDark ? colors.textMuted : '#7C5CE0' },
-              ]}>
-              {signInMethod}
-            </Text>
-          </View>
+          {/* "Email" Tonal Chip */}
+          <Button
+            variant="tonal"
+            size="sm"
+            icon="mail-outline"
+            title={signInMethod}
+          />
         </View>
 
         {/* Divider */}
@@ -113,32 +95,16 @@ export const SettingsAccountSection: React.FC<SettingsAccountSectionProps> = ({
           ]}
         />
 
-        {/* Full-width Red-Tinted Button: "Log Out of Kinly" */}
-        <Pressable
-          onPress={() => {
-            triggerHaptic();
-            onLogout();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Log Out of Kinly"
-          style={({ pressed }) => [
-            styles.logoutButton,
-            {
-              backgroundColor: isDark
-                ? 'rgba(240, 82, 77, 0.16)'
-                : 'rgba(225, 29, 72, 0.06)',
-              borderColor: isDark
-                ? 'rgba(240, 82, 77, 0.35)'
-                : 'rgba(225, 29, 72, 0.18)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons name="log-out-outline" size={17} color={colors.red} />
-          <Text style={[styles.logoutText, { color: colors.red }]}>
-            Log Out of Kinly
-          </Text>
-        </Pressable>
+        {/* Full-width Danger Button: "Log Out of Kinly" */}
+        <Button
+          variant="danger"
+          fullWidth
+          icon="log-out-outline"
+          title="Log Out of Kinly"
+          onPress={onLogout}
+        />
       </GlassCard>
+
     </View>
   );
 };
@@ -185,36 +151,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  methodChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  methodChipText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
   divider: {
     height: 1,
     width: '100%',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  logoutText: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.1,
   },
 });

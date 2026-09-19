@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { Button } from '@/components/ui';
 
 export interface SuggestedPromptItem {
   text: string;
@@ -49,49 +50,20 @@ export const ChatSuggestedPrompts: React.FC<ChatSuggestedPromptsProps> = ({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}>
-      {prompts.map((item, index) => {
-        return (
-          <Pressable
-            key={`${item.text}-${index}`}
-            onPress={() => {
-              triggerHaptic();
-              onSelectPrompt(item.text);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={item.text}
-            style={({ pressed }) => [
-              styles.pillChip,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(15, 26, 58, 0.85)'
-                  : 'rgba(124, 92, 224, 0.08)',
-                borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.28)'
-                  : 'rgba(124, 92, 224, 0.16)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons
-              name={item.icon}
-              size={13}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
-            />
-            <Text
-              style={[
-                styles.pillText,
-                {
-                  color: colors.text,
-                  fontSize: isElderly ? 14 : 12.5,
-                },
-              ]}>
-              {item.text}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {prompts.map((item, index) => (
+        <Button
+          key={`${item.text}-${index}`}
+          variant="secondary"
+          size="sm"
+          icon={item.icon}
+          title={item.text}
+          onPress={() => onSelectPrompt(item.text)}
+        />
+      ))}
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   scrollContent: {

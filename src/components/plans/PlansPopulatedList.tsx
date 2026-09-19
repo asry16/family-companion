@@ -12,6 +12,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { StatusChip, StatusChipVariant } from '@/components/ui/StatusChip';
 import { PillButton } from '@/components/ui/PillButton';
+import { Button } from '@/components/ui';
 
 export interface PlanItem {
   id: string;
@@ -60,25 +61,15 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
           </Text>
         </View>
 
-        <Pressable
-          onPress={() => {
-            triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-            onAddPlan();
-          }}
-          style={({ pressed }) => [
-            styles.addPlanHeaderBtn,
-            {
-              backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(124, 92, 224, 0.08)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons name="add" size={15} color={isDark ? '#38BDF8' : '#7C5CE0'} />
-          <Text style={[styles.addPlanHeaderText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
-            Add Plan
-          </Text>
-        </Pressable>
+        <Button
+          variant="primary"
+          size="sm"
+          icon="add"
+          title="Add Plan"
+          onPress={onAddPlan}
+        />
       </View>
+
 
       {/* Plan Cards */}
       <View style={styles.cardList}>
@@ -259,19 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.8,
-  },
-  addPlanHeaderBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  addPlanHeaderText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
   cardList: {
     gap: 8,

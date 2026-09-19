@@ -14,21 +14,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { IconCircleButton } from '@/components/ui/IconCircleButton';
+import { Button, HeaderIconCapsule } from '@/components/ui';
 
 interface CircleHeaderProps {
   onOpenFamilySwitcher?: () => void;
+  onOpenSos?: () => void;
   onOpenSettings?: () => void;
 }
 
 export const CircleHeader: React.FC<CircleHeaderProps> = ({
   onOpenFamilySwitcher,
+  onOpenSos,
   onOpenSettings,
 }) => {
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme, isElderly } = useAppTheme();
-  const { profile, members, unreadCount } = useFamily();
+  const { profile, members, unreadCount, simpleMode, setSimpleMode } = useFamily();
   const { user } = useAuth();
 
   const familyName = profile?.name || "The A Family";
@@ -42,6 +45,12 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
       } catch (e) {}
     }
   };
+
+  const handleToggleElderly = () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    setSimpleMode(!simpleMode);
+  };
+
 
   return (
     <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) }]}>
@@ -117,51 +126,64 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Quick Action Controls Cluster */}
-        <View style={styles.rightActionCluster}>
-          {/* Sun/Moon = Theme Toggle */}
-          <IconCircleButton
-            name={isDark ? 'sunny' : 'moon'}
-            size={36}
-            iconSize={17}
-            color={isDark ? '#FBBF24' : '#6D5BD0'}
-            glowColor={isDark ? '#FBBF24' : undefined}
-            onPress={toggleTheme}
-            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-          />
+        {/* Right: Quick Action Controls Grouped in Capsule */}
+        <HeaderIconCapsule
+          items={[
+            {
+              id: 'theme',
+              name: isDark ? 'sunny' : 'moon',
+              accessibilityLabel: `Switch to ${isDark ? 'Light' : 'Dark'} mode`,
+              isActive: !isDark,
+              color: isDark ? '#FBBF24' : '#4B3FBF',
+              onPress: toggleTheme,
+            },
+            {
+              id: 'notifications',
+              name: 'notifications-outline',
+              accessibilityLabel: 'Notifications',
+              badgeCount: unreadCount > 0 ? unreadCount : 1,
+              badgeColor: colors.red,
+              onPress: () => router.push('/modal/notifications'),
+            },
+            {
+              id: 'settings',
+              name: 'settings-outline',
+              accessibilityLabel: 'Settings',
+              onPress: () => {
+                if (onOpenSettings) {
+                  onOpenSettings();
+                } else {
+                  router.push('/modal/family-settings');
+                }
+              },
+            },
+          ]}
+        />
+      </View>
 
-          {/* Bell with Red Badge "1" */}
-          <IconCircleButton
-            name="notifications-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
-            badgeCount={unreadCount > 0 ? unreadCount : 1}
-            badgeColor={colors.red}
-            onPress={() => router.push('/modal/notifications')}
-            accessibilityLabel="Notifications"
-          />
+      {/* Chips Bar: SOS (secondary danger) and Elderly (secondary) */}
+      <View style={styles.chipsBarRow}>
+        <Button
+          variant="secondary"
+          colorScheme="danger"
+          size="sm"
+          icon="warning-outline"
+          title="SOS"
+          onPress={onOpenSos}
+        />
 
-          {/* Settings Gear */}
-          <IconCircleButton
-            name="settings-outline"
-            size={36}
-            iconSize={17}
-            color={isDark ? colors.text : '#6D5BD0'}
-            onPress={() => {
-              if (onOpenSettings) {
-                onOpenSettings();
-              } else {
-                router.push('/modal/family-settings');
-              }
-            }}
-            accessibilityLabel="Settings"
-          />
-        </View>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="people-outline"
+          title={simpleMode ? 'Elderly Active' : 'Elderly'}
+          onPress={handleToggleElderly}
+        />
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -238,4 +260,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  chipsBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 4,
+  },
 });
+

@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { Button } from '@/components/ui';
 
 export interface SettingsTopBarProps {
   title?: string;
@@ -75,26 +76,16 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
       )}
 
       <View style={styles.barRow}>
-        {/* Left: Back Arrow Button */}
-        <Pressable
+        {/* Left: Back Arrow Button (circular tonal) */}
+        <Button
+          variant="tonal"
+          size="sm"
+          circular
+          icon="arrow-back"
           onPress={handleBack}
-          hitSlop={10}
-          accessibilityRole="button"
           accessibilityLabel="Go back"
-          style={({ pressed }) => [
-            styles.backButton,
-            {
-              backgroundColor: isDark
-                ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(255, 255, 255, 0.72)',
-              borderColor: isDark
-                ? 'rgba(255, 255, 255, 0.12)'
-                : 'rgba(124, 92, 224, 0.15)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
-        </Pressable>
+        />
+
 
         {/* Center: Title & Subtitle */}
         <View style={styles.titleColumn}>

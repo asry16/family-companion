@@ -7,7 +7,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { PillButton } from '@/components/ui/PillButton';
+import { Button } from '@/components/ui';
 
 interface FamilyCardProps {
   onViewLiveMap: () => void;
@@ -193,18 +193,20 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             </View>
           </View>
 
-          {/* "View Live Map →" Pill Button Over It */}
-          <PillButton
-            title="View Live Map →"
+          {/* "View Live Map" Primary Button with Arrow Over It */}
+          <Button
+            title="View Live Map"
             variant="primary"
             size="sm"
+            icon="arrow-forward"
+            iconPosition="right"
             onPress={onViewLiveMap}
             style={styles.viewLiveMapBtn}
-            textStyle={styles.viewLiveMapBtnText}
           />
         </View>
       </View>
     </GlassCard>
+
   );
 };
 

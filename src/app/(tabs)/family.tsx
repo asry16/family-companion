@@ -106,8 +106,10 @@ export default function FamilyScreen() {
       {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, Sun, Bell, Settings */}
       <CircleHeader
         onOpenFamilySwitcher={() => setQrModalVisible(true)}
+        onOpenSos={() => setSosModalVisible(true)}
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'circle' } })}
       />
+
 
       <ScrollView
         style={styles.scroll}

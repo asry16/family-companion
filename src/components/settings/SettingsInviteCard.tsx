@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui';
 
 export interface SettingsInviteCardProps {
   inviteCode?: string;
@@ -91,40 +92,16 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
             </Text>
           </View>
 
-          {/* "View QR" Pill Button */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic();
-              onViewQR();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="View QR Code"
-            style={({ pressed }) => [
-              styles.viewQrPill,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.20)'
-                  : 'rgba(124, 92, 224, 0.10)',
-                borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.40)'
-                  : 'rgba(124, 92, 224, 0.25)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons
-              name="qr-code-outline"
-              size={13}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
-            />
-            <Text
-              style={[
-                styles.viewQrText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
-              ]}>
-              View QR
-            </Text>
-          </Pressable>
+          {/* "View QR" Tonal Button */}
+          <Button
+            variant="tonal"
+            size="sm"
+            icon="qr-code-outline"
+            title="View QR"
+            onPress={onViewQR}
+          />
         </View>
+
 
         {/* Description */}
         <Text
@@ -136,80 +113,29 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
         </Text>
 
         {/* Two Buttons Side by Side */}
-        <View style={styles.actionButtonsRow}>
-          {/* "Share QR Invite" (Filled primary gradient, share icon) */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic();
-              onShareInvite();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Share QR Invite"
-            style={({ pressed }) => [
-              styles.btnFlex,
-              styles.gradientBtnWrap,
-              {
-                opacity: pressed ? 0.88 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}>
-            <LinearGradient
-              colors={isDark ? ['#3B6FF0', '#7C5CE0'] : ['#4F8EF7', '#8A6BF2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientBtnInner}>
-              <Ionicons
-                name="share-outline"
-                size={16}
-                color={isDark ? '#000000' : '#FFFFFF'}
-              />
-              <Text
-                style={[
-                  styles.btnText,
-                  { color: isDark ? '#000000' : '#FFFFFF' },
-                ]}>
-                Share QR Invite
-              </Text>
-            </LinearGradient>
-          </Pressable>
+        <View style={[styles.actionButtonsRow, { gap: 10 }]}>
+          {/* "Share QR Invite" (primary) */}
+          <Button
+            variant="primary"
+            size="md"
+            icon="share-outline"
+            title="Share QR Invite"
+            onPress={onShareInvite}
+            style={{ flex: 1 }}
+          />
 
-          {/* "Join Other Family" (Outlined, scan-frame icon) */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic();
-              onJoinOtherFamily();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Join Other Family"
-            style={({ pressed }) => [
-              styles.btnFlex,
-              styles.outlinedBtn,
-              {
-                borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.45)'
-                  : '#7C5CE0',
-                backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.10)'
-                  : 'rgba(124, 92, 224, 0.08)',
-                opacity: pressed ? 0.75 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}>
-            <Ionicons
-              name="scan-outline"
-              size={16}
-              color={isDark ? '#38BDF8' : '#7C5CE0'}
-            />
-            <Text
-              style={[
-                styles.btnText,
-                { color: isDark ? '#38BDF8' : '#7C5CE0' },
-              ]}>
-              Join Other Family
-            </Text>
-          </Pressable>
+          {/* "Join Other Family" (secondary) */}
+          <Button
+            variant="secondary"
+            size="md"
+            icon="scan-outline"
+            title="Join Other Family"
+            onPress={onJoinOtherFamily}
+            style={{ flex: 1 }}
+          />
         </View>
       </GlassCard>
+
     </View>
   );
 };
@@ -256,20 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1.5,
   },
-  viewQrPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: 2,
-  },
-  viewQrText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
   descriptionText: {
     fontSize: 13,
     fontWeight: '500',
@@ -280,36 +192,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginTop: 4,
-  },
-  btnFlex: {
-    flex: 1,
-  },
-  gradientBtnWrap: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  gradientBtnInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-  outlinedBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    borderWidth: 1.2,
-  },
-  btnText: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    letterSpacing: -0.1,
   },
 });

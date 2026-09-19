@@ -17,6 +17,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui';
 
 interface CircleLiveMapCardProps {
   onFullScreen?: () => void;
@@ -100,21 +101,13 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           </Text>
         </View>
 
-        <Pressable
-          onPress={() => {
-            triggerHaptic();
-            if (onFullScreen) onFullScreen();
-          }}
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.fullScreenPressable,
-            { opacity: pressed ? 0.7 : 1 },
-          ]}>
-          <Text style={[styles.fullScreenText, { color: colors.blue }]}>
-            Full Screen →
-          </Text>
-        </Pressable>
+        <Button
+          variant="link"
+          title="Full Screen"
+          onPress={onFullScreen}
+        />
       </View>
+
 
       {/* 2. Rounded Map Container with Overlays */}
       <View
@@ -360,138 +353,47 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({ onFullScre
           </Pressable>
         </View>
 
-        {/* Bottom-Right: "Recenter" Pill */}
-        <Pressable
+        {/* Bottom-Right: "Recenter" Button (secondary small) */}
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="compass-outline"
+          title="Recenter"
           onPress={handleRecenter}
-          style={[
-            styles.recenterPill,
-            {
-              backgroundColor: isDark ? 'rgba(15, 26, 58, 0.92)' : 'rgba(255, 255, 255, 0.94)',
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.40)' : 'rgba(124, 92, 224, 0.20)',
-            },
-          ]}>
-          <Ionicons name="compass-outline" size={13} color={isDark ? colors.blue : '#7C5CE0'} />
-          <Text style={[styles.recenterText, { color: isDark ? colors.blue : '#7C5CE0' }]}>Recenter</Text>
-        </Pressable>
+          style={styles.recenterPill}
+        />
       </View>
 
-      {/* 3. Below Map: Member Filter Chips ("All (1)" + One chip per member with green dot) */}
+      {/* 3. Below Map: Member Filter Chips ("All (1)" + One chip per member) */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterChipsRow}>
+        contentContainerStyle={[styles.filterChipsRow, { gap: 8 }]}>
         {/* "All (1)" Chip */}
-        <Pressable
-          onPress={() => {
-            triggerHaptic();
-            setSelectedMemberId(null);
-          }}
-          style={[
-            styles.filterChip,
-            {
-              backgroundColor: !selectedMemberId
-                ? isDark
-                  ? colors.blue
-                  : undefined
-                : isDark
-                ? 'rgba(255, 255, 255, 0.06)'
-                : 'rgba(124, 92, 224, 0.08)',
-              borderColor: !selectedMemberId
-                ? isDark
-                  ? colors.blue
-                  : 'transparent'
-                : isDark
-                ? 'rgba(255, 255, 255, 0.12)'
-                : 'rgba(124, 92, 224, 0.15)',
-              overflow: 'hidden',
-            },
-          ]}>
-          {!isDark && !selectedMemberId && (
-            <LinearGradient
-              colors={['#4F8EF7', '#8A6BF2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <Text
-            style={[
-              styles.filterChipText,
-              {
-                color: !selectedMemberId
-                  ? '#FFFFFF'
-                  : colors.text,
-                fontWeight: !selectedMemberId ? '800' : '600',
-              },
-            ]}>
-            All ({broadcastingCount})
-          </Text>
-        </Pressable>
+        <Button
+          variant="chip"
+          size="sm"
+          title={`All (${broadcastingCount})`}
+          selected={!selectedMemberId}
+          onPress={() => setSelectedMemberId(null)}
+        />
 
-        {/* Member Chips with Green Dot */}
+        {/* Member Chips */}
         {members.map((m) => {
           const isSelected = selectedMemberId === m.id;
           return (
-            <Pressable
+            <Button
               key={m.id}
-              onPress={() => {
-                triggerHaptic();
-                setSelectedMemberId(isSelected ? null : m.id);
-              }}
-              style={[
-                styles.filterChip,
-                {
-                  backgroundColor: isSelected
-                    ? isDark
-                      ? colors.blue
-                      : undefined
-                    : isDark
-                    ? 'rgba(255, 255, 255, 0.06)'
-                    : 'rgba(124, 92, 224, 0.08)',
-                  borderColor: isSelected
-                    ? isDark
-                      ? colors.blue
-                      : 'transparent'
-                    : isDark
-                    ? 'rgba(255, 255, 255, 0.12)'
-                    : 'rgba(124, 92, 224, 0.15)',
-                  overflow: 'hidden',
-                },
-              ]}>
-              {!isDark && isSelected && (
-                <LinearGradient
-                  colors={['#4F8EF7', '#8A6BF2']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
-              <View
-                style={[
-                  styles.filterDot,
-                  {
-                    backgroundColor: isSelected
-                      ? '#FFFFFF'
-                      : colors.green,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  {
-                    color: isSelected
-                      ? '#FFFFFF'
-                      : colors.text,
-                    fontWeight: isSelected ? '800' : '600',
-                  },
-                ]}>
-                {m.name}
-              </Text>
-            </Pressable>
+              variant="chip"
+              size="sm"
+              title={m.name}
+              selected={isSelected}
+              onPress={() => setSelectedMemberId(isSelected ? null : m.id)}
+            />
           );
         })}
       </ScrollView>
+
     </GlassCard>
   );
 };

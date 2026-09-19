@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui';
 
 export interface SettingsProfileSectionProps {
   name: string;
@@ -127,32 +128,17 @@ export const SettingsProfileSection: React.FC<SettingsProfileSectionProps> = ({
             </View>
           </View>
 
-          {/* Edit Profile Button */}
-          <Pressable
-            onPress={() => {
-              triggerHaptic();
-              onEditProfile();
-            }}
-            accessibilityRole="button"
+          {/* Edit Profile Button: Circular Tonal Pencil */}
+          <Button
+            variant="tonal"
+            size="sm"
+            circular
+            icon="create-outline"
+            onPress={onEditProfile}
             accessibilityLabel="Edit Profile"
-            style={({ pressed }) => [
-              styles.editButton,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(59, 111, 240, 0.18)'
-                  : 'rgba(124, 92, 224, 0.08)',
-                borderColor: isDark
-                  ? 'rgba(59, 111, 240, 0.35)'
-                  : '#7C5CE0',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons name="create-outline" size={14} color={isDark ? '#38BDF8' : '#7C5CE0'} />
-            <Text style={[styles.editText, { color: isDark ? '#38BDF8' : '#7C5CE0' }]}>
-              Edit
-            </Text>
-          </Pressable>
+          />
         </View>
+
 
         {/* Divider */}
         <View

@@ -24,3 +24,5 @@ export { Header } from './Header';
 export { PasswordStrengthMeter } from './PasswordStrengthMeter';
 export { VoiceButton } from './VoiceButton';
 export { LightBackdrop } from './LightBackdrop';
+export { Button, HeaderIconCapsule } from './Button';
+export type { ButtonProps, ButtonVariant, ButtonSize, HeaderCapsuleItem, HeaderIconCapsuleProps } from './Button';

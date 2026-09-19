@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { IconCircleButton } from '@/components/ui/IconCircleButton';
+import { HeaderIconCapsule } from '@/components/ui';
 
 import { HeaderAmbientArt } from './HeaderAmbientArt';
 
@@ -81,48 +82,41 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
             </View>
           </View>
 
-          {/* Right: Three Circular Icon Buttons (bell with red dot, sun = theme toggle, settings gear) */}
-          <View style={styles.actionsCluster}>
-            {/* 1. Bell with Red Notification Dot */}
-            <IconCircleButton
-              name="notifications-outline"
-              size={40}
-              iconSize={18}
-              color={isDark ? colors.text : '#6D5BD0'}
-              showBadgeDot={true}
-              badgeColor={colors.red}
-              onPress={() => router.push('/modal/notifications')}
-              accessibilityLabel="Notifications"
-            />
-
-            {/* 2. Sun/Moon = Theme Toggle */}
-            <IconCircleButton
-              name={isDark ? 'sunny' : 'moon'}
-              size={40}
-              iconSize={18}
-              color={isDark ? '#FBBF24' : '#6D5BD0'}
-              glowColor={isDark ? '#FBBF24' : undefined}
-              onPress={toggleTheme}
-              accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-            />
-
-            {/* 3. Settings Gear */}
-            <IconCircleButton
-              name="settings-outline"
-              size={40}
-              iconSize={18}
-              color={isDark ? colors.text : '#6D5BD0'}
-              onPress={() => {
-                if (onOpenSettings) {
-                  onOpenSettings();
-                } else {
-                  router.push('/modal/family-settings');
-                }
-              }}
-              accessibilityLabel="Settings"
-            />
-          </View>
+          {/* Right: Header controls inside ONE white translucent capsule */}
+          <HeaderIconCapsule
+            items={[
+              {
+                id: 'notifications',
+                name: 'notifications-outline',
+                accessibilityLabel: 'Notifications',
+                showBadgeDot: true,
+                badgeColor: colors.red,
+                onPress: () => router.push('/modal/notifications'),
+              },
+              {
+                id: 'theme',
+                name: isDark ? 'sunny' : 'moon',
+                accessibilityLabel: `Switch to ${isDark ? 'Light' : 'Dark'} mode`,
+                isActive: !isDark,
+                color: isDark ? '#FBBF24' : '#4B3FBF',
+                onPress: toggleTheme,
+              },
+              {
+                id: 'settings',
+                name: 'settings-outline',
+                accessibilityLabel: 'Settings',
+                onPress: () => {
+                  if (onOpenSettings) {
+                    onOpenSettings();
+                  } else {
+                    router.push('/modal/family-settings');
+                  }
+                },
+              },
+            ]}
+          />
         </View>
+
 
         {/* Active Global SOS Alert Banner */}
         {sosAlert?.active && (
