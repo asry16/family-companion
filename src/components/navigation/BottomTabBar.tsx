@@ -422,7 +422,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                       : colors.text,
                     fontWeight: '600',
                   },
-                  isDark && isActive && styles.darkActiveGlowText,
                 ]}>
                 Assistant
               </Text>
@@ -447,7 +446,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               style={[
                 styles.iconWrapper,
                 { transform: [{ scale: scaleAnim }] },
-                isDark && isActive && styles.darkActiveGlowIcon,
               ]}>
               <Ionicons name={iconName} size={TabBarTokens.iconSize} color={iconColor} />
             </Animated.View>
@@ -459,7 +457,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                   color: iconColor,
                   fontWeight: isActive ? '600' : '500',
                 },
-                isDark && isActive && styles.darkActiveGlowText,
               ]}>
               {tab.label}
             </Text>
@@ -511,6 +508,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 4,
     overflow: 'visible',
+    ...(Platform.OS === 'web'
+      ? ({
+          outline: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          cursor: 'pointer',
+        } as any)
+      : {}),
   },
   iconWrapper: {
     alignItems: 'center',
@@ -522,22 +526,6 @@ const styles = StyleSheet.create({
     fontSize: TabBarTokens.labelFontSize,
     letterSpacing: 0.1,
     textAlign: 'center',
-  },
-  darkActiveGlowText: {
-    textShadowColor: TabBarTokens.dark.activeGlow,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
-  },
-  darkActiveGlowIcon: {
-    shadowColor: TabBarTokens.dark.activeColor,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 12,
-    ...(Platform.OS === 'web'
-      ? ({
-          filter: `drop-shadow(0 0 6px ${TabBarTokens.dark.activeGlow})`,
-        } as any)
-      : {}),
   },
 
   // Assistant Orb Styling

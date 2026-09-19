@@ -541,21 +541,25 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
                   { scale: isHolding ? holdScaleAnim : coreScale },
                 ],
               }}>
-              {isDark ? (
-                // Dark mode: Dark navy fill with 3px rose ring (#FF5C6C), white "SOS", and rose glow
-                <View style={styles.darkSosCore}>
-                  <Text style={styles.sosText}>SOS</Text>
-                </View>
-              ) : (
-                // Light mode: filled coral-red radial gradient (#FF7A7A center to #EF4444 edge) with soft red shadow
-                <LinearGradient
-                  colors={HomeCardTokens.colors.sosLightCore}
-                  start={{ x: 0.2, y: 0.2 }}
-                  end={{ x: 0.9, y: 0.9 }}
-                  style={styles.lightSosCore}>
-                  <Text style={styles.sosText}>SOS</Text>
-                </LinearGradient>
-              )}
+              <LinearGradient
+                colors={
+                  isDark
+                    ? HomeCardTokens.colors.sosDarkCore
+                    : HomeCardTokens.colors.sosLightCore
+                }
+                start={{ x: 0.1, y: 0.1 }}
+                end={{ x: 0.9, y: 0.9 }}
+                style={[
+                  styles.sosCoreButton,
+                  {
+                    borderColor: isDark ? '#FF6B81' : '#FFA8B5',
+                    shadowColor: isDark ? '#FF2A45' : '#EF4444',
+                    shadowOpacity: isDark ? 0.6 : 0.35,
+                    shadowRadius: isDark ? 14 : 10,
+                  },
+                ]}>
+                <Text style={styles.sosText}>SOS</Text>
+              </LinearGradient>
             </Animated.View>
           </Pressable>
         </View>
@@ -715,31 +719,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 5,
   },
-  lightSosCore: {
+  sosCoreButton: {
     width: HomeCardTokens.needHelp.sosSize,
     height: HomeCardTokens.needHelp.sosSize,
     borderRadius: HomeCardTokens.needHelp.sosSize / 2,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  darkSosCore: {
-    width: HomeCardTokens.needHelp.sosSize,
-    height: HomeCardTokens.needHelp.sosSize,
-    borderRadius: HomeCardTokens.needHelp.sosSize / 2,
-    backgroundColor: '#0F172A',
-    borderWidth: 3,
-    borderColor: '#FF5C6C',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FF5C6C',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 14,
     elevation: 8,
   },
   sosText: {
