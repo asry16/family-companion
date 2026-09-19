@@ -210,13 +210,13 @@ export default function TabsLayout() {
                 styles.iconWrap,
                 focused && [
                   styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : 'rgba(37, 99, 235, 0.1)' },
+                  { backgroundColor: isDark ? 'rgba(59, 111, 240, 0.20)' : 'rgba(59, 111, 240, 0.10)' },
                 ],
               ]}>
               <Ionicons
                 name={focused ? 'calendar' : 'calendar-outline'}
                 size={20}
-                color={focused ? (isDark ? '#38BDF8' : colors.brandAccent) : color}
+                color={focused ? colors.blue : color}
               />
             </View>
           ),
