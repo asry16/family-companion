@@ -395,21 +395,15 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.mapLeftEdgeFade}
-            pointerEvents="none"
           />
         </View>
       </View>
 
-      {/* 4. "View Live Map →" Button (Anchored bottom-right with 12px inset, overlapping map thumbnail) */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="View Live Map"
-        onPress={(e) => {
-          e.stopPropagation();
-          triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-          onViewLiveMap();
-        }}
-        style={({ pressed }) => [
+      {/* 4. "View Live Map →" Pill Indicator (Anchored bottom-right with 12px inset, overlapping map thumbnail) */}
+      <View
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no"
+        style={[
           styles.viewLiveMapPill,
           {
             backgroundColor: isDark ? '#0F1A3A' : '#FFFFFF',
@@ -417,8 +411,6 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             borderWidth: isDark ? 1 : 0,
             shadowColor: isDark ? '#38BDF8' : '#6E5ADC',
             shadowOpacity: isDark ? 0.25 : 0.15,
-            opacity: pressed ? 0.92 : 1,
-            transform: [{ scale: pressed ? 0.97 : 1 }],
           },
         ]}>
         <Text
@@ -429,7 +421,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           ]}>
           View Live Map →
         </Text>
-      </Pressable>
+      </View>
     </Pressable>
   );
 };
@@ -675,6 +667,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     width: 24,
+    pointerEvents: 'none',
   },
 
   // View Live Map Pill
