@@ -2,7 +2,9 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getAwsClientConfig, hasAwsCredentials, logAwsOperation } from './awsConfig';
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'kinly-family-vault';
+function getBucketName(): string {
+  return process.env.AWS_S3_BUCKET || 'kinly-family-vault';
+}
 
 let s3Client: S3Client | null = null;
 function getClient(): S3Client {
@@ -50,7 +52,7 @@ export const s3Service = {
         const client = getClient();
         await client.send(
           new PutObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: s3Key,
             Body: bodyBuffer,
             ContentType: contentType,
@@ -65,17 +67,17 @@ export const s3Service = {
         const presignedUrl = await getSignedUrl(
           client,
           new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: s3Key,
           }),
           { expiresIn: 86400 }
         );
 
-        logAwsOperation('s3', 'PutObject', { bucket: BUCKET_NAME, key: s3Key, bytes: bodyBuffer.length });
+        logAwsOperation('s3', 'PutObject', { bucket: getBucketName(), key: s3Key, bytes: bodyBuffer.length });
         return {
           s3Key,
           url: presignedUrl,
-          bucket: BUCKET_NAME,
+          bucket: getBucketName(),
           isLiveS3: true,
         };
       } catch (err: any) {
@@ -84,11 +86,11 @@ export const s3Service = {
     }
 
     // Simulation / local fallback
-    logAwsOperation('s3', 'SimulatedUpload', { bucket: BUCKET_NAME, key: s3Key, bytes: bodyBuffer.length });
+    logAwsOperation('s3', 'SimulatedUpload', { bucket: getBucketName(), key: s3Key, bytes: bodyBuffer.length });
     return {
       s3Key,
-      url: `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`,
-      bucket: BUCKET_NAME,
+      url: `https://${getBucketName()}.s3.amazonaws.com/${s3Key}`,
+      bucket: getBucketName(),
       isLiveS3: false,
     };
   },
@@ -103,7 +105,7 @@ export const s3Service = {
         return await getSignedUrl(
           client,
           new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: s3Key,
           }),
           { expiresIn: expiresInSeconds }
@@ -113,6 +115,6 @@ export const s3Service = {
       }
     }
 
-    return `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+    return `https://${getBucketName()}.s3.amazonaws.com/${s3Key}`;
   },
 };
