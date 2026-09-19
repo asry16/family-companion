@@ -18,19 +18,17 @@ import { IconCircleButton } from '@/components/ui/IconCircleButton';
 
 interface CircleHeaderProps {
   onOpenFamilySwitcher?: () => void;
-  onOpenSos?: () => void;
   onOpenSettings?: () => void;
 }
 
 export const CircleHeader: React.FC<CircleHeaderProps> = ({
   onOpenFamilySwitcher,
-  onOpenSos,
   onOpenSettings,
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme, isElderly } = useAppTheme();
-  const { profile, members, unreadCount, simpleMode, setSimpleMode } = useFamily();
+  const { profile, members, unreadCount } = useFamily();
   const { user } = useAuth();
 
   const familyName = profile?.name || "The A Family";
@@ -43,11 +41,6 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
         Haptics.impactAsync(style);
       } catch (e) {}
     }
-  };
-
-  const handleToggleElderly = () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setSimpleMode(!simpleMode);
   };
 
   return (
@@ -166,56 +159,6 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
           />
         </View>
       </View>
-
-      {/* Chips Bar: Outlined Red SOS Chip + Outlined Blue Elderly Chip */}
-      <View style={styles.chipsBarRow}>
-        {/* 1. Outlined Red SOS Chip */}
-        <Pressable
-          onPress={() => {
-            triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-            if (onOpenSos) {
-              onOpenSos();
-            }
-          }}
-          style={({ pressed }) => [
-            styles.outlinedChip,
-            {
-              borderColor: isDark ? 'rgba(240, 82, 77, 0.65)' : colors.red,
-              backgroundColor: isDark ? 'rgba(240, 82, 77, 0.12)' : 'rgba(240, 82, 77, 0.06)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons name="warning-outline" size={13} color={colors.red} />
-          <Text style={[styles.outlinedChipText, { color: colors.red }]}>SOS</Text>
-        </Pressable>
-
-        {/* 2. Outlined Blue Elderly Chip (Toggles elderly mode) */}
-        <Pressable
-          onPress={handleToggleElderly}
-          style={({ pressed }) => [
-            styles.outlinedChip,
-            {
-              borderColor: isDark ? 'rgba(59, 111, 240, 0.65)' : colors.blue,
-              backgroundColor: simpleMode
-                ? isDark
-                  ? 'rgba(59, 111, 240, 0.25)'
-                  : 'rgba(59, 111, 240, 0.14)'
-                : isDark
-                ? 'rgba(59, 111, 240, 0.10)'
-                : 'rgba(59, 111, 240, 0.05)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons
-            name={simpleMode ? 'heart' : 'heart-outline'}
-            size={13}
-            color={colors.blue}
-          />
-          <Text style={[styles.outlinedChipText, { color: colors.blue }]}>
-            {simpleMode ? 'Elderly Active' : 'Elderly'}
-          </Text>
-        </Pressable>
-      </View>
     </View>
   );
 };
@@ -294,24 +237,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-  },
-  chipsBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingTop: 2,
-  },
-  outlinedChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 4.5,
-    borderRadius: 14,
-    borderWidth: 1.2,
-  },
-  outlinedChipText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
 });

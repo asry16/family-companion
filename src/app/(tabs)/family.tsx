@@ -99,10 +99,9 @@ export default function FamilyScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, SOS & Elderly chips, Sun, Bell, Settings */}
+      {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, Sun, Bell, Settings */}
       <CircleHeader
         onOpenFamilySwitcher={() => setQrModalVisible(true)}
-        onOpenSos={() => setSosModalVisible(true)}
         onOpenSettings={() => router.push('/modal/family-settings')}
       />
 
