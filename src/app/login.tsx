@@ -1,1722 +1,862 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   ScrollView,
   Pressable,
+  Animated,
+  Easing,
   Platform,
+  Dimensions,
+  Keyboard,
+  AppState,
+  AccessibilityInfo,
   ActivityIndicator,
   Modal,
-  KeyboardAvoidingView,
+  TextInput,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { FrontPageTokens } from '@/constants/theme';
+import { LightBackdrop } from '@/components/ui/LightBackdrop';
+import { DarkStarsBackdrop } from '@/components/ui/DarkStarsBackdrop';
+import { AuthCard } from '@/components/auth/AuthCard';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
+
+const { height: WINDOW_HEIGHT, width: WINDOW_WIDTH } = Dimensions.get('window');
+
+// Module-level flag: intro plays once per app launch
+let hasPlayedIntroGlobal = false;
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
-  const {
-    signInWithGoogle,
-    signInWithApple,
-    signInWithEmail,
-    requestOtp,
-    signInWithOtp,
-    sendPasswordResetEmail,
-  } = useAuth();
+  const { colors, isDark } = useAppTheme();
+  const { isAuthenticated, isLoading, sendPasswordResetEmail } = useAuth();
 
-  // Screen View Mode: 'gateway' (hero welcome) or 'signIn' (focused sign in form)
-  const [viewMode, setViewMode] = useState<'gateway' | 'signIn'>('gateway');
+  // Screen height reference
+  const [screenHeight, setScreenHeight] = useState(WINDOW_HEIGHT);
 
-  // Sign In Method: 'password' | 'otp'
-  const [signInMethod, setSignInMethod] = useState<'password' | 'otp'>('password');
+  // Animation Phase: 'phase1' (centered brand intro) | 'phase2' (brand at top, card visible)
+  const [phase, setPhase] = useState<'phase1' | 'phase2'>(
+    hasPlayedIntroGlobal ? 'phase2' : 'phase1'
+  );
+  const [isCardInteractive, setIsCardInteractive] = useState(hasPlayedIntroGlobal);
 
-  // Sign In Form Fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-
-  // OTP Login States
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpCooldown, setOtpCooldown] = useState(0);
-  const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
-  const [isOtpDelivered, setIsOtpDelivered] = useState(false);
-
-  // States
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Forgot Password Modal
+  // Modals
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotStatus, setForgotStatus] = useState<{ success?: boolean; message?: string } | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [termsType, setTermsType] = useState<'terms' | 'privacy'>('terms');
 
-  // OTP Cooldown countdown
-  React.useEffect(() => {
-    if (otpCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setOtpCooldown((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpCooldown]);
+  // Animation Values
+  const brandTranslateY = useRef(new Animated.Value(0)).current;
+  const brandScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? FrontPageTokens.timings.phase2LogoFinalScale : 1)).current;
+  const keyboardScale = useRef(new Animated.Value(1)).current;
 
-  // Haptic feedback helper
-  const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
-    }
-  };
+  // Phase 1 Intro Elements
+  const logoOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
+  const logoScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0.85)).current;
+  const nameOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
+  const nameTranslateY = useRef(new Animated.Value(hasPlayedIntroGlobal ? 0 : 12)).current;
+  const taglineOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
+  const taglineTranslateY = useRef(new Animated.Value(hasPlayedIntroGlobal ? 0 : 12)).current;
 
-  const handleSendOtp = async () => {
-    if (otpLoading || otpCooldown > 0) return;
-    setErrorMessage(null);
-    setOtpSuccessMessage(null);
+  // Halo pulse loop
+  const haloPulseAnim = useRef(new Animated.Value(0)).current;
+  const haloPulseLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) {
-      setErrorMessage('Please enter your email address to receive an OTP code.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g. name@domain.com).');
-      return;
-    }
+  // Phase 2 Card Entrance
+  const cardOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
+  const cardTranslateY = useRef(new Animated.Value(hasPlayedIntroGlobal ? 0 : 60)).current;
 
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setOtpLoading(true);
+  // Timing references for cleanup
+  const holdTimerRef = useRef<any>(null);
+  const brandHeightRef = useRef<number>(180);
 
-    try {
-      const res = await requestOtp(cleanEmail, 'login');
-      if (res.success) {
-        setOtpSent(true);
-        setOtpCooldown(60);
-        setIsOtpDelivered(Boolean(res.delivered));
-        setOtpSuccessMessage(res.message || 'A 6-digit verification code was sent to your email.');
-      } else {
-        setErrorMessage(res.error || 'Failed to dispatch verification code. Please try again.');
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Could not send verification code.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
+  // Top position calculation: ~12% of screen height from the top
+  const finalTopY = Math.round(screenHeight * FrontPageTokens.brandTopPercent);
 
-  const handleVerifyOtpAndLogin = async () => {
-    if (loading) return;
-    setErrorMessage(null);
+  // Compute delta to vertically center brand group during Phase 1
+  const computeCenterDeltaY = useCallback(
+    (h: number) => {
+      const centerY = (screenHeight - (insets.top + insets.bottom) - h) / 2;
+      return Math.max(0, centerY - finalTopY);
+    },
+    [screenHeight, insets.top, insets.bottom, finalTopY]
+  );
 
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanCode = otpCode.trim();
-
-    if (!cleanEmail) {
-      setErrorMessage('Please enter your email address.');
-      return;
-    }
-    if (!cleanCode || cleanCode.length < 6) {
-      setErrorMessage('Please enter the complete 6-digit verification code.');
-      return;
-    }
-
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
-
-    try {
-      const result = await signInWithOtp(cleanEmail, cleanCode);
-      if (result.success) {
-        router.replace('/(tabs)');
-      } else {
-        setErrorMessage(result.error || 'Invalid or expired verification code.');
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Verification failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignIn = async () => {
-    if (loading) return;
-    setErrorMessage(null);
-
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) {
-      setErrorMessage('Please enter your email address.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g. name@domain.com).');
-      return;
-    }
-    if (!password) {
-      setErrorMessage('Please enter your password.');
-      return;
-    }
-
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
-
-    try {
-      const result = await signInWithEmail(cleanEmail, password, rememberMe);
-      if (result.success) {
-        router.replace('/(tabs)');
-      } else {
-        setErrorMessage(result.error || 'Invalid email or password.');
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Unable to sign in. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (loading) return;
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      await signInWithGoogle();
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
       router.replace('/(tabs)');
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Google authentication could not be completed.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isAuthenticated, isLoading, router]);
 
-  const handleAppleSignIn = async () => {
-    if (loading) return;
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      await signInWithApple();
-      router.replace('/(tabs)');
-    } catch (err: any) {
-      setErrorMessage('Apple authentication could not be completed.');
-    } finally {
-      setLoading(false);
+  // Halo pulsing animation loop (scale 1 to 1.15, opacity 0.5 to 0, 2600ms loop)
+  const startHaloPulse = useCallback(() => {
+    haloPulseAnim.setValue(0);
+    haloPulseLoopRef.current = Animated.loop(
+      Animated.timing(haloPulseAnim, {
+        toValue: 1,
+        duration: FrontPageTokens.timings.phase1HaloPulseLoop,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    haloPulseLoopRef.current.start();
+  }, [haloPulseAnim]);
+
+  const stopHaloPulse = useCallback(() => {
+    if (haloPulseLoopRef.current) {
+      haloPulseLoopRef.current.stop();
+      haloPulseLoopRef.current = null;
     }
-  };
+  }, []);
 
+  // Transition to Phase 2: Glide brand group up & slide card in
+  const triggerPhase2 = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
 
+    setPhase('phase2');
 
-  const handleForgotPasswordSubmit = async () => {
-    if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
-      setForgotStatus({
-        success: false,
-        message: 'Please enter a valid email address.',
+    // Glide brand group up and scale logo to 0.85
+    Animated.parallel([
+      Animated.timing(brandTranslateY, {
+        toValue: 0,
+        duration: FrontPageTokens.timings.phase2BrandGlide,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(brandScale, {
+        toValue: FrontPageTokens.timings.phase2LogoFinalScale,
+        duration: FrontPageTokens.timings.phase2BrandGlide,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start();
+
+    // 200ms delay then slide card up from bottom
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(cardOpacity, {
+          toValue: 1,
+          duration: FrontPageTokens.timings.phase2CardSpring,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.spring(cardTranslateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 52,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start(() => {
+        setIsCardInteractive(true);
+        hasPlayedIntroGlobal = true;
       });
+    }, FrontPageTokens.timings.phase2CardDelay);
+  }, [brandTranslateY, brandScale, cardOpacity, cardTranslateY]);
+
+  // Execute Phase 1 on mount
+  useEffect(() => {
+    if (hasPlayedIntroGlobal) {
+      setIsCardInteractive(true);
       return;
     }
 
+    // Check reduced motion
+    let isMounted = true;
+    const checkMotion = async () => {
+      try {
+        const isReduced = await AccessibilityInfo.isReduceMotionEnabled();
+        const prefersReduceWeb =
+          Platform.OS === 'web' &&
+          typeof window !== 'undefined' &&
+          window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+        if ((isReduced || prefersReduceWeb) && isMounted) {
+          hasPlayedIntroGlobal = true;
+          setPhase('phase2');
+          brandTranslateY.setValue(0);
+          brandScale.setValue(FrontPageTokens.timings.phase2LogoFinalScale);
+          logoOpacity.setValue(1);
+          logoScale.setValue(1);
+          nameOpacity.setValue(1);
+          nameTranslateY.setValue(0);
+          taglineOpacity.setValue(1);
+          taglineTranslateY.setValue(0);
+          cardOpacity.setValue(1);
+          cardTranslateY.setValue(0);
+          setIsCardInteractive(true);
+          return;
+        }
+      } catch (e) {}
+
+      if (!isMounted) return;
+
+      // Calculate vertical center delta for brand
+      const deltaY = computeCenterDeltaY(brandHeightRef.current);
+      brandTranslateY.setValue(deltaY);
+
+      // Start halo pulse loop
+      startHaloPulse();
+
+      // Logo fade & scale in (0.85 to 1, 500ms)
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: FrontPageTokens.timings.phase1LogoFadeScale,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: FrontPageTokens.timings.phase1LogoFadeScale,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start(() => {
+        if (!isMounted) return;
+
+        // Name fade up 12px (350ms)
+        Animated.parallel([
+          Animated.timing(nameOpacity, {
+            toValue: 1,
+            duration: 350,
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+          Animated.timing(nameTranslateY, {
+            toValue: 0,
+            duration: 350,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        ]).start();
+
+        // Staggered 150ms: Tagline fade up 12px (350ms)
+        setTimeout(() => {
+          if (!isMounted) return;
+          Animated.parallel([
+            Animated.timing(taglineOpacity, {
+              toValue: 1,
+              duration: 350,
+              useNativeDriver: Platform.OS !== 'web',
+            }),
+            Animated.timing(taglineTranslateY, {
+              toValue: 0,
+              duration: 350,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: Platform.OS !== 'web',
+            }),
+          ]).start(() => {
+            if (!isMounted) return;
+            // Hold for ~900ms then automatically glide to Phase 2
+            holdTimerRef.current = setTimeout(() => {
+              if (isMounted) triggerPhase2();
+            }, FrontPageTokens.timings.phase1Hold);
+          });
+        }, FrontPageTokens.timings.phase1TextFadeUpDelay);
+      });
+    };
+
+    checkMotion();
+
+    return () => {
+      isMounted = false;
+      stopHaloPulse();
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    };
+  }, [computeCenterDeltaY, startHaloPulse, stopHaloPulse, triggerPhase2]);
+
+  // AppState listener: pause animation when app is backgrounded
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState.match(/inactive|background/)) {
+        stopHaloPulse();
+      } else if (nextState === 'active' && phase === 'phase1') {
+        startHaloPulse();
+      }
+    });
+    return () => sub.remove();
+  }, [phase, startHaloPulse, stopHaloPulse]);
+
+  // Keyboard listeners: scale brand group down to 0.7 so card has room
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      Animated.timing(keyboardScale, {
+        toValue: FrontPageTokens.timings.keyboardBrandScale,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    };
+
+    const onHide = (e: any) => {
+      Animated.timing(keyboardScale, {
+        toValue: 1,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    };
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardScale]);
+
+  // Handle tap anywhere during Phase 1 to skip straight to Phase 2
+  const handlePhase1Tap = () => {
+    if (phase === 'phase1') {
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch (e) {}
+      }
+      logoOpacity.setValue(1);
+      logoScale.setValue(1);
+      nameOpacity.setValue(1);
+      nameTranslateY.setValue(0);
+      taglineOpacity.setValue(1);
+      taglineTranslateY.setValue(0);
+      triggerPhase2();
+    }
+  };
+
+  // Password reset handler
+  const handleSendReset = async () => {
+    if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
+      alert('Please enter a valid email address.');
+      return;
+    }
     setForgotLoading(true);
     try {
-      const res = await sendPasswordResetEmail(forgotEmail);
-      setForgotStatus({
-        success: true,
-        message: res.message,
-      });
-    } catch (e) {
-      setForgotStatus({
-        success: false,
-        message: 'Could not send reset link. Please try again.',
-      });
+      const res = await sendPasswordResetEmail(forgotEmail.trim());
+      setForgotSuccess(res.message || 'Password reset instructions have been sent.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to send reset link.');
     } finally {
       setForgotLoading(false);
     }
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+  // Theme-tailored tokens
+  const themeTokens = isDark ? FrontPageTokens.colors.dark : FrontPageTokens.colors.light;
 
-        {/* ========================================================================= */}
-        {/* VIEW 1: GATEWAY (Welcome / Hero / Action Choices without Form Clutter)    */}
-        {/* ========================================================================= */}
-        {viewMode === 'gateway' && (
-          <View style={styles.gatewayContainer}>
-            {/* Ambient Aura & Brand Emblem */}
-            <View style={styles.brandHeroBlock}>
-              <View style={styles.emblemAuraWrap}>
-                <View
-                  style={[
-                    styles.emblemOuterRing,
-                    {
-                      borderColor: colors.brandAccent + '30',
-                      backgroundColor: colors.brandAccent + '12',
-                    },
-                  ]}>
-                  <View
-                    style={[
-                      styles.emblemCore,
-                      {
-                        backgroundColor: colors.brandAccent,
-                        shadowColor: colors.brandAccent,
-                      },
-                    ]}>
-                    <Ionicons name="people" size={36} color="#FFFFFF" />
-                  </View>
-                </View>
-              </View>
+  // Pulsing halo scale & opacity interpolation
+  const haloScale = haloPulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.15],
+  });
+  const haloOpacity = haloPulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.5, 0],
+  });
 
-              <View style={styles.brandBadge}>
-                <Text style={[styles.brandBadgeText, { color: colors.brandAccent }]}>
-                  FAMILYOS • PRIVATE COMPANION
-                </Text>
-              </View>
-
-              <Text
-                style={[
-                  styles.brandName,
-                  { color: colors.text, fontSize: isElderly ? 38 : 34 },
-                ]}>
-                Kinly
-              </Text>
-
-              <Text
-                style={[
-                  styles.heroPhilosophy,
-                  { color: colors.textSecondary, fontSize: isElderly ? 16 : 14 },
-                ]}>
-                "Don't make the family manage the app.{'\n'}Make the app understand the family."
-              </Text>
-            </View>
-
-            {/* Curated Value Highlights */}
-            <View style={styles.highlightsContainer}>
-              <View
-                style={[
-                  styles.highlightCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                  },
-                ]}>
-                <View
-                  style={[
-                    styles.highlightIconWrap,
-                    { backgroundColor: colors.blueSoft },
-                  ]}>
-                  <Ionicons name="shield-checkmark" size={18} color={colors.blue} />
-                </View>
-                <View style={styles.highlightTextWrap}>
-                  <Text style={[styles.highlightTitle, { color: colors.text }]}>
-                    Private Family Vault
-                  </Text>
-                  <Text style={[styles.highlightSub, { color: colors.textSecondary }]}>
-                    Zero plaintext data. Passwords encrypted with SHA-256 isolation.
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.highlightCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                  },
-                ]}>
-                <View
-                  style={[
-                    styles.highlightIconWrap,
-                    { backgroundColor: colors.greenSoft },
-                  ]}>
-                  <Ionicons name="location" size={18} color={colors.green} />
-                </View>
-                <View style={styles.highlightTextWrap}>
-                  <Text style={[styles.highlightTitle, { color: colors.text }]}>
-                    Live Coordination
-                  </Text>
-                  <Text style={[styles.highlightSub, { color: colors.textSecondary }]}>
-                    Battery-efficient presence, safety alerts, and reach detection.
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* The 3 Core Actions on 1st Page: Sign In, Sign Up, Create Family */}
-            <View style={styles.gatewayCardsStack}>
-              {/* Option 1: Sign In */}
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  setErrorMessage(null);
-                  setViewMode('signIn');
-                }}
-                style={({ pressed }) => [
-                  styles.gatewayActionCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.88 : 1,
-                  },
-                ]}>
-                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.blueSoft }]}>
-                  <Ionicons name="log-in-outline" size={22} color={colors.blue} />
-                </View>
-                <View style={styles.gatewayActionTextWrap}>
-                  <Text style={[styles.gatewayActionTitle, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
-                    Sign In
-                  </Text>
-                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
-                    Access your existing family space or member account
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
-
-              {/* Option 2: Sign Up */}
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/register?mode=signup');
-                }}
-                style={({ pressed }) => [
-                  styles.gatewayActionCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.88 : 1,
-                  },
-                ]}>
-                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.greenSoft }]}>
-                  <Ionicons name="person-add-outline" size={22} color={colors.green} />
-                </View>
-                <View style={styles.gatewayActionTextWrap}>
-                  <Text style={[styles.gatewayActionTitle, { color: colors.text, fontSize: isElderly ? 18 : 16 }]}>
-                    Sign Up
-                  </Text>
-                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
-                    Register your personal account to join your family
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
-
-              {/* Option 3: Create Family Space */}
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push('/register?mode=create_family');
-                }}
-                style={({ pressed }) => [
-                  styles.gatewayActionCardFeatured,
-                  {
-                    backgroundColor: colors.brandAccent + '12',
-                    borderColor: colors.brandAccent + '50',
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.99 : 1 }],
-                  },
-                ]}>
-                <View style={[styles.gatewayActionIconBox, { backgroundColor: colors.brandAccent + '25' }]}>
-                  <Ionicons name="home-outline" size={22} color={colors.brandAccent} />
-                </View>
-                <View style={styles.gatewayActionTextWrap}>
-                  <View style={styles.titleBadgeRow}>
-                    <Text style={[styles.gatewayActionTitle, { color: colors.brandAccent, fontSize: isElderly ? 18 : 16 }]}>
-                      Create Family Space
-                    </Text>
-                    <View style={[styles.miniJewelBadge, { backgroundColor: colors.brandAccent }]}>
-                      <Text style={styles.miniJewelBadgeText}>NEW SPACE</Text>
-                    </View>
-                  </View>
-                  <Text style={[styles.gatewayActionSub, { color: colors.textSecondary }]}>
-                    Establish a brand-new encrypted sanctuary for your whole household
-                  </Text>
-                </View>
-                <Ionicons name="arrow-forward-circle" size={24} color={colors.brandAccent} />
-              </Pressable>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
-                OR CONTINUE WITH
-              </Text>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            </View>
-
-            {/* 1-Tap Social Authentications */}
-            <View style={styles.socialStack}>
-              <Pressable
-                onPress={handleAppleSignIn}
-                disabled={loading}
-                style={({ pressed }) => [
-                  styles.appleButton,
-                  { opacity: loading ? 0.7 : pressed ? 0.85 : 1 },
-                ]}>
-                <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                <Text style={styles.appleButtonText}>Continue with Apple</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleGoogleSignIn}
-                disabled={loading}
-                style={({ pressed }) => [
-                  styles.googleButton,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                    opacity: loading ? 0.7 : pressed ? 0.85 : 1,
-                  },
-                ]}>
-                <View style={styles.googleIconCircle}>
-                  <Ionicons name="logo-google" size={17} color="#EA4335" />
-                </View>
-                <Text style={[styles.googleButtonText, { color: colors.text }]}>
-                  Continue with Google
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Security Assurance Footer */}
-            <View style={styles.securityFooter}>
-              <Ionicons name="shield-checkmark-outline" size={14} color={colors.green} />
-              <Text style={[styles.securityFooterText, { color: colors.textMuted }]}>
-                Zero Plaintext Passwords • SHA-256 Cryptographic Vault
-              </Text>
+  // Plain splash while checking session or if already authenticated
+  if (isLoading || isAuthenticated) {
+    return (
+      <View style={[styles.splashContainer, { backgroundColor: colors.background }]}>
+        {isDark ? <DarkStarsBackdrop /> : <LightBackdrop />}
+        <View style={styles.splashContent}>
+          <View
+            style={[
+              styles.logoHalo,
+              {
+                borderColor: themeTokens.haloBorder,
+                backgroundColor: themeTokens.haloBg,
+              },
+            ]}>
+            <View style={[styles.logoCore, { backgroundColor: themeTokens.logoBg }]}>
+              <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
             </View>
           </View>
-        )}
+          <ActivityIndicator
+            size="small"
+            color={themeTokens.linkViolet}
+            style={{ marginTop: 24 }}
+          />
+        </View>
+      </View>
+    );
+  }
 
+  return (
+    <View
+      onLayout={(e) => {
+        const { height } = e.nativeEvent.layout;
+        if (height > 0 && Math.abs(height - screenHeight) > 10) {
+          setScreenHeight(height);
+        }
+      }}
+      style={[styles.rootContainer, { backgroundColor: colors.background }]}>
+      {/* Background Backdrops: Light (lavender + botanticals) & Dark (deep navy + stars) */}
+      {isDark ? <DarkStarsBackdrop /> : <LightBackdrop />}
+
+      {/* Screen container: safe-area aware, centered column max width 440 */}
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + finalTopY,
+            paddingBottom: insets.bottom + 32,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
         {/* ========================================================================= */}
-        {/* VIEW 2: FOCUSED SIGN IN (Appears ONLY when user taps "Sign In with Email") */}
+        {/* BRAND GROUP: LOGO + APP NAME + TAGLINE                                    */}
         {/* ========================================================================= */}
-        {viewMode === 'signIn' && (
-          <View style={styles.signInContainer}>
-            {/* Top Navigation Bar with Back Button */}
-            <View style={styles.topNavRow}>
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  setViewMode('gateway');
-                  setErrorMessage(null);
-                }}
-                hitSlop={12}
-                style={styles.backNavButton}>
-                <Ionicons name="arrow-back" size={20} color={colors.text} />
-                <Text style={[styles.backNavText, { color: colors.textSecondary }]}>
-                  Back
-                </Text>
-              </Pressable>
-              <Text style={[styles.navBrandTitle, { color: colors.textMuted }]}>
-                Kinly
-              </Text>
-            </View>
-
-            {/* Editorial Heading */}
-            <View style={styles.formHeader}>
-              <Text
-                style={[
-                  styles.formTitle,
-                  { color: colors.text, fontSize: isElderly ? 32 : 28 },
-                ]}>
-                Welcome back
-              </Text>
-              <Text
-                style={[
-                  styles.formSubtitle,
-                  { color: colors.textSecondary, fontSize: isElderly ? 16 : 14 },
-                ]}>
-                {signInMethod === 'password'
-                  ? "Sign in with your email and password to access your family's vault."
-                  : "Sign in instantly with a secure 6-digit one-time code sent to your email."}
-              </Text>
-            </View>
-
-            {/* Authentication Method Segmented Switcher */}
-            <View
+        <Animated.View
+          onLayout={(e) => {
+            brandHeightRef.current = e.nativeEvent.layout.height;
+          }}
+          style={[
+            styles.brandGroup,
+            {
+              transform: [
+                { translateY: brandTranslateY },
+                { scale: brandScale },
+                { scale: keyboardScale },
+              ],
+            },
+          ]}>
+          {/* 1. LOGO: 72px violet circle with white family icon in 96px halo ring */}
+          <Animated.View
+            style={[
+              styles.logoWrapper,
+              {
+                opacity: logoOpacity,
+                transform: [{ scale: logoScale }],
+              },
+            ]}>
+            {/* Animated Pulsing Outer Halo Layer */}
+            <Animated.View
+              pointerEvents="none"
               style={[
-                styles.methodTabsRow,
-                { backgroundColor: colors.borderSubtle, borderColor: colors.border },
-              ]}>
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  setSignInMethod('password');
-                  setErrorMessage(null);
-                }}
-                style={[
-                  styles.methodTab,
-                  signInMethod === 'password' && [
-                    styles.methodTabActive,
-                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  ],
-                ]}>
-                <Ionicons
-                  name="key-outline"
-                  size={16}
-                  color={signInMethod === 'password' ? colors.brandAccent : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.methodTabText,
-                    {
-                      color: signInMethod === 'password' ? colors.text : colors.textSecondary,
-                      fontWeight: signInMethod === 'password' ? '700' : '500',
-                    },
-                  ]}>
-                  Password
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-                  setSignInMethod('otp');
-                  setErrorMessage(null);
-                }}
-                style={[
-                  styles.methodTab,
-                  signInMethod === 'otp' && [
-                    styles.methodTabActive,
-                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  ],
-                ]}>
-                <Ionicons
-                  name="mail-unread-outline"
-                  size={16}
-                  color={signInMethod === 'otp' ? colors.brandAccent : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.methodTabText,
-                    {
-                      color: signInMethod === 'otp' ? colors.text : colors.textSecondary,
-                      fontWeight: signInMethod === 'otp' ? '700' : '500',
-                    },
-                  ]}>
-                  Email OTP Code
-                </Text>
-                <View style={[styles.methodJewel, { backgroundColor: colors.brandAccent + '1E' }]}>
-                  <Text style={[styles.methodJewelText, { color: colors.brandAccent }]}>Instant</Text>
-                </View>
-              </Pressable>
-            </View>
-
-            {/* Form Card */}
-            <View
-              style={[
-                styles.formCard,
+                styles.logoHaloPulse,
                 {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
+                  borderColor: themeTokens.haloBorder,
+                  backgroundColor: themeTokens.haloBg,
+                  opacity: haloOpacity,
+                  transform: [{ scale: haloScale }],
+                },
+              ]}
+            />
+
+            {/* Static Halo Ring (96px) */}
+            <View
+              style={[
+                styles.logoHalo,
+                {
+                  borderColor: themeTokens.haloBorder,
+                  backgroundColor: themeTokens.haloBg,
                 },
               ]}>
-              {/* Error Alert Box */}
-              {errorMessage && (
-                <View
-                  style={[
-                    styles.alertBox,
-                    { backgroundColor: colors.redSoft, borderColor: colors.redBorder },
-                  ]}>
-                  <Ionicons name="alert-circle" size={18} color={colors.red} />
-                  <Text style={[styles.alertText, { color: colors.red }]}>
-                    {errorMessage}
-                  </Text>
-                </View>
-              )}
-
-              {/* OTP Success / Delivery Info Banner */}
-              {signInMethod === 'otp' && otpSuccessMessage && (
-                <View
-                  style={[
-                    styles.alertBox,
-                    isOtpDelivered
-                      ? { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder }
-                      : { backgroundColor: colors.yellowSoft, borderColor: colors.yellowBorder },
-                  ]}>
-                  <Ionicons
-                    name={isOtpDelivered ? "checkmark-circle" : "information-circle"}
-                    size={18}
-                    color={isOtpDelivered ? colors.green : colors.yellow}
-                  />
-                  <Text
-                    style={[
-                      styles.alertText,
-                      { color: isOtpDelivered ? colors.green : colors.yellow },
-                    ]}>
-                    {otpSuccessMessage}
-                  </Text>
-                </View>
-              )}
-
-              {/* Email Input (Common to both methods) */}
-              <View style={styles.inputGroup}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 0 }]}>
-                    Email Address
-                  </Text>
-                  {signInMethod === 'otp' && otpSent && (
-                    <Pressable
-                      onPress={() => {
-                        setOtpSent(false);
-                        setOtpCode('');
-                        setOtpSuccessMessage(null);
-                      }}>
-                      <Text style={{ fontSize: 12, color: colors.brandAccent, fontWeight: '600' }}>
-                        Change email
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
-                <View
-                  style={[
-                    styles.inputFieldContainer,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}>
-                  <Ionicons
-                    name="mail-outline"
-                    size={18}
-                    color={colors.textSecondary}
-                    style={styles.inputLeadingIcon}
-                  />
-                  <TextInput
-                    value={email}
-                    editable={signInMethod !== 'otp' || !otpSent}
-                    onChangeText={(val) => {
-                      setEmail(val);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    placeholder="name@family.com"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[
-                      styles.textInput,
-                      { color: colors.text },
-                      signInMethod === 'otp' && otpSent && { opacity: 0.7 },
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {/* METHOD 1: PASSWORD FORM */}
-              {signInMethod === 'password' && (
-                <>
-                  {/* Password Input */}
-                  <View style={styles.inputGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>
-                      Password
-                    </Text>
-                    <View
-                      style={[
-                        styles.inputFieldContainer,
-                        { backgroundColor: colors.background, borderColor: colors.border },
-                      ]}>
-                      <Ionicons
-                        name="lock-closed-outline"
-                        size={18}
-                        color={colors.textSecondary}
-                        style={styles.inputLeadingIcon}
-                      />
-                      <TextInput
-                        value={password}
-                        onChangeText={(val) => {
-                          setPassword(val);
-                          if (errorMessage) setErrorMessage(null);
-                        }}
-                        placeholder="Enter your password"
-                        placeholderTextColor={colors.textMuted}
-                        secureTextEntry={!showPassword}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        style={[styles.textInput, { color: colors.text }]}
-                      />
-                      <Pressable
-                        onPress={() => setShowPassword(!showPassword)}
-                        hitSlop={10}
-                        style={styles.trailingAction}>
-                        <Ionicons
-                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={18}
-                          color={colors.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {/* Remember Me & Forgot Password */}
-                  <View style={styles.optionsRow}>
-                    <Pressable
-                      onPress={() => setRememberMe(!rememberMe)}
-                      style={styles.rememberMeRow}>
-                      <View
-                        style={[
-                          styles.checkbox,
-                          {
-                            borderColor: rememberMe ? colors.brandAccent : colors.border,
-                            backgroundColor: rememberMe ? colors.brandAccent : 'transparent',
-                          },
-                        ]}>
-                        {rememberMe && (
-                          <Ionicons name="checkmark" size={13} color="#FFFFFF" />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.rememberMeText,
-                          { color: colors.text, fontSize: isElderly ? 15 : 13 },
-                        ]}>
-                        Remember me
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        setForgotEmail(email);
-                        setForgotStatus(null);
-                        setForgotModalVisible(true);
-                      }}
-                      hitSlop={8}>
-                      <Text
-                        style={[
-                          styles.forgotText,
-                          { color: colors.brandAccent, fontSize: isElderly ? 15 : 13 },
-                        ]}>
-                        Forgot Password?
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  {/* Submit Button */}
-                  <Pressable
-                    onPress={handleSignIn}
-                    disabled={loading}
-                    style={({ pressed }) => [
-                      styles.primaryActionButton,
-                      {
-                        backgroundColor: colors.brandAccent,
-                        shadowColor: colors.brandAccent,
-                        opacity: loading ? 0.7 : pressed ? 0.9 : 1,
-                      },
-                    ]}>
-                    {loading ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <View style={styles.buttonContentRow}>
-                        <Text
-                          style={[
-                            styles.primaryActionText,
-                            { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
-                          ]}>
-                          Sign In with Password
-                        </Text>
-                        <Ionicons name="arrow-forward" size={18} color={colors.buttonTextOnAccent} />
-                      </View>
-                    )}
-                  </Pressable>
-                </>
-              )}
-
-              {/* METHOD 2: OTP / CODE SECTION */}
-              {signInMethod === 'otp' && (
-                <>
-                  {!otpSent ? (
-                    <Pressable
-                      onPress={handleSendOtp}
-                      disabled={otpLoading}
-                      style={({ pressed }) => [
-                        styles.primaryActionButton,
-                        {
-                          backgroundColor: colors.brandAccent,
-                          shadowColor: colors.brandAccent,
-                          marginTop: 8,
-                          opacity: otpLoading ? 0.7 : pressed ? 0.9 : 1,
-                        },
-                      ]}>
-                      {otpLoading ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <View style={styles.buttonContentRow}>
-                          <Ionicons name="paper-plane-outline" size={18} color={colors.buttonTextOnAccent} />
-                          <Text
-                            style={[
-                              styles.primaryActionText,
-                              { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
-                            ]}>
-                            Send Verification Code
-                          </Text>
-                        </View>
-                      )}
-                    </Pressable>
-                  ) : (
-                    <>
-                      {/* OTP Code Input */}
-                      <View style={styles.inputGroup}>
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>
-                          6-Digit Verification Code
-                        </Text>
-                        <View
-                          style={[
-                            styles.inputFieldContainer,
-                            { backgroundColor: colors.background, borderColor: colors.border },
-                          ]}>
-                          <Ionicons
-                            name="shield-checkmark-outline"
-                            size={18}
-                            color={colors.textSecondary}
-                            style={styles.inputLeadingIcon}
-                          />
-                          <TextInput
-                            value={otpCode}
-                            onChangeText={(val) => {
-                              setOtpCode(val);
-                              if (errorMessage) setErrorMessage(null);
-                            }}
-                            placeholder="6-digit code"
-                            placeholderTextColor={colors.textMuted}
-                            keyboardType="number-pad"
-                            maxLength={6}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            style={[
-                              styles.textInput,
-                              styles.otpTextInput,
-                              { color: colors.text },
-                            ]}
-                          />
-                        </View>
-                      </View>
-
-                      {/* Resend OTP Row */}
-                      <View style={styles.otpResendRow}>
-                        <Text style={[styles.otpResendText, { color: colors.textSecondary }]}>
-                          Didn't receive email code?
-                        </Text>
-                        {otpCooldown > 0 ? (
-                          <Text style={[styles.otpCooldownBadge, { color: colors.textMuted }]}>
-                            Resend in {otpCooldown}s
-                          </Text>
-                        ) : (
-                          <Pressable
-                            onPress={handleSendOtp}
-                            disabled={otpLoading}
-                            hitSlop={8}>
-                            <Text style={[styles.otpResendAction, { color: colors.brandAccent }]}>
-                              {otpLoading ? 'Sending...' : 'Resend Code'}
-                            </Text>
-                          </Pressable>
-                        )}
-                      </View>
-
-                      {/* Verify & Sign In Button */}
-                      <Pressable
-                        onPress={handleVerifyOtpAndLogin}
-                        disabled={loading}
-                        style={({ pressed }) => [
-                          styles.primaryActionButton,
-                          {
-                            backgroundColor: colors.brandAccent,
-                            shadowColor: colors.brandAccent,
-                            opacity: loading ? 0.7 : pressed ? 0.9 : 1,
-                          },
-                        ]}>
-                        {loading ? (
-                          <ActivityIndicator color="#FFFFFF" />
-                        ) : (
-                          <View style={styles.buttonContentRow}>
-                            <Text
-                              style={[
-                                styles.primaryActionText,
-                                { color: colors.buttonTextOnAccent, fontSize: isElderly ? 18 : 16 },
-                              ]}>
-                              Verify & Sign In
-                            </Text>
-                            <Ionicons name="checkmark-done" size={18} color={colors.buttonTextOnAccent} />
-                          </View>
-                        )}
-                      </Pressable>
-                    </>
-                  )}
-                </>
-              )}
-            </View>
-
-            {/* Switch to Sign Up or Create Family */}
-            <View style={styles.switchPromptColumn}>
-              <View style={styles.switchPromptRow}>
-                <Text style={[styles.switchPromptText, { color: colors.textSecondary }]}>
-                  Need a personal member account?
-                </Text>
-                <Pressable
-                  onPress={() => router.push('/register?mode=signup')}
-                  hitSlop={8}>
-                  <Text style={[styles.switchPromptAction, { color: colors.brandAccent }]}>
-                    Sign Up
-                  </Text>
-                </Pressable>
-              </View>
-
-              <View style={[styles.switchPromptRow, { marginTop: 8 }]}>
-                <Text style={[styles.switchPromptText, { color: colors.textSecondary }]}>
-                  Want to establish a new household?
-                </Text>
-                <Pressable
-                  onPress={() => router.push('/register?mode=create_family')}
-                  hitSlop={8}>
-                  <Text style={[styles.switchPromptAction, { color: colors.green }]}>
-                    Create Family Space →
-                  </Text>
-                </Pressable>
+              {/* Violet Circle (72px) with Family Icon */}
+              <View
+                style={[
+                  styles.logoCore,
+                  {
+                    backgroundColor: themeTokens.logoBg,
+                    shadowColor: themeTokens.logoBg,
+                  },
+                ]}>
+                <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
               </View>
             </View>
-          </View>
-        )}
+          </Animated.View>
 
+          {/* 2. APP NAME: 40px, heavy weight, -1 letter spacing */}
+          <Animated.Text
+            style={[
+              styles.appNameText,
+              {
+                color: themeTokens.nameText,
+                opacity: nameOpacity,
+                transform: [{ translateY: nameTranslateY }],
+              },
+            ]}>
+            {FrontPageTokens.appName}
+          </Animated.Text>
+
+          {/* 3. TAGLINE: italic 16px, muted lavender-gray, max width 300, in quotes */}
+          <Animated.Text
+            style={[
+              styles.taglineText,
+              {
+                color: themeTokens.taglineText,
+                opacity: taglineOpacity,
+                transform: [{ translateY: taglineTranslateY }],
+              },
+            ]}>
+            "{FrontPageTokens.tagline}"
+          </Animated.Text>
+        </Animated.View>
+
+        {/* ========================================================================= */}
+        {/* AUTH CARD: 3-State Glassmorphism Card                                     */}
+        {/* ========================================================================= */}
+        <Animated.View
+          style={[
+            styles.cardAnimatedWrapper,
+            {
+              opacity: cardOpacity,
+              transform: [{ translateY: cardTranslateY }],
+            },
+          ]}>
+          <AuthCard
+            interactive={isCardInteractive}
+            onSuccess={() => {
+              if (Platform.OS !== 'web') {
+                try {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } catch (e) {}
+              }
+              router.replace('/(tabs)');
+            }}
+            onJoinWithCode={() => setJoinModalVisible(true)}
+            onForgotPassword={(prefilledEmail) => {
+              if (prefilledEmail) setForgotEmail(prefilledEmail);
+              setForgotSuccess(null);
+              setForgotModalVisible(true);
+            }}
+            onOpenTerms={() => {
+              setTermsType('terms');
+              setTermsModalVisible(true);
+            }}
+            onOpenPrivacy={() => {
+              setTermsType('privacy');
+              setTermsModalVisible(true);
+            }}
+          />
+        </Animated.View>
       </ScrollView>
 
+      {/* Phase 1 Skip Overlay: Tap anywhere during intro to glide up to Phase 2 */}
+      {phase === 'phase1' && (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handlePhase1Tap}
+          accessibilityLabel="Tap anywhere to skip intro"
+        />
+      )}
+
       {/* ========================================================================= */}
-      {/* MODAL 1: FORGOT PASSWORD                                                  */}
+      {/* JOIN WITH INVITE CODE MODAL                                               */}
+      {/* ========================================================================= */}
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
+        onSuccess={(_familyName) => {
+          setJoinModalVisible(false);
+          router.replace('/(tabs)');
+        }}
+      />
+
+      {/* ========================================================================= */}
+      {/* FORGOT PASSWORD MODAL                                                     */}
       {/* ========================================================================= */}
       <Modal
         visible={forgotModalVisible}
-        transparent
         animationType="fade"
+        transparent
         onRequestClose={() => setForgotModalVisible(false)}>
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setForgotModalVisible(false)}>
-          <Pressable
+        <View style={styles.modalOverlay}>
+          <View
             style={[
               styles.modalCard,
               {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
+                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: themeTokens.cardBorder,
               },
-            ]}
-            onPress={(e) => e.stopPropagation()}>
+            ]}>
             <View style={styles.modalHeader}>
-              <View
-                style={[
-                  styles.modalIconWrap,
-                  { backgroundColor: colors.brandSoft },
-                ]}>
-                <Ionicons name="key-outline" size={24} color={colors.brandAccent} />
-              </View>
-              <Text
-                style={[
-                  styles.modalTitle,
-                  { color: colors.text, fontSize: isElderly ? 22 : 18 },
-                ]}>
-                Reset Your Password
-              </Text>
-              <Text style={[styles.modalSub, { color: colors.textSecondary }]}>
-                Enter the email address associated with your Kinly account to receive a reset link.
-              </Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Reset Password</Text>
+              <Pressable onPress={() => setForgotModalVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={22} color={colors.text} />
+              </Pressable>
             </View>
 
-            {forgotStatus && (
-              <View
-                style={[
-                  styles.alertBox,
-                  {
-                    backgroundColor: forgotStatus.success ? colors.greenSoft : colors.redSoft,
-                    borderColor: forgotStatus.success ? colors.greenBorder : colors.redBorder,
-                  },
-                ]}>
-                <Ionicons
-                  name={forgotStatus.success ? 'checkmark-circle' : 'alert-circle'}
-                  size={16}
-                  color={forgotStatus.success ? colors.green : colors.red}
-                />
-                <Text
+            {forgotSuccess ? (
+              <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                <Ionicons name="checkmark-circle" size={48} color={colors.green} />
+                <Text style={[styles.modalText, { color: colors.text, marginTop: 12 }]}>
+                  {forgotSuccess}
+                </Text>
+                <Pressable
+                  onPress={() => setForgotModalVisible(false)}
+                  style={[styles.modalDoneButton, { backgroundColor: themeTokens.linkViolet }]}>
+                  <Text style={styles.modalDoneButtonText}>Done</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                  Enter your email address and we will send you a link to reset your password.
+                </Text>
+
+                <View
                   style={[
-                    styles.alertText,
-                    { color: forgotStatus.success ? colors.green : colors.red },
+                    styles.modalInputWrap,
+                    {
+                      borderColor: themeTokens.inputBorder,
+                      backgroundColor: themeTokens.inputBg,
+                    },
                   ]}>
-                  {forgotStatus.message}
-                </Text>
-              </View>
+                  <Ionicons name="mail-outline" size={18} color={themeTokens.inputPlaceholder} style={{ marginRight: 10 }} />
+                  <TextInput
+                    value={forgotEmail}
+                    onChangeText={setForgotEmail}
+                    placeholder="Email address"
+                    placeholderTextColor={themeTokens.inputPlaceholder}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={[styles.modalTextInput, { color: colors.text }]}
+                  />
+                </View>
+
+                <Pressable
+                  onPress={handleSendReset}
+                  disabled={forgotLoading}
+                  style={[styles.modalActionButton, { backgroundColor: themeTokens.linkViolet }]}>
+                  {forgotLoading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.modalActionButtonText}>Send reset link</Text>
+                  )}
+                </Pressable>
+              </>
             )}
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>
-                Email Address
-              </Text>
-              <View
-                style={[
-                  styles.inputFieldContainer,
-                  { backgroundColor: colors.background, borderColor: colors.border },
-                ]}>
-                <Ionicons
-                  name="mail-outline"
-                  size={18}
-                  color={colors.textSecondary}
-                  style={styles.inputLeadingIcon}
-                />
-                <TextInput
-                  value={forgotEmail}
-                  onChangeText={setForgotEmail}
-                  placeholder="name@family.com"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={[styles.textInput, { color: colors.text }]}
-                />
-              </View>
-            </View>
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={handleForgotPasswordSubmit}
-                disabled={forgotLoading}
-                style={[
-                  styles.primaryActionButton,
-                  { backgroundColor: colors.brandAccent },
-                ]}>
-                {forgotLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.primaryActionText}>Send Reset Link</Text>
-                )}
-              </Pressable>
-
-              <Pressable
-                onPress={() => setForgotModalVisible(false)}
-                style={styles.modalCancelButton}>
-                <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>
-                  Cancel
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
 
+      {/* ========================================================================= */}
+      {/* TERMS / PRIVACY POLICY MODAL                                              */}
+      {/* ========================================================================= */}
+      <Modal
+        visible={termsModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setTermsModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: isDark ? 'rgba(15, 26, 58, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                borderColor: themeTokens.cardBorder,
+                maxHeight: '80%',
+              },
+            ]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {termsType === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
+              </Text>
+              <Pressable onPress={() => setTermsModalVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={22} color={colors.text} />
+              </Pressable>
+            </View>
 
+            <ScrollView style={{ marginTop: 12 }}>
+              <Text style={[styles.modalPolicyText, { color: colors.textSecondary }]}>
+                {termsType === 'terms'
+                  ? `Welcome to Kinly. By accessing or using our application, you agree to be bound by these Terms of Service. Kinly is designed exclusively for private family coordination, document vaulting, and emergency assistance.\n\nAll personal data, locations, and family records are encrypted end-to-end and stored securely. You retain full ownership of all family content uploaded to the platform.`
+                  : `Kinly respects your private family sanctuary. We never sell, rent, or monetize your location data, family communications, or private documents.\n\nYour biometric authentication and vault data remain strictly localized or zero-knowledge encrypted. Emergency SOS location sharing is only triggered by explicit user activation.`}
+              </Text>
+            </ScrollView>
 
-    </KeyboardAvoidingView>
+            <Pressable
+              onPress={() => setTermsModalVisible(false)}
+              style={[styles.modalDoneButton, { backgroundColor: themeTokens.linkViolet, marginTop: 16 }]}>
+              <Text style={styles.modalDoneButtonText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  rootContainer: {
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingTop: 44,
-    paddingBottom: 48,
-    maxWidth: 480,
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: 16,
     width: '100%',
+    maxWidth: FrontPageTokens.cardMaxWidth,
     alignSelf: 'center',
   },
-
-  // Gateway Layout
-  gatewayContainer: {
-    gap: 22,
-  },
-  brandHeroBlock: {
+  splashContainer: {
+    flex: 1,
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 12,
+    justifyContent: 'center',
   },
-  emblemAuraWrap: {
-    marginBottom: 4,
+  splashContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  emblemOuterRing: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+  brandGroup: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  logoWrapper: {
+    width: FrontPageTokens.haloSize,
+    height: FrontPageTokens.haloSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginBottom: FrontPageTokens.logoNameGap,
+  },
+  logoHaloPulse: {
+    position: 'absolute',
+    width: FrontPageTokens.haloSize,
+    height: FrontPageTokens.haloSize,
+    borderRadius: FrontPageTokens.haloSize / 2,
+    borderWidth: 1.5,
+  },
+  logoHalo: {
+    width: FrontPageTokens.haloSize,
+    height: FrontPageTokens.haloSize,
+    borderRadius: FrontPageTokens.haloSize / 2,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emblemCore: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+  logoCore: {
+    width: FrontPageTokens.logoSize,
+    height: FrontPageTokens.logoSize,
+    borderRadius: FrontPageTokens.logoSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 6,
   },
-  brandBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    marginTop: 4,
-  },
-  brandBadgeText: {
-    fontSize: 10,
+  appNameText: {
+    fontSize: 40,
     fontWeight: '800',
-    letterSpacing: 1.2,
-  },
-  brandName: {
-    fontWeight: '800',
-    letterSpacing: -0.6,
-  },
-  heroPhilosophy: {
+    letterSpacing: -1,
     textAlign: 'center',
-    lineHeight: 20,
+    marginBottom: FrontPageTokens.nameTaglineGap,
+  },
+  taglineText: {
+    fontSize: 16,
     fontStyle: 'italic',
-    maxWidth: 320,
+    textAlign: 'center',
+    maxWidth: FrontPageTokens.taglineMaxWidth,
+    lineHeight: 22,
   },
-
-  // Highlights
-  highlightsContainer: {
-    gap: 10,
-    marginVertical: 4,
-  },
-  highlightCard: {
-    flexDirection: 'row',
+  cardAnimatedWrapper: {
+    width: '100%',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
+    marginTop: FrontPageTokens.brandCardGap,
   },
-  highlightIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  highlightTextWrap: {
+  modalOverlay: {
     flex: 1,
-    gap: 2,
-  },
-  highlightTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  highlightSub: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-
-  // Actions & Gateway 3-Choice Stack
-  gatewayCardsStack: {
-    gap: 12,
-    marginTop: 4,
-  },
-  gatewayActionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    paddingHorizontal: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  gatewayActionCardFeatured: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    paddingHorizontal: 16,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    gap: 14,
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  gatewayActionIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  gatewayActionTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  gatewayActionTitle: {
-    fontWeight: '700',
-  },
-  gatewayActionSub: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  titleBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  miniJewelBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  miniJewelBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  actionsBlock: {
-    gap: 10,
-    marginTop: 6,
-  },
-  switchPromptColumn: {
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 4,
-  },
-  primaryActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-    borderRadius: 16,
-    gap: 8,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  primaryActionText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  secondaryActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  secondaryActionText: {
-    fontWeight: '700',
-  },
-
-  // Divider
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 2,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-
-  // Social
-  socialStack: {
-    gap: 10,
-  },
-  appleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-    borderRadius: 16,
-    backgroundColor: '#000000',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  appleButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  googleIconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleButtonText: {
-    fontWeight: '700',
-    fontSize: 15,
-  },
-
-  // Security Footer
-  securityFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  securityFooterText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-
-  // Sign In Focused View
-  signInContainer: {
-    gap: 20,
-  },
-  topNavRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  backNavButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  backNavText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  navBrandTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  formHeader: {
-    gap: 6,
-  },
-  formTitle: {
-    fontWeight: '800',
-    letterSpacing: -0.4,
-  },
-  formSubtitle: {
-    lineHeight: 20,
-  },
-  formCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 22,
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  inputGroup: {
-    gap: 6,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  inputFieldContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    minHeight: 48,
-  },
-  inputLeadingIcon: {
-    marginRight: 10,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 15,
-    paddingVertical: 8,
-  },
-  trailingAction: {
-    padding: 4,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rememberMeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rememberMeText: {
-    fontWeight: '500',
-  },
-  forgotText: {
-    fontWeight: '600',
-  },
-  buttonContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  switchPromptRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  switchPromptText: {
-    fontSize: 14,
-  },
-  switchPromptAction: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  // Alert Box
-  alertBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  alertText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-
-  // Modals
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: 20,
   },
   modalCard: {
     width: '100%',
     maxWidth: 400,
     borderRadius: 24,
-    padding: 24,
     borderWidth: 1,
-    gap: 16,
+    padding: 22,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  modalIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   modalTitle: {
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  modalSub: {
-    textAlign: 'center',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  modalActions: {
-    gap: 10,
-    marginTop: 4,
-  },
-  modalCancelButton: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  modalCancelText: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '600',
   },
-
-  // Bottom Sheet
-  bottomSheetCard: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    maxWidth: 480,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    padding: 22,
-    gap: 14,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#94A3B8',
-    alignSelf: 'center',
-    marginBottom: 4,
-  },
-  sheetHeader: {
-    gap: 4,
-  },
-  sheetTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sheetTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  sheetSub: {
+  modalSubtitle: {
     fontSize: 13,
     lineHeight: 18,
+    marginBottom: 16,
   },
-  memberCard: {
+  modalInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    gap: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
   },
-  memberName: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  memberMeta: {
-    fontSize: 12,
-    marginTop: 1,
-  },
-  sheetCloseButton: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  sheetCloseText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Segmented Method Tabs
-  methodTabsRow: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 4,
-    gap: 6,
-  },
-  methodTab: {
+  modalTextInput: {
     flex: 1,
-    flexDirection: 'row',
+    fontSize: 15,
+    padding: 0,
+    margin: 0,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
+  },
+  modalActionButton: {
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
   },
-  methodTabActive: {
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  methodTabText: {
-    fontSize: 13,
-  },
-  methodJewel: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  methodJewelText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  otpTextInput: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 6,
-    textAlign: 'center',
-  },
-  otpResendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginVertical: 4,
-  },
-  otpResendText: {
-    fontSize: 13,
-  },
-  otpCooldownBadge: {
-    fontSize: 13,
+  modalActionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '600',
   },
-  otpResendAction: {
+  modalDoneButton: {
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    alignSelf: 'stretch',
+  },
+  modalDoneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalPolicyText: {
     fontSize: 13,
-    fontWeight: '700',
+    lineHeight: 20,
   },
 });
