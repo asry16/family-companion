@@ -57,6 +57,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // State Management
   const [cardState, setCardState] = useState<AuthCardState>(initialState);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Form Fields - Sign In
   const [signInEmail, setSignInEmail] = useState('');
@@ -113,7 +114,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  // 250ms crossfade between card states
+  // Sliding transition between card states
   const switchState = (nextState: AuthCardState) => {
     if (Platform.OS !== 'web') {
       try {
@@ -122,20 +123,38 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
     setErrors({});
     onStateChange?.(nextState);
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 120,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start(() => {
-      try {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      } catch (e) {}
-      setCardState(nextState);
+
+    // Determine slide direction (right-to-left for SignUp, left-to-right for SignIn)
+    const direction = nextState === 'signUp' ? -50 : 50;
+
+    Animated.parallel([
       Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 130,
+        toValue: 0,
+        duration: 150,
         useNativeDriver: Platform.OS !== 'web',
-      }).start();
+      }),
+      Animated.timing(slideAnim, {
+        toValue: direction,
+        duration: 150,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start(() => {
+      setCardState(nextState);
+      slideAnim.setValue(-direction); // reset to opposite side
+      
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
     });
   };
 
@@ -468,7 +487,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         ]}
       />
 
-      <Animated.View style={{ opacity: fadeAnim }}>
+      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
         {/* ========================================================================= */}
         {/* 1. CHOOSE STATE (DEFAULT)                                                 */}
         {/* ========================================================================= */}
@@ -1424,7 +1443,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   fieldsContainer: {
-    gap: 12,
+    gap: 16,
   },
   textInput: {
     flex: 1,
@@ -1447,7 +1466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 16,
     gap: 8,
   },
   errorBannerText: {
@@ -1468,7 +1487,7 @@ const styles = StyleSheet.create({
     height: FrontPageTokens.buttonHeight,
     borderRadius: 24,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: 8,
   },
   gradientFill: {
     flex: 1,
@@ -1488,7 +1507,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 8,
     paddingHorizontal: 20,
   },
   secondaryButtonText: {
@@ -1499,7 +1518,7 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 18,
+    marginVertical: 16,
     paddingHorizontal: 10,
   },
   dividerLine: {
@@ -1540,7 +1559,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 16,
   },
   switchText: {
     fontSize: 14,

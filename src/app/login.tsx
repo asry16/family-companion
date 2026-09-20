@@ -75,6 +75,7 @@ export default function LoginScreen() {
   const brandTranslateY = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? FrontPageTokens.timings.phase2LogoFinalScale : 1)).current;
   const keyboardScale = useRef(new Animated.Value(1)).current;
+  const keyboardTranslateY = useRef(new Animated.Value(0)).current;
 
   // Phase 1 Intro Elements
   const logoOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
@@ -312,21 +313,37 @@ export default function LoginScreen() {
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = (e: any) => {
-      Animated.timing(keyboardScale, {
-        toValue: FrontPageTokens.timings.keyboardBrandScale,
-        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
+      Animated.parallel([
+        Animated.timing(keyboardScale, {
+          toValue: 0.55,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(keyboardTranslateY, {
+          toValue: -40,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        })
+      ]).start();
     };
 
     const onHide = (e: any) => {
-      Animated.timing(keyboardScale, {
-        toValue: 1,
-        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
+      Animated.parallel([
+        Animated.timing(keyboardScale, {
+          toValue: 1,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(keyboardTranslateY, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        })
+      ]).start();
     };
 
     const showSub = Keyboard.addListener(showEvent, onShow);
@@ -522,6 +539,7 @@ export default function LoginScreen() {
                 transform: [
                   { translateY: brandTranslateY },
                   { scale: brandScale },
+                  { translateY: keyboardTranslateY },
                   { scale: keyboardScale },
                 ],
               },
