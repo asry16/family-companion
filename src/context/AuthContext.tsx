@@ -102,6 +102,7 @@ interface AuthContextValue {
 
 const AUTH_STORAGE_KEY = '@kinly_auth_user_v1';
 const REGISTERED_ACCOUNTS_KEY = '@kinly_accounts_vault_v1';
+const SCRATCH_RESET_KEY = '@kinly_scratch_reset_v4';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -123,6 +124,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     async function loadSession() {
       try {
+        const alreadyReset = await AsyncStorage.getItem(SCRATCH_RESET_KEY);
+        if (!alreadyReset) {
+          // Clear all client cache and stored accounts to start completely from scratch
+          await AsyncStorage.clear();
+          await AsyncStorage.setItem(SCRATCH_RESET_KEY, 'true');
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
         const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
         if (stored) {
           try {
@@ -1001,7 +1012,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     setUser(null);
-    await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const purgeKeys = allKeys.filter((k) => k !== SCRATCH_RESET_KEY);
+      if (purgeKeys.length > 0) {
+        await AsyncStorage.multiRemove(purgeKeys);
+      }
+    } catch {
+      await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+    }
     try {
       await apiClient.auth.logout();
     } catch {}
