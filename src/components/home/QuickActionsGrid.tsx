@@ -26,15 +26,15 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
     }
   };
 
-  const handleAction = (type: 'plan' | 'scan' | 'checkin' | 'brief') => {
+  const handleAction = (type: 'plan' | 'find' | 'checkin' | 'brief') => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     switch (type) {
       case 'plan':
         router.push('/modal/new-plan');
         break;
-      case 'scan':
-        router.push('/modal/scan-document');
+      case 'find':
+        router.push('/(tabs)/memory');
         break;
       case 'checkin':
         if (activeUser) {
@@ -64,10 +64,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({ onSeeAll }) 
       borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
     },
     {
-      id: 'scan',
-      title: 'Scan Document',
-      subtitle: 'Extract important details',
-      icon: 'scan-outline' as const,
+      id: 'find',
+      title: 'Find Item',
+      subtitle: 'Locate physical items',
+      icon: 'search-outline' as const,
       accent: isDark ? colors.brandAccent : '#7C5CE0',
       glowBg: isDark ? 'rgba(139, 124, 246, 0.15)' : '#F5F0FF',
       borderAccent: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
