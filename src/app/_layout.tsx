@@ -14,6 +14,7 @@ LogBox.ignoreLogs([
   'props.pointerEvents is deprecated. Use style.pointerEvents',
   'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.',
   'Animated: `useNativeDriver` is not supported because the native animated module is missing.',
+  'Cannot connect to Expo CLI',
 ]);
 
 if (typeof console !== 'undefined') {
@@ -24,7 +25,8 @@ if (typeof console !== 'undefined') {
       (args[0].includes('"shadow*" style props are deprecated') ||
         args[0].includes('props.pointerEvents is deprecated') ||
         args[0].includes('setLayoutAnimationEnabledExperimental') ||
-        args[0].includes('useNativeDriver` is not supported'))
+        args[0].includes('useNativeDriver` is not supported') ||
+        args[0].includes('Cannot connect to Expo CLI'))
     ) {
       return;
     }
