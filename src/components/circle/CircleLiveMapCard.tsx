@@ -12,6 +12,7 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
@@ -38,7 +39,93 @@ interface CircleLiveMapCardProps {
   isFullScreen?: boolean;
 }
 
-const MEMBER_ACCENT_COLORS = ['#4F8EF7', '#8B6CF0', '#2DD4BF', '#F59E0B'];
+const MEMBER_ACCENT_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'];
+
+const VectorMapCanvas = ({ width, height, isDark }: { width: number; height: number; isDark: boolean }) => {
+  const w = width > 0 ? width : 380;
+  const h = height > 0 ? height : 340;
+
+  if (isDark) {
+    return (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0F1535' }]}>
+        <Svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={StyleSheet.absoluteFill}>
+          <Rect x="0" y="0" width={w} height={h} fill="#0F1535" />
+          <Rect x={w * 0.08} y={h * 0.08} width={w * 0.22} height={h * 0.20} rx={10} fill="#142838" opacity={0.6} />
+          <Rect x={w * 0.06} y={h * 0.44} width={w * 0.25} height={h * 0.22} rx={10} fill="#142838" opacity={0.6} />
+          <Path d={`M -30,${h * 0.32} L ${w + 30},${h * 0.52}`} stroke="#1E2568" strokeWidth="14" fill="none" />
+          <Path d={`M ${w * 0.16},-30 L ${w * 0.55},${h + 30}`} stroke="#1E2568" strokeWidth="14" fill="none" />
+          <Path d={`M -30,${h * 0.68} L ${w + 30},${h * 0.72}`} stroke="#1E2568" strokeWidth="9" fill="none" />
+          <Path d={`M ${w * 0.45},-30 L -30,${h * 0.50}`} stroke="#1E2568" strokeWidth="9" fill="none" />
+          <Path
+            d={`M ${w * 0.82},-30 C ${w * 0.76},${h * 0.20} ${w * 0.68},${h * 0.36} ${w * 0.60},${h * 0.52} C ${w * 0.52},${h * 0.68} ${w * 0.46},${h * 0.84} ${w * 0.36},${h + 30}`}
+            stroke="#1E3A8A"
+            strokeWidth="30"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </Svg>
+      </View>
+    );
+  }
+
+  // Light Mode vector map matching reference image exactly
+  return (
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#F0F3FA' }]}>
+      <Svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={StyleSheet.absoluteFill}>
+        {/* Soft pastel canvas ground */}
+        <Rect x="0" y="0" width={w} height={h} fill="#F0F3FA" />
+
+        {/* Soft green park patches */}
+        <Rect x={w * 0.08} y={h * 0.08} width={w * 0.22} height={h * 0.20} rx={10} fill="#DCFCE7" stroke="#BBF7D0" strokeWidth={1} opacity={0.9} />
+        <Rect x={w * 0.06} y={h * 0.44} width={w * 0.25} height={h * 0.22} rx={10} fill="#DCFCE7" stroke="#BBF7D0" strokeWidth={1} opacity={0.9} />
+        <Rect x={w * 0.42} y={h * 0.72} width={w * 0.24} height={h * 0.20} rx={10} fill="#DCFCE7" stroke="#BBF7D0" strokeWidth={1} opacity={0.7} />
+
+        {/* Crisp white street grid with delicate road borders */}
+        <Path d={`M -30,${h * 0.32} L ${w + 30},${h * 0.52}`} stroke="rgba(215, 222, 235, 0.7)" strokeWidth="18" fill="none" />
+        <Path d={`M -30,${h * 0.32} L ${w + 30},${h * 0.52}`} stroke="#FFFFFF" strokeWidth="14" fill="none" />
+
+        <Path d={`M ${w * 0.16},-30 L ${w * 0.55},${h + 30}`} stroke="rgba(215, 222, 235, 0.7)" strokeWidth="18" fill="none" />
+        <Path d={`M ${w * 0.16},-30 L ${w * 0.55},${h + 30}`} stroke="#FFFFFF" strokeWidth="14" fill="none" />
+
+        <Path d={`M -30,${h * 0.68} L ${w + 30},${h * 0.72}`} stroke="rgba(215, 222, 235, 0.5)" strokeWidth="12" fill="none" />
+        <Path d={`M -30,${h * 0.68} L ${w + 30},${h * 0.72}`} stroke="#FFFFFF" strokeWidth="9" fill="none" />
+
+        <Path d={`M ${w * 0.45},-30 L -30,${h * 0.50}`} stroke="rgba(215, 222, 235, 0.5)" strokeWidth="12" fill="none" />
+        <Path d={`M ${w * 0.45},-30 L -30,${h * 0.50}`} stroke="#FFFFFF" strokeWidth="9" fill="none" />
+
+        <Path d={`M ${w * 0.58},${h * 0.22} L ${w * 0.90},${h * 0.05}`} stroke="#FFFFFF" strokeWidth="7" fill="none" />
+        <Path d={`M 20,${h * 0.18} L ${w * 0.38},${h * 0.20}`} stroke="#FFFFFF" strokeWidth="7" fill="none" />
+        <Path d={`M ${w * 0.18},${h * 0.62} L ${w * 0.52},${h * 0.58}`} stroke="#FFFFFF" strokeWidth="7" fill="none" />
+        <Path d={`M ${w * 0.72},${h * 0.48} L ${w * 0.98},${h * 0.72}`} stroke="#FFFFFF" strokeWidth="8" fill="none" />
+
+        {/* Winding Blue River traversing right side toward bottom matching reference picture */}
+        <Path
+          d={`M ${w * 0.82},-30 C ${w * 0.76},${h * 0.20} ${w * 0.68},${h * 0.36} ${w * 0.60},${h * 0.52} C ${w * 0.52},${h * 0.68} ${w * 0.46},${h * 0.84} ${w * 0.36},${h + 30}`}
+          stroke="#93C5FD"
+          strokeWidth="38"
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.5}
+        />
+        <Path
+          d={`M ${w * 0.82},-30 C ${w * 0.76},${h * 0.20} ${w * 0.68},${h * 0.36} ${w * 0.60},${h * 0.52} C ${w * 0.52},${h * 0.68} ${w * 0.46},${h * 0.84} ${w * 0.36},${h + 30}`}
+          stroke="#BFDBFE"
+          strokeWidth="30"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <Path
+          d={`M ${w * 0.82},-30 C ${w * 0.76},${h * 0.20} ${w * 0.68},${h * 0.36} ${w * 0.60},${h * 0.52} C ${w * 0.52},${h * 0.68} ${w * 0.46},${h * 0.84} ${w * 0.36},${h + 30}`}
+          stroke="#DBEAFE"
+          strokeWidth="12"
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.7}
+        />
+      </Svg>
+    </View>
+  );
+};
 
 export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   members: propMembers,
@@ -264,32 +351,40 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   const centerX = cardLayout.width > 0 ? cardLayout.width / 2 : 180;
   const centerY = cardLayout.height > 0 ? cardLayout.height / 2 : (typeof mapHeight === 'number' ? mapHeight / 2 : 200);
 
-  // Pin positions calculation
+  // Pin positions calculation matching reference geometry
   const memberPositions = useMemo(() => {
     return displayMembers.map((member, idx) => {
       const isSelf = member.isSelf || member.id === activeUser?.id;
       let posX = centerX;
       let posY = centerY;
 
-      if (isSelf) {
-        posX = centerX;
-        posY = centerY + 10;
+      if (isSelf || idx === 0) {
+        // Ritu Raj / top-center-left
+        posX = centerX - 42;
+        posY = centerY - 52;
       } else if (idx === 1) {
-        posX = centerX - 95;
-        posY = centerY - 55;
+        // Asmita / right side
+        posX = centerX + 68;
+        posY = centerY - 15;
       } else if (idx === 2) {
-        posX = centerX + 90;
-        posY = centerY + 45;
+        // Sister / bottom-left
+        posX = centerX - 60;
+        posY = centerY + 48;
       } else {
         const angle = (idx * (2 * Math.PI)) / displayMembers.length;
         posX = centerX + Math.cos(angle) * 80;
         posY = centerY + Math.sin(angle) * 60;
       }
 
-      const accentColor = MEMBER_ACCENT_COLORS[idx % MEMBER_ACCENT_COLORS.length];
+      const accentColor =
+        idx === 0
+          ? '#3B82F6'
+          : idx === 1
+          ? '#8B5CF6'
+          : idx === 2
+          ? '#10B981'
+          : MEMBER_ACCENT_COLORS[idx % MEMBER_ACCENT_COLORS.length];
       const ringAnim = idx === 0 ? ringAnim1 : idx === 1 ? ringAnim2 : ringAnim3;
-      // If position is on right side of centerX, flip bubble to left to prevent boundary clipping
-      const isBubbleOnLeft = posX > centerX + 10;
 
       return {
         member,
@@ -297,7 +392,6 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
         posY,
         accentColor,
         ringAnim,
-        isBubbleOnLeft,
       };
     });
   }, [displayMembers, activeUser?.id, centerX, centerY, ringAnim1, ringAnim2, ringAnim3]);
@@ -305,7 +399,6 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   // Center map on specific member if selected
   const handlePinPress = (memberId: string, posX: number, posY: number) => {
     triggerHaptic();
-    // Center pan toward marker
     setPanOffset({
       x: (centerX - posX) * 0.7,
       y: (centerY - posY) * 0.7,
@@ -328,10 +421,14 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           styles.mapContainer,
           {
             height: mapHeight,
-            borderRadius: isFullScreen ? 0 : CircleTokens.mapCardRadius,
+            borderRadius: isFullScreen ? 0 : 24,
             borderWidth: isFullScreen ? 0 : 1,
-            backgroundColor: '#0F1535',
-            borderColor: 'rgba(130, 140, 255, 0.22)',
+            backgroundColor: isDark ? '#0F1535' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(20, 32, 58, 0.08)',
+            shadowColor: '#64748B',
+            shadowOpacity: isDark ? 0.18 : 0.08,
+            shadowRadius: 14,
+            elevation: 3,
           },
         ]}
         {...panResponder.panHandlers}>
@@ -349,8 +446,14 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             },
           ]}>
           
-          {/* ArcGIS Raster Tiles Grid or Fallback Illustration */}
-          {!tileError ? (
+          {/* Vector Map Canvas matching reference image in light mode */}
+          {!isDark ? (
+            <VectorMapCanvas
+              width={cardLayout.width || 380}
+              height={typeof mapHeight === 'number' ? mapHeight : 340}
+              isDark={false}
+            />
+          ) : !tileError ? (
             <View style={styles.tileGridContainer}>
               {mapTiles.map((tile) => (
                 <Image
@@ -369,39 +472,29 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               ))}
             </View>
           ) : (
-            /* Fallback vector map styling when offline */
-            <View
-              style={[
-                styles.fallbackMapSurface,
-                { backgroundColor: isDark ? '#141A4A' : '#E8EEF8' },
-              ]}>
-              <View
-                style={[
-                  styles.fallbackRoadHorizontal,
-                  { backgroundColor: isDark ? '#2A3080' : '#CBD5E1' },
-                ]}
-              />
-              <View
-                style={[
-                  styles.fallbackRoadVertical,
-                  { backgroundColor: isDark ? '#2A3080' : '#CBD5E1' },
-                ]}
-              />
-              <View
-                style={[
-                  styles.fallbackParkPatch,
-                  { backgroundColor: isDark ? '#1C4B4A' : '#D1FAE5' },
-                ]}
-              />
-            </View>
+            <VectorMapCanvas
+              width={cardLayout.width || 380}
+              height={typeof mapHeight === 'number' ? mapHeight : 340}
+              isDark={true}
+            />
           )}
 
-          {/* Member Pins */}
-          {memberPositions.map(({ member, posX, posY, accentColor, ringAnim, isBubbleOnLeft }) => {
+          {/* Member Pins with Callout Speech Bubbles */}
+          {memberPositions.map(({ member, posX, posY, accentColor, ringAnim }) => {
             const isSelected = selectedMemberId === member.id;
             const initials = member.name.charAt(0).toUpperCase();
             const locationPlace = member.humanLocation || 'At Home';
             const locationTime = member.lastUpdated || 'Just now';
+
+            // Determine location context icon
+            const lowerLoc = locationPlace.toLowerCase();
+            const iconName: keyof typeof Ionicons.glyphMap = lowerLoc.includes('home')
+              ? 'home'
+              : lowerLoc.includes('college') || lowerLoc.includes('school') || lowerLoc.includes('class')
+              ? 'school'
+              : lowerLoc.includes('work') || lowerLoc.includes('office')
+              ? 'briefcase'
+              : 'location';
 
             return (
               <View
@@ -415,7 +508,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                   },
                 ]}>
                 
-                {/* Ground Pulsing Ring */}
+                {/* Ground Pulsing Halo */}
                 <Animated.View
                   style={[
                     styles.groundPulseRing,
@@ -426,7 +519,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                         {
                           scale: ringAnim.interpolate({
                             inputRange: [0, 1],
-                            outputRange: [1.0, 1.6],
+                            outputRange: [1.0, 1.7],
                           }),
                         },
                       ],
@@ -443,13 +536,13 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                   onPress={() => handlePinPress(member.id, posX, posY)}
                   hitSlop={8}
                   style={styles.teardropContainer}>
-                  {/* Pin Body */}
+                  {/* Pin Body: Solid circle with bold white initial */}
                   <View
                     style={[
                       styles.pinTeardropCircle,
                       {
-                        borderColor: accentColor,
-                        backgroundColor: isDark ? '#141B4A' : '#FFFFFF',
+                        borderColor: '#FFFFFF',
+                        backgroundColor: accentColor,
                         shadowColor: accentColor,
                       },
                     ]}>
@@ -460,48 +553,73 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                         resizeMode="cover"
                       />
                     ) : (
-                      <Text style={[styles.pinInitialText, { color: accentColor }]}>
+                      <Text style={[styles.pinInitialText, { color: '#FFFFFF' }]}>
                         {initials}
                       </Text>
                     )}
                     {/* Small Green Online Dot */}
-                    <View style={[styles.pinOnlineDot, { backgroundColor: colors.green }]} />
+                    <View
+                      style={[
+                        styles.pinOnlineDot,
+                        {
+                          backgroundColor: '#10B981',
+                          borderColor: isDark ? '#141B4A' : '#FFFFFF',
+                        },
+                      ]}
+                    />
                   </View>
 
                   {/* Teardrop Point Tail */}
                   <View style={[styles.pinPointTail, { borderTopColor: accentColor }]} />
                 </Pressable>
 
-                {/* Name & Telemetry Glass Bubble (hidden when zoomed out < 0.9) */}
-                {zoomLevel >= 0.9 && (
+                {/* Connected Callout Speech Bubble (to the right matching reference) */}
+                {zoomLevel >= 0.8 && (
                   <Pressable
                     onPress={() => handlePinPress(member.id, posX, posY)}
                     style={[
                       styles.nameBubble,
-                      isBubbleOnLeft ? styles.nameBubbleLeft : styles.nameBubbleRight,
+                      styles.nameBubbleRight,
                       {
-                        backgroundColor: 'rgba(20, 27, 74, 0.85)',
+                        backgroundColor: isDark ? 'rgba(20, 27, 74, 0.90)' : '#FFFFFF',
                         borderColor: isSelected
                           ? accentColor
-                          : 'rgba(130, 140, 255, 0.3)',
+                          : isDark
+                          ? 'rgba(130, 140, 255, 0.3)'
+                          : 'rgba(20, 32, 58, 0.08)',
+                        shadowColor: '#64748B',
+                        shadowOpacity: isDark ? 0.2 : 0.10,
                       },
                     ]}>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.bubbleNameText,
-                        { color: colors.text, fontWeight: isSelected ? '700' : '600' },
-                      ]}>
-                      {member.name.split(' ')[0]}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.bubbleDetailsText,
-                        { color: isDark ? colors.textMuted : colors.textSecondary },
-                      ]}>
-                      {locationPlace} • {locationTime}
-                    </Text>
+                    <View style={styles.bubbleTopRow}>
+                      <View style={styles.bubbleGreenDot} />
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.bubbleNameText,
+                          {
+                            color: isDark ? '#FFFFFF' : '#1E293B',
+                            fontWeight: isSelected ? '700' : '600',
+                          },
+                        ]}>
+                        {member.name}
+                      </Text>
+                    </View>
+                    <View style={styles.bubbleBottomRow}>
+                      <Ionicons
+                        name={iconName}
+                        size={10.5}
+                        color={isDark ? '#A594FD' : '#7C5CE0'}
+                      />
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.bubbleDetailsText,
+                          { color: isDark ? '#94A3B8' : '#64748B' },
+                        ]}>
+                        {locationPlace} • {locationTime}
+                      </Text>
+                    </View>
                   </Pressable>
                 )}
               </View>
@@ -510,14 +628,14 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
         </Animated.View>
 
         {/* OVERLAYS */}
-        {/* 1. Top-Left: Glass Pill "Live Location" or "Enable Live GPS" */}
+        {/* 1. Top-Left: Pill "Live Location" or "Enable Live GPS" */}
         {needsPermissionPrompt ? (
           <Pressable
             onPress={handleRequestLiveLocation}
             style={({ pressed }) => [
               styles.topLeftPill,
               {
-                backgroundColor: isDark ? 'rgba(139, 124, 246, 0.28)' : 'rgba(124, 92, 224, 0.15)',
+                backgroundColor: isDark ? 'rgba(139, 124, 246, 0.28)' : '#EDE9FE',
                 borderColor: isDark ? '#8B7CF6' : '#7C5CE0',
                 opacity: pressed ? 0.8 : 1,
               },
@@ -532,55 +650,28 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={[
               styles.topLeftPill,
               {
-                backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                borderColor: 'rgba(130, 140, 255, 0.3)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.3)' : 'rgba(20, 32, 58, 0.08)',
+                shadowColor: '#64748B',
+                shadowOpacity: isDark ? 0 : 0.08,
+                shadowRadius: 4,
+                elevation: 2,
               },
             ]}>
             <Animated.View
               style={[
                 styles.overlayGreenDot,
-                { backgroundColor: colors.green, opacity: greenPulseAnim },
+                { backgroundColor: '#10B981', opacity: greenPulseAnim },
               ]}
             />
-            <Text style={[styles.topLeftPillText, { color: colors.text }]}>
+            <Text style={[styles.topLeftPillText, { color: isDark ? '#FFFFFF' : '#1E293B' }]}>
               Live Location
             </Text>
           </View>
         )}
 
-        {/* 2. Top-Right: Full Screen Option Pill & View List Pill */}
+        {/* 2. Top-Right: "View List >" Pill matching reference picture */}
         <View style={styles.topRightActionsRow}>
-          {onFullScreen && (
-            <Pressable
-              onPress={() => {
-                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-                onFullScreen();
-              }}
-              hitSlop={6}
-              accessibilityLabel={isFullScreen ? 'Exit Full Screen' : 'View Full Screen Map'}
-              style={({ pressed }) => [
-                styles.topRightPill,
-                {
-                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-                  borderColor: isDark ? 'rgba(130, 140, 255, 0.35)' : 'rgba(124, 92, 224, 0.28)',
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Ionicons
-                name={isFullScreen ? 'contract-outline' : 'expand-outline'}
-                size={13}
-                color={isDark ? '#C9CEFF' : '#5B628F'}
-              />
-              <Text
-                style={[
-                  styles.topRightPillText,
-                  { color: isDark ? '#C9CEFF' : '#5B628F' },
-                ]}>
-                {isFullScreen ? 'Exit' : 'Full Screen'}
-              </Text>
-            </Pressable>
-          )}
-
           {onPressViewList && (
             <Pressable
               onPress={() => {
@@ -591,99 +682,82 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               style={({ pressed }) => [
                 styles.topRightPill,
                 {
-                  backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                  borderColor: 'rgba(130, 140, 255, 0.3)',
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.3)' : 'rgba(20, 32, 58, 0.08)',
+                  shadowColor: '#64748B',
+                  shadowOpacity: isDark ? 0 : 0.08,
+                  shadowRadius: 4,
+                  elevation: 2,
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
               <Ionicons
-                name="people-outline"
-                size={13}
-                color={isDark ? '#8B7CF6' : '#7C5CE0'}
+                name="people"
+                size={14}
+                color={isDark ? '#A594FD' : '#7C5CE0'}
               />
               <Text
                 style={[
                   styles.topRightPillText,
-                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
+                  { color: isDark ? '#A594FD' : '#7C5CE0' },
                 ]}>
                 View List
               </Text>
               <Ionicons
-                name="chevron-down"
+                name="chevron-forward"
                 size={12}
-                color={isDark ? '#8B7CF6' : '#7C5CE0'}
+                color={isDark ? '#A594FD' : '#7C5CE0'}
               />
             </Pressable>
           )}
-        </View>
 
-        {/* 3. Bottom-Left: Green Glass Pill "Live • GPS" */}
-        <View
-          style={[
-            styles.bottomLeftPill,
-            {
-              backgroundColor: 'rgba(20, 27, 74, 0.6)',
-              borderColor: 'rgba(130, 140, 255, 0.3)',
-            },
-          ]}>
-          <View style={[styles.bottomLeftDot, { backgroundColor: isDark ? '#34D399' : '#059669' }]} />
-          <Text
-            style={[
-              styles.bottomLeftPillText,
-              { color: isDark ? '#34D399' : '#059669' },
-            ]}>
-            Live • {isGpsLive ? 'GPS' : 'Network'}
-          </Text>
-        </View>
-
-        {/* 4. Right Side: Full Screen + Layer Switcher + 40px Locate Button + Grouped Vertical Zoom Control */}
-        <View style={styles.rightControlsContainer}>
-          {/* 40px Circular Full Screen Toggle Button */}
-          {onFullScreen && (
+          {isFullScreen && onFullScreen && (
             <Pressable
               onPress={() => {
                 triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
                 onFullScreen();
               }}
               hitSlop={6}
-              accessibilityLabel={isFullScreen ? 'Exit Full Screen' : 'View Full Screen Map'}
               style={({ pressed }) => [
-                styles.locateButton,
+                styles.topRightPill,
                 {
-                  backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                  borderColor: 'rgba(130, 140, 255, 0.3)',
-                  opacity: pressed ? 0.8 : 1,
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.35)' : 'rgba(20, 32, 58, 0.08)',
+                  opacity: pressed ? 0.75 : 1,
                 },
               ]}>
-              <Ionicons
-                name={isFullScreen ? 'contract-outline' : 'expand-outline'}
-                size={18}
-                color={isDark ? '#C9CEFF' : '#5B628F'}
-              />
+              <Ionicons name="contract-outline" size={13} color={isDark ? '#C9CEFF' : '#5B628F'} />
+              <Text style={[styles.topRightPillText, { color: isDark ? '#C9CEFF' : '#5B628F' }]}>Exit</Text>
             </Pressable>
           )}
+        </View>
 
-          {/* Map Layer Switcher Button */}
-          <Pressable
-            onPress={cycleMapMode}
-            hitSlop={6}
-            accessibilityLabel={`Map style: ${tileMode}`}
-            style={({ pressed }) => [
-              styles.locateButton,
-              {
-                backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                borderColor: 'rgba(130, 140, 255, 0.3)',
-                opacity: pressed ? 0.8 : 1,
-              },
+        {/* 3. Bottom-Left: Pill "Live • GPS" matching reference picture */}
+        <View
+          style={[
+            styles.bottomLeftPill,
+            {
+              backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.3)' : 'rgba(20, 32, 58, 0.08)',
+              shadowColor: '#64748B',
+              shadowOpacity: isDark ? 0 : 0.08,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+          ]}>
+          <View style={[styles.bottomLeftDot, { backgroundColor: '#10B981' }]} />
+          <Text
+            style={[
+              styles.bottomLeftPillText,
+              { color: isDark ? '#34D399' : '#1E293B' },
             ]}>
-            <Ionicons
-              name={tileMode === 'satellite' ? 'earth' : 'layers-outline'}
-              size={18}
-              color={tileMode === 'satellite' ? '#2DD4BF' : isDark ? '#C9CEFF' : '#5B628F'}
-            />
-          </Pressable>
+            Live • {isGpsLive ? 'GPS' : 'Network'}
+          </Text>
+        </View>
 
-          {/* 40px Circular Locate Button */}
+        {/* 4. Right Side: Circular Locate Button + Segmented Zoom Control */}
+        <View style={styles.rightControlsContainer}>
+          {/* Circular Locate Button */}
           <Pressable
             onPress={handleLocate}
             hitSlop={6}
@@ -691,15 +765,19 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={({ pressed }) => [
               styles.locateButton,
               {
-                backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                borderColor: 'rgba(130, 140, 255, 0.3)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.3)' : 'rgba(20, 32, 58, 0.08)',
+                shadowColor: '#64748B',
+                shadowOpacity: isDark ? 0 : 0.08,
+                shadowRadius: 4,
+                elevation: 2,
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
             <Ionicons
-              name="navigate-outline"
+              name="locate-outline"
               size={18}
-              color={isDark ? '#C9CEFF' : '#5B628F'}
+              color={isDark ? '#C9CEFF' : '#334155'}
             />
           </Pressable>
 
@@ -708,8 +786,12 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={[
               styles.zoomGroup,
               {
-                backgroundColor: 'rgba(20, 27, 74, 0.6)',
-                borderColor: 'rgba(130, 140, 255, 0.3)',
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.3)' : 'rgba(20, 32, 58, 0.08)',
+                shadowColor: '#64748B',
+                shadowOpacity: isDark ? 0 : 0.08,
+                shadowRadius: 4,
+                elevation: 2,
               },
             ]}>
             <Pressable
@@ -730,7 +812,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               style={[
                 styles.zoomDivider,
                 {
-                  backgroundColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.18)',
+                  backgroundColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(20, 32, 58, 0.08)',
                 },
               ]}
             />
@@ -751,24 +833,22 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           </View>
         </View>
 
-        {/* 5. Legal OpenStreetMap Attribution */}
-        <View
-          style={[
-            styles.osmAttributionBadge,
-            {
-              pointerEvents: 'none',
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.70)' : 'rgba(255, 255, 255, 0.75)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
-            },
-          ]}>
-          <Text
+        {/* 5. Legal OpenStreetMap Attribution in dark mode */}
+        {isDark && (
+          <View
             style={[
-              styles.osmAttributionText,
-              { color: isDark ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)' },
+              styles.osmAttributionBadge,
+              {
+                pointerEvents: 'none',
+                backgroundColor: 'rgba(15, 23, 42, 0.70)',
+                borderColor: 'rgba(255, 255, 255, 0.10)',
+              },
             ]}>
-            {getOsmAttribution(tileMode)}
-          </Text>
-        </View>
+            <Text style={[styles.osmAttributionText, { color: 'rgba(203, 213, 225, 0.8)' }]}>
+              {getOsmAttribution(tileMode)}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -786,15 +866,15 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   mapContainer: {
-    borderRadius: CircleTokens.mapCardRadius,
+    borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 3,
   },
   mapCanvasPlane: {
     position: 'absolute',
@@ -815,37 +895,6 @@ const styles = StyleSheet.create({
     width: 256,
     height: 256,
   },
-  fallbackMapSurface: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    overflow: 'hidden',
-  },
-  fallbackRoadHorizontal: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '48%',
-    height: 14,
-  },
-  fallbackRoadVertical: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '42%',
-    width: 14,
-  },
-  fallbackParkPatch: {
-    position: 'absolute',
-    right: 24,
-    top: 24,
-    width: 90,
-    height: 70,
-    borderRadius: 16,
-    opacity: 0.6,
-  },
   pinMarkerWrapper: {
     position: 'absolute',
     width: 44,
@@ -855,9 +904,9 @@ const styles = StyleSheet.create({
   groundPulseRing: {
     position: 'absolute',
     bottom: -6,
-    width: 32,
-    height: 18,
-    borderRadius: 16,
+    width: 34,
+    height: 20,
+    borderRadius: 17,
     borderWidth: 2,
     alignSelf: 'center',
   },
@@ -866,36 +915,35 @@ const styles = StyleSheet.create({
     width: 44,
   },
   pinTeardropCircle: {
-    width: CircleTokens.mapPinAvatarSize + 4,
-    height: CircleTokens.mapPinAvatarSize + 4,
-    borderRadius: (CircleTokens.mapPinAvatarSize + 4) / 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
   },
   pinAvatarImage: {
-    width: CircleTokens.mapPinAvatarSize,
-    height: CircleTokens.mapPinAvatarSize,
-    borderRadius: CircleTokens.mapPinAvatarSize / 2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   pinInitialText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   pinOnlineDot: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: -1,
+    right: -1,
     width: 9,
     height: 9,
     borderRadius: 4.5,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
   },
   pinPointTail: {
     width: 0,
@@ -912,32 +960,47 @@ const styles = StyleSheet.create({
   nameBubble: {
     position: 'absolute',
     top: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
     borderWidth: 1,
-    minWidth: 90,
-    maxWidth: 130,
-    shadowColor: '#000000',
+    minWidth: 84,
+    maxWidth: 145,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 3,
   },
   nameBubbleRight: {
-    left: 48,
+    left: 44,
   },
   nameBubbleLeft: {
-    right: 48,
+    right: 44,
+  },
+  bubbleTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  bubbleGreenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
   },
   bubbleNameText: {
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: -0.2,
     includeFontPadding: false,
   },
+  bubbleBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
   bubbleDetailsText: {
-    fontSize: 10.5,
-    marginTop: 1,
+    fontSize: 10,
+    fontWeight: '500',
     includeFontPadding: false,
   },
   topLeftPill: {
@@ -947,14 +1010,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 11,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
   overlayGreenDot: {
@@ -980,20 +1041,18 @@ const styles = StyleSheet.create({
   topRightPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
+    gap: 5,
+    paddingHorizontal: 11,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
   topRightPillText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: -0.1,
     includeFontPadding: false,
   },
@@ -1004,10 +1063,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
     borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
   bottomLeftDot: {
     width: 6,
@@ -1028,33 +1090,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   locateButton: {
-    width: CircleTokens.headerButtonSize,
-    height: CircleTokens.headerButtonSize,
-    borderRadius: CircleTokens.headerButtonSize / 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   zoomGroup: {
-    width: 36,
-    borderRadius: 18,
+    width: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   zoomBtn: {
-    width: 36,
-    height: 32,
+    width: 38,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },

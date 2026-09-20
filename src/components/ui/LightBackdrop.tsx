@@ -2,9 +2,25 @@ import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const BotanicalSprig = ({ size = 120, color = '#DDD6FE' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+    {/* Main stem */}
+    <Path d="M 12 88 C 26 68 46 38 86 14" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    {/* Leaves fanning along stem */}
+    <Path d="M 86 14 C 80 8 72 7 66 12 C 60 17 64 25 86 14 Z" fill={color} />
+    <Path d="M 68 28 C 55 22 45 25 46 33 C 47 41 58 39 68 28 Z" fill={color} />
+    <Path d="M 72 26 C 75 16 85 18 86 26 C 87 34 78 35 72 26 Z" fill={color} />
+    <Path d="M 52 44 C 38 38 30 43 32 51 C 34 59 45 56 52 44 Z" fill={color} />
+    <Path d="M 56 42 C 63 32 73 35 73 43 C 73 51 63 51 56 42 Z" fill={color} />
+    <Path d="M 36 62 C 22 58 16 65 19 72 C 22 79 32 74 36 62 Z" fill={color} />
+    <Path d="M 40 60 C 48 52 57 56 56 64 C 55 72 46 70 40 60 Z" fill={color} />
+  </Svg>
+);
 
 export const LightBackdrop: React.FC = () => {
   const { isDark } = useAppTheme();
@@ -14,50 +30,37 @@ export const LightBackdrop: React.FC = () => {
 
   return (
     <View style={[styles.backdropContainer, { pointerEvents: 'none' }]}>
-      {/* 1. Base Soft Lavender Gradient: #F8F7FF at top to #EFEDFB at bottom */}
+      {/* 1. Base Soft Lavender Gradient */}
       <LinearGradient
-        colors={['#F8F7FF', '#F3F0FC', '#EFEDFB']}
+        colors={['#F8F9FE', '#F4F3FC', '#EEECFA']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* 2. Large Blurred Pale-Violet Ambient Blobs (#E4E0FA at 40% opacity) */}
+      {/* 2. Large Blurred Pale-Violet Ambient Blobs */}
       <View style={[styles.ambientBlob, styles.blobTopRight]} />
       <View style={[styles.ambientBlob, styles.blobMidLeft]} />
       <View style={[styles.ambientBlob, styles.blobBottomRight]} />
 
-      {/* 3. Decorative Botanical Sprigs, Butterfly, and 4-Point Sparkles (30-40% Opacity) */}
-      {/* Top-Left Lavender Botanical Sprig */}
+      {/* 3. Corner Botanical Leaf Sprigs matching reference picture */}
       <View style={styles.sprigTopLeft}>
-        <Ionicons name="leaf-outline" size={34} color="#8A6BF2" style={{ transform: [{ rotate: '-35deg' }] }} />
-        <Ionicons name="flower-outline" size={16} color="#7C5CE0" style={styles.flowerTopLeft} />
+        <BotanicalSprig size={135} color="#C4B5FD" />
       </View>
 
-      {/* Bottom-Right Lavender Botanical Sprig */}
       <View style={styles.sprigBottomRight}>
-        <Ionicons name="leaf-outline" size={38} color="#8A6BF2" style={{ transform: [{ rotate: '145deg' }] }} />
-        <Ionicons name="flower-outline" size={18} color="#7C5CE0" style={styles.flowerBottomRight} />
+        <BotanicalSprig size={145} color="#C4B5FD" />
       </View>
 
-      {/* Small Butterfly on the Right Edge */}
-      <View style={styles.butterflyContainer}>
-        <MaterialCommunityIcons name="butterfly" size={24} color="#8A6BF2" style={{ transform: [{ rotate: '-15deg' }] }} />
-      </View>
+      {/* Subtle Mid-Left Petal Bloom Watermark */}
+      <View style={styles.petalBloomMidLeft} />
 
-      {/* Sparkle 1: Top-Right */}
+      {/* Sparkles */}
       <View style={styles.sparkleTopRight}>
-        <Ionicons name="sparkles" size={18} color="#8A6BF2" />
-      </View>
-
-      {/* Sparkle 2: Mid-Left edge */}
-      <View style={styles.sparkleMidLeft}>
-        <Ionicons name="sparkles" size={15} color="#7C5CE0" />
-      </View>
-
-      {/* Sparkle 3: Bottom-Center margin */}
-      <View style={styles.sparkleBottomCenter}>
         <Ionicons name="sparkles" size={16} color="#A78BFA" />
+      </View>
+      <View style={styles.sparkleBottomCenter}>
+        <Ionicons name="sparkles" size={14} color="#C4B5FD" />
       </View>
     </View>
   );
@@ -98,43 +101,32 @@ const styles = StyleSheet.create({
   },
   sprigTopLeft: {
     position: 'absolute',
-    top: 24,
-    left: 10,
-    opacity: 0.35,
-  },
-  flowerTopLeft: {
-    position: 'absolute',
-    top: -4,
-    left: 20,
+    top: -10,
+    left: -10,
+    transform: [{ rotate: '-15deg' }],
+    opacity: 0.45,
   },
   sprigBottomRight: {
     position: 'absolute',
-    bottom: 120,
-    right: 12,
-    opacity: 0.34,
+    bottom: -15,
+    right: -15,
+    transform: [{ rotate: '165deg' }],
+    opacity: 0.45,
   },
-  flowerBottomRight: {
+  petalBloomMidLeft: {
     position: 'absolute',
-    bottom: 24,
-    right: 22,
-  },
-  butterflyContainer: {
-    position: 'absolute',
-    top: 235,
-    right: 12,
-    opacity: 0.35,
+    top: '42%',
+    left: -60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(221, 214, 254, 0.28)',
   },
   sparkleTopRight: {
     position: 'absolute',
     top: 85,
     right: 56,
     opacity: 0.38,
-  },
-  sparkleMidLeft: {
-    position: 'absolute',
-    top: 380,
-    left: 18,
-    opacity: 0.32,
   },
   sparkleBottomCenter: {
     position: 'absolute',

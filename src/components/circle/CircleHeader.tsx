@@ -75,22 +75,37 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
     <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) }]}>
       <View style={styles.contentRow}>
         
-        {/* Left: Simple Arrow Back Button */}
+        {/* Left: Circular Arrow Back Button */}
         <Pressable
           onPress={handleBack}
-          hitSlop={12}
-          style={({ pressed }) => [styles.backButton, { opacity: pressed ? 0.75 : 1 }]}>
-          <Ionicons name="arrow-back" size={24} color="#C9CEFF" />
+          hitSlop={8}
+          accessibilityLabel="Go back"
+          style={({ pressed }) => [
+            styles.circularBtn,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(140, 150, 255, 0.20)' : 'rgba(20, 32, 58, 0.08)',
+              opacity: pressed ? 0.75 : 1,
+            },
+          ]}>
+          <Ionicons name="arrow-back" size={20} color={isDark ? '#C9CEFF' : '#1E1B4B'} />
         </Pressable>
 
-        {/* Center: Group Icon + Titles */}
+        {/* Center: Group Icon (Squircle) + Titles */}
         <View style={styles.titleCluster}>
-          <View style={styles.groupIconCircle}>
-            <Ionicons name="people" size={20} color="#FFFFFF" />
+          <View
+            style={[
+              styles.groupIconSquircle,
+              {
+                backgroundColor: isDark ? '#1E2568' : '#EDE9FE',
+                borderColor: isDark ? 'rgba(139, 124, 246, 0.5)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <Ionicons name="people" size={20} color={isDark ? '#FFFFFF' : '#7C5CE0'} />
           </View>
 
           <View style={styles.textColumn}>
-            <Text numberOfLines={1} style={[styles.headerTitle, { color: '#FFFFFF' }]}>
+            <Text numberOfLines={1} style={[styles.headerTitle, { color: isDark ? '#FFFFFF' : '#1E1B4B' }]}>
               Family Circle
             </Text>
             <View style={styles.subtitleRow}>
@@ -100,31 +115,61 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
                   { backgroundColor: '#10B981', opacity: pulseAnim },
                 ]}
               />
-              <Text numberOfLines={1} style={styles.subtitleText}>
+              <Text numberOfLines={1} style={[styles.subtitleText, { color: isDark ? '#94A3B8' : '#6B7280' }]}>
                 {familyName} • {memberText}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Right: Icon Buttons */}
+        {/* Right: Circular Icon Action Buttons */}
         <View style={styles.actionCluster}>
           {/* Bell with badge */}
-          <Pressable onPress={onOpenNotifications || (() => router.push('/modal/notifications'))} style={styles.iconBtn}>
-            <Ionicons name="notifications-outline" size={20} color="#C9CEFF" />
+          <Pressable
+            onPress={onOpenNotifications || (() => router.push('/modal/notifications'))}
+            accessibilityLabel="Notifications"
+            style={({ pressed }) => [
+              styles.circularBtn,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(140, 150, 255, 0.20)' : 'rgba(20, 32, 58, 0.08)',
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}>
+            <Ionicons name="notifications-outline" size={19} color={isDark ? '#C9CEFF' : '#1E1B4B'} />
             <View style={styles.badge}>
               <Text style={styles.badgeTxt}>{unreadCount > 0 ? unreadCount : 1}</Text>
             </View>
           </Pressable>
 
           {/* Theme Toggle */}
-          <Pressable onPress={toggleTheme} style={styles.iconBtn}>
-            <Ionicons name="moon" size={18} color="#C9CEFF" />
+          <Pressable
+            onPress={toggleTheme}
+            accessibilityLabel="Toggle Theme"
+            style={({ pressed }) => [
+              styles.circularBtn,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(140, 150, 255, 0.20)' : 'rgba(20, 32, 58, 0.08)',
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}>
+            <Ionicons name="moon" size={18} color={isDark ? '#C9CEFF' : '#1E1B4B'} />
           </Pressable>
 
           {/* Settings Gear */}
-          <Pressable onPress={onOpenSettings || (() => router.push('/modal/family-settings'))} style={styles.iconBtn}>
-            <Ionicons name="settings-outline" size={18} color="#C9CEFF" />
+          <Pressable
+            onPress={onOpenSettings || (() => router.push('/modal/family-settings'))}
+            accessibilityLabel="Family Settings"
+            style={({ pressed }) => [
+              styles.circularBtn,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(140, 150, 255, 0.20)' : 'rgba(20, 32, 58, 0.08)',
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}>
+            <Ionicons name="settings-outline" size={18} color={isDark ? '#C9CEFF' : '#1E1B4B'} />
           </Pressable>
         </View>
 
@@ -134,38 +179,90 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
 };
 
 const styles = StyleSheet.create({
-  headerContainer: { paddingHorizontal: 16, paddingBottom: 16 },
-  contentRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  backButton: {
-    width: 36, height: 36,
-    alignItems: 'center', justifyContent: 'center',
+  headerContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  titleCluster: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  groupIconCircle: {
-    width: 44, height: 44,
-    borderRadius: 22,
-    backgroundColor: '#1E2568', // matching reference color for icon bg
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  circularBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
-    borderColor: 'rgba(139, 124, 246, 0.5)',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#8B6CF0', shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6, shadowRadius: 8, elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  textColumn: { flex: 1, justifyContent: 'center', gap: 2 },
-  headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
-  subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pulsingGreenDot: { width: 8, height: 8, borderRadius: 4 },
-  subtitleText: { fontSize: 13, fontWeight: '500', color: '#94A3B8' },
-  actionCluster: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    alignItems: 'center', justifyContent: 'center',
+  titleCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  groupIconSquircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#7C5CE0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  textColumn: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 2,
+  },
+  headerTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pulsingGreenDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  subtitleText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  actionCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   badge: {
-    position: 'absolute', top: -2, right: -4,
-    width: 16, height: 16, borderRadius: 8,
-    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 15,
+    height: 15,
+    borderRadius: 7.5,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  badgeTxt: { color: '#FFF', fontSize: 9, fontWeight: '800' },
+  badgeTxt: {
+    color: '#FFF',
+    fontSize: 8.5,
+    fontWeight: '800',
+  },
 });

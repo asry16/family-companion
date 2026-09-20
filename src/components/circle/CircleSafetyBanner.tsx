@@ -61,10 +61,21 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
         : `${memberNeedingAttention?.name || 'Member'} is currently busy • Locations synced`)
     : `${activeCount} active family ${activeCount === 1 ? 'member' : 'members'} • Location encrypted`;
 
-  const bannerColor = isEmergency ? '#EF4444' : isAlertState ? '#F59E0B' : '#34D399';
-  const shieldGradient: [string, string] = isEmergency ? ['#EF4444', '#DC2626'] : isAlertState ? ['#F59E0B', '#D97706'] : ['#34D399', '#059669'];
-  const haloBg = isEmergency ? 'rgba(239, 68, 68, 0.15)' : isAlertState ? 'rgba(245, 158, 11, 0.15)' : 'rgba(52, 211, 153, 0.15)';
-  const glowColor = isEmergency ? 'rgba(239, 68, 68, 0.15)' : isAlertState ? 'rgba(245, 158, 11, 0.15)' : 'rgba(52, 211, 153, 0.1)';
+  const bannerColor = isEmergency ? '#EF4444' : isAlertState ? '#F59E0B' : isDark ? '#34D399' : '#10B981';
+  const shieldGradient: [string, string] = isEmergency
+    ? ['#EF4444', '#DC2626']
+    : isAlertState
+    ? ['#F59E0B', '#D97706']
+    : isDark
+    ? ['#34D399', '#059669']
+    : ['#10B981', '#059669'];
+  const haloBg = isEmergency
+    ? 'rgba(239, 68, 68, 0.15)'
+    : isAlertState
+    ? 'rgba(245, 158, 11, 0.15)'
+    : isDark
+    ? 'rgba(52, 211, 153, 0.15)'
+    : 'rgba(16, 185, 129, 0.15)';
 
   return (
     <Pressable
@@ -72,11 +83,18 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
       style={({ pressed }) => [
         styles.cardWrapper,
         {
-          opacity: pressed ? 0.9 : 1,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-          backgroundColor: 'rgba(20, 27, 74, 0.6)',
-          borderColor: isEmergency ? 'rgba(239, 68, 68, 0.4)' : isAlertState ? 'rgba(245, 158, 11, 0.4)' : 'rgba(52, 211, 153, 0.3)',
-          shadowColor: bannerColor,
+          opacity: pressed ? 0.92 : 1,
+          transform: [{ scale: pressed ? 0.985 : 1 }],
+          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.6)' : '#FFFFFF',
+          borderColor: isEmergency
+            ? 'rgba(239, 68, 68, 0.4)'
+            : isAlertState
+            ? 'rgba(245, 158, 11, 0.4)'
+            : isDark
+            ? 'rgba(52, 211, 153, 0.3)'
+            : 'rgba(16, 185, 129, 0.20)',
+          shadowColor: isDark ? bannerColor : '#64748B',
+          shadowOpacity: isDark ? 0.2 : 0.06,
         },
       ]}>
       <View style={styles.bannerRow}>
@@ -89,13 +107,20 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
               {
                 backgroundColor: haloBg,
                 transform: [
-                  { scale: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) },
+                  { scale: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) },
                 ],
                 opacity: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
               },
             ]}
           />
-          <View style={[styles.shieldOuterRing, { borderColor: bannerColor }]}>
+          <View
+            style={[
+              styles.shieldOuterRing,
+              {
+                borderColor: isDark ? bannerColor : '#A7F3D0',
+                backgroundColor: isDark ? 'transparent' : '#DCFCE7',
+              },
+            ]}>
             <LinearGradient colors={shieldGradient} style={styles.shieldInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Ionicons
                 name={isEmergency ? 'alert' : isAlertState ? 'warning' : 'shield-checkmark'}
@@ -111,13 +136,13 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
           <Text numberOfLines={1} style={[styles.titleText, { color: bannerColor }]}>
             {bannerTitle}
           </Text>
-          <Text numberOfLines={1} style={[styles.subtitleText, { color: '#94A3B8' }]}>
+          <Text numberOfLines={1} style={[styles.subtitleText, { color: isDark ? '#94A3B8' : '#6B7280' }]}>
             {bannerSubtitle}
           </Text>
         </View>
 
         {/* Chevron */}
-        <Ionicons name="chevron-forward" size={18} color="#C9CEFF" />
+        <Ionicons name="chevron-forward" size={18} color={isDark ? '#C9CEFF' : '#9CA3AF'} />
       </View>
     </Pressable>
   );
@@ -128,17 +153,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 20,
-    borderWidth: 1.5,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 2,
   },
   bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   shieldWrap: {
-    width: 36, height: 36,
+    width: 38, height: 38,
     alignItems: 'center', justifyContent: 'center',
   },
   shieldHalo: {
@@ -147,18 +171,17 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   shieldOuterRing: {
-    width: 36, height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+    width: 38, height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'transparent',
   },
   shieldInner: {
-    width: 26, height: 26,
-    borderRadius: 13,
+    width: 28, height: 28,
+    borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  textColumn: { flex: 1, gap: 4 },
-  titleText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  textColumn: { flex: 1, gap: 3 },
+  titleText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.3 },
   subtitleText: { fontSize: 12, fontWeight: '500' },
 });

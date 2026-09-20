@@ -52,20 +52,29 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.containerCard,
+        {
+          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.6)' : '#FFFFFF',
+          borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(20, 32, 58, 0.06)',
+          shadowColor: '#64748B',
+          shadowOpacity: isDark ? 0.2 : 0.06,
+        },
+      ]}>
       {/* Section Header */}
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           <Ionicons
             name="people"
             size={18}
-            color="#C9CEFF"
+            color={isDark ? '#A594FD' : '#7C5CE0'}
           />
           <Text
             style={[
               styles.sectionTitle,
               {
-                color: '#FFFFFF',
+                color: isDark ? '#FFFFFF' : '#1E1B4B',
                 fontSize: isElderly ? 18 : 16,
               },
             ]}>
@@ -74,7 +83,7 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           <Text
             style={[
               styles.countMuted,
-              { color: '#94A3B8' },
+              { color: isDark ? '#94A3B8' : '#6B7280' },
             ]}>
             ({members.length})
           </Text>
@@ -88,20 +97,20 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           style={({ pressed }) => [
             styles.addMemberPill,
             {
-              backgroundColor: 'rgba(20, 27, 74, 0.4)',
-              borderColor: 'rgba(130, 140, 255, 0.3)',
+              backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : '#EDE9FE',
+              borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.12)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name="add"
             size={15}
-            color="#C9CEFF"
+            color={isDark ? '#A594FD' : '#7C5CE0'}
           />
           <Text
             style={[
               styles.addMemberText,
-              { color: '#C9CEFF' },
+              { color: isDark ? '#A594FD' : '#7C5CE0' },
             ]}>
             Add Member
           </Text>
@@ -237,10 +246,16 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
+  containerCard: {
+    marginHorizontal: 16,
     marginVertical: 6,
-    gap: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 16,
+    gap: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
