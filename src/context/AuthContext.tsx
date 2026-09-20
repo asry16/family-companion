@@ -17,9 +17,11 @@ export interface AuthUser {
   photoUrl?: string;
   phone?: string;
   provider: 'google' | 'apple' | 'email' | 'demo';
-  familyMemberId: string;
+  familyMemberId?: string;
   familyName?: string;
   familyInviteCode?: string;
+  familyUsername?: string;
+  hasCompletedFamilySetup?: boolean;
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   rememberMe?: boolean;
@@ -33,8 +35,11 @@ interface StoredUserAccount {
   phone?: string;
   dateOfBirth?: string;
   passwordHash: string; // SHA-256 hashed, NEVER plain text
-  familyMemberId: string;
+  familyMemberId?: string;
   familyName?: string;
+  familyInviteCode?: string;
+  familyUsername?: string;
+  hasCompletedFamilySetup?: boolean;
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   verificationCode?: string;
@@ -84,6 +89,14 @@ interface AuthContextValue {
   signInWithOtp: (email: string, code: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetEmail: (email: string) => Promise<{ success: boolean; message: string }>;
   updateUserProfile: (updates: Partial<AuthUser>) => Promise<void>;
+  completeFamilySetup: (familyData: {
+    familyId: string;
+    familyName: string;
+    familyUsername?: string;
+    familyInviteCode?: string;
+    relation?: MemberRelation;
+    memberId?: string;
+  }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -115,7 +128,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const parsedUser = JSON.parse(stored);
             if (parsedUser && parsedUser.id && parsedUser.email) {
-              setUser(parsedUser);
+              const hasCompleted = Boolean(
+                parsedUser.hasCompletedFamilySetup ?? (parsedUser.familyName && parsedUser.familyMemberId)
+              );
+              setUser({
+                ...parsedUser,
+                hasCompletedFamilySetup: hasCompleted,
+              });
             } else {
               // Corrupted payload: clean up safely
               await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
@@ -191,6 +210,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (apiRes.success && apiRes.data?.user) {
             delete failedAttemptsMap[lockoutKey];
             const sUser = apiRes.data.user;
+            const hasCompleted = Boolean(
+              sUser.hasCompletedFamilySetup ?? (sUser.familyName && sUser.familyMemberId)
+            );
             const authenticatedUser: AuthUser = {
               id: sUser.id,
               name: sUser.name,
@@ -198,9 +220,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: sUser.email,
               phone: sUser.phone || undefined,
               provider: 'email',
-              familyMemberId: sUser.familyMemberId || `member_${sUser.id}`,
-              familyName: sUser.familyName || `${sUser.name}'s Family`,
+              familyMemberId: sUser.familyMemberId,
+              familyName: sUser.familyName,
+              familyUsername: sUser.familyUsername || apiRes.data?.family?.username,
               familyInviteCode: sUser.familyInviteCode || apiRes.data?.family?.invite_code,
+              hasCompletedFamilySetup: hasCompleted,
               relation: sUser.relation || 'Self',
               isEmailVerified: !!sUser.isVerified,
               rememberMe,
@@ -238,6 +262,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (isPasswordCorrect) {
             delete failedAttemptsMap[lockoutKey];
 
+            const hasCompleted = Boolean(
+              found.hasCompletedFamilySetup ?? (found.familyName && found.familyMemberId)
+            );
             const authenticatedUser: AuthUser = {
               id: found.id,
               name: found.name,
@@ -245,8 +272,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: found.email,
               phone: found.phone,
               provider: 'email',
-              familyMemberId: found.familyMemberId || `member_${found.id}`,
-              familyName: found.familyName || `${found.name}'s Family`,
+              familyMemberId: found.familyMemberId,
+              familyName: found.familyName,
+              familyUsername: found.familyUsername,
+              familyInviteCode: found.familyInviteCode,
+              hasCompletedFamilySetup: hasCompleted,
               relation: found.relation || 'Self',
               isEmailVerified: true,
               rememberMe,
@@ -353,13 +383,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: false, error: 'An account with this phone number already exists. Please sign in.' };
         }
 
-        const customFamilyName = inviteCode ? 'Connected Family' : `${cleanName}'s Family`;
         const localUserId = `user_${Date.now()}`;
-        const localMemberId = `member_${Date.now()}`;
         const fallbackEmail = cleanEmail || `${cleanPhoneDigits || localUserId}@kinly.local`;
 
         let serverUserId: string | null = null;
-        let serverMemberId: string | null = null;
         let serverVerificationCode: string | undefined = undefined;
         let serverDelivered = false;
 
@@ -369,12 +396,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: cleanName,
             email: fallbackEmail,
             password: cleanPass,
-            familyName: customFamilyName,
-            relation: 'Self',
           });
           if (apiRes.success && apiRes.data?.user) {
             serverUserId = apiRes.data.user.id;
-            serverMemberId = apiRes.data.user.familyMemberId;
             serverVerificationCode = apiRes.data.verificationCode;
             serverDelivered = Boolean(apiRes.data.delivered || (apiRes as any).delivered);
           } else if (apiRes.error && apiRes.error.toLowerCase().includes('already exists')) {
@@ -382,7 +406,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch {}
 
-        const memberId = serverMemberId || localMemberId;
         const userId = serverUserId || localUserId;
         const verificationCode = serverVerificationCode || Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -393,8 +416,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           phone: cleanPhone || undefined,
           dateOfBirth: cleanDob || undefined,
           passwordHash: hashed,
-          familyMemberId: memberId,
-          familyName: customFamilyName,
+          familyMemberId: undefined,
+          familyName: undefined,
+          hasCompletedFamilySetup: false,
           relation: 'Self',
           isEmailVerified: false,
           verificationCode,
@@ -404,85 +428,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accounts.push(newAccount);
         await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
 
-        // Create initial personalized user member and family profile in family storage
-        const userMember: FamilyMember = {
-          id: memberId,
-          name: cleanName,
-          relation: 'Self',
-          initials: cleanName
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase(),
-          avatarColor: '#3B82F6',
-          isSelf: true,
-          statusMessage: 'Just joined KinLy!',
-          currentPlaceId: 'place_home',
-          humanLocation: 'At Home',
-          batteryLevel: 98,
-          isCharging: false,
-          isSharingLocation: true,
-          sharingDuration: 'always',
-          lastUpdated: 'Just now',
-          availability: 'available',
-          phone: cleanPhone || '+1 555-0100',
-          ringerMode: 'sound',
-          deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
-          coords: {
-            x: 50,
-            y: 45,
-            latitude: 28.4595,
-            longitude: 77.0266,
-          },
-        };
-
-        const userProfile: FamilyProfile = {
-          id: `family_${Date.now()}`,
-          name: customFamilyName,
-          code: inviteCode || `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
-          address: 'Home Address',
-          homeCity: 'Family Home',
-          membersCount: 1,
-        };
-
-        const initialUserState = {
-          profile: userProfile,
-          members: [userMember],
-          places: [
-            {
-              id: 'place_home',
-              name: 'Home',
-              address: 'Family Residence',
-              type: 'home',
-              isSafeZone: true,
-              coordinates: { latitude: 28.4595, longitude: 77.0266 },
-              iconName: 'home',
-              color: '#3B82F6',
-            },
-          ],
-          tasks: [],
-          events: [],
-          reminders: [],
-          memories: [],
-          documents: [],
-          notifications: [
-            {
-              id: `notif_${Date.now()}`,
-              title: `Welcome to ${customFamilyName}!`,
-              body: `Your private family vault is active. Tap Circle to invite or add members.`,
-              priority: 'important',
-              timestamp: 'Just now',
-              isRead: false,
-              category: 'ai',
-            },
-          ],
-          simpleMode: mode === 'elderly',
-        };
-
-        await AsyncStorage.setItem(`@kinly_family_state_${newAccount.id}`, JSON.stringify(initialUserState));
-        await AsyncStorage.setItem('@kinly_family_state_v1', JSON.stringify(initialUserState));
-
         return {
           success: true,
           requiresVerification: true,
@@ -490,7 +435,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: fallbackEmail,
           phone: cleanPhone || undefined,
           delivered: serverDelivered,
-          familyName: customFamilyName,
         };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Registration failed.' };
@@ -743,6 +687,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         account.isEmailVerified = true;
         await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
 
+        const hasCompleted = Boolean(
+          account.hasCompletedFamilySetup ?? (account.familyName && account.familyMemberId)
+        );
+
         const verifiedUser: AuthUser = {
           id: account.id,
           name: account.name,
@@ -752,6 +700,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           provider: 'email',
           familyMemberId: account.familyMemberId,
           familyName: account.familyName,
+          familyUsername: account.familyUsername,
+          familyInviteCode: account.familyInviteCode,
+          hasCompletedFamilySetup: hasCompleted,
           relation: account.relation,
           isEmailVerified: true,
           rememberMe: true,
@@ -1009,6 +960,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const completeFamilySetup = useCallback(
+    async (familyData: {
+      familyId: string;
+      familyName: string;
+      familyUsername?: string;
+      familyInviteCode?: string;
+      relation?: MemberRelation;
+      memberId?: string;
+    }) => {
+      if (!user) return;
+      const updatedUser: AuthUser = {
+        ...user,
+        familyMemberId: familyData.memberId || user.familyMemberId || `member_${user.id}`,
+        familyName: familyData.familyName,
+        familyUsername: familyData.familyUsername,
+        familyInviteCode: familyData.familyInviteCode,
+        relation: familyData.relation || user.relation || 'Self',
+        hasCompletedFamilySetup: true,
+      };
+      await saveUserSession(updatedUser, updatedUser.rememberMe ?? true);
+
+      try {
+        const rawAccounts = await AsyncStorage.getItem(REGISTERED_ACCOUNTS_KEY);
+        if (rawAccounts) {
+          const accounts: StoredUserAccount[] = JSON.parse(rawAccounts);
+          const idx = accounts.findIndex(
+            (a) => a.id === user.id || (a.email && a.email.toLowerCase() === user.email.toLowerCase())
+          );
+          if (idx >= 0) {
+            accounts[idx] = {
+              ...accounts[idx],
+              familyMemberId: updatedUser.familyMemberId,
+              familyName: updatedUser.familyName,
+              familyUsername: updatedUser.familyUsername,
+              familyInviteCode: updatedUser.familyInviteCode,
+              relation: updatedUser.relation,
+              hasCompletedFamilySetup: true,
+            };
+            await AsyncStorage.setItem(REGISTERED_ACCOUNTS_KEY, JSON.stringify(accounts));
+          }
+        }
+      } catch {}
+    },
+    [user]
+  );
+
   const signOut = useCallback(async () => {
     setUser(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
@@ -1035,6 +1032,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithOtp,
         sendPasswordResetEmail,
         updateUserProfile,
+        completeFamilySetup,
         signOut,
       }}>
       {children}

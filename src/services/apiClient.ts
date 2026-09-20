@@ -220,11 +220,49 @@ export const apiClient = {
       });
     },
 
-    joinFamily: async (inviteCode: string, relation?: string) => {
-      return request('/api/family/join', {
+    createFamily: async (name: string, username?: string) => {
+      const res = await request<{
+        token: string;
+        family: any;
+        member: any;
+      }>('/api/family/create', {
         method: 'POST',
-        body: JSON.stringify({ inviteCode, relation }),
+        body: JSON.stringify({ name, username }),
       });
+      if (res.success && res.data?.token) {
+        await AsyncStorage.setItem(JWT_TOKEN_KEY, res.data.token);
+      }
+      return res;
+    },
+
+    lookupFamily: async (query: string) => {
+      return request<{
+        family: {
+          id: string;
+          name: string;
+          username: string | null;
+          inviteCode: string;
+          membersCount: number;
+        };
+      }>(`/api/family/lookup?query=${encodeURIComponent(query)}`);
+    },
+
+    joinFamily: async (usernameOrCode: string, relation?: string) => {
+      const res = await request<{
+        token?: string;
+        familyId: string;
+        familyName: string;
+        familyUsername?: string;
+        inviteCode?: string;
+        message: string;
+      }>('/api/family/join', {
+        method: 'POST',
+        body: JSON.stringify({ usernameOrCode, inviteCode: usernameOrCode, relation }),
+      });
+      if (res.success && res.data?.token) {
+        await AsyncStorage.setItem(JWT_TOKEN_KEY, res.data.token);
+      }
+      return res;
     },
 
     addMember: async (member: any) => {

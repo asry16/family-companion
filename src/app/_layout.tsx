@@ -59,15 +59,23 @@ function RootNavigator() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
+    const onSetupScreen = (segments[0] as string) === 'family-setup';
 
     // Gate unauthenticated users to start on the 1st page (/login)
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect authenticated users to appropriate Dashboard/Home screen
-      router.replace('/(tabs)');
+    } else if (isAuthenticated) {
+      // If user has not completed family setup yet, gate them to /family-setup
+      if (!user?.hasCompletedFamilySetup) {
+        if (!onSetupScreen) {
+          router.replace('/family-setup' as any);
+        }
+      } else if (inAuthGroup || onSetupScreen) {
+        // Redirect authenticated users with completed setup to tabs
+        router.replace('/(tabs)');
+      }
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, user?.hasCompletedFamilySetup, segments, router]);
 
   return (
     <View
@@ -104,6 +112,13 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="family-setup"
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
           <Stack.Screen
             name="modal/simple-mode"
             options={{

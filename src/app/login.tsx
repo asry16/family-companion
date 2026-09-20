@@ -40,7 +40,7 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
-  const { isAuthenticated, isLoading, sendPasswordResetEmail } = useAuth();
+  const { user, isAuthenticated, isLoading, sendPasswordResetEmail } = useAuth();
 
   // Screen height reference
   const [screenHeight, setScreenHeight] = useState(WINDOW_HEIGHT);
@@ -657,13 +657,17 @@ export default function LoginScreen() {
                 handleFocusChange(false);
               }
             }}
-            onSuccess={() => {
+            onSuccess={(params) => {
               if (Platform.OS !== 'web') {
                 try {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } catch (e) {}
               }
-              router.replace('/(tabs)');
+              if (params?.isNewSignUp || !user?.hasCompletedFamilySetup) {
+                router.replace('/family-setup' as any);
+              } else {
+                router.replace('/(tabs)');
+              }
             }}
             onJoinWithCode={() => setJoinModalVisible(true)}
             onForgotPassword={(prefilledIdentifier) => {

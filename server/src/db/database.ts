@@ -20,6 +20,18 @@ const schemaPath = path.join(__dirname, 'schema.sql');
 const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schemaSql);
 
+// Dynamic migration: Ensure families has username column
+try {
+  db.exec(`ALTER TABLE families ADD COLUMN username TEXT;`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_families_username ON families(username);`);
+} catch {
+  // Index already exists
+}
+
 // -------------------------------------------------------------
 // USER REPOSITORY
 // -------------------------------------------------------------
@@ -95,6 +107,7 @@ export const usersRepo = {
 export interface DbFamily {
   id: string;
   name: string;
+  username: string | null;
   invite_code: string;
   address: string;
   home_city: string;
@@ -107,28 +120,44 @@ export const familiesRepo = {
   create: (family: {
     id: string;
     name: string;
-    inviteCode: string;
+    username?: string;
+    inviteCode?: string;
+    invite_code?: string;
     address?: string;
     homeCity?: string;
     createdByUserId?: string;
-  }) => {
+  }): DbFamily => {
+    const cleanUsername = family.username
+      ? family.username.replace(/^@/, '').trim().toLowerCase()
+      : null;
+    const finalCode = (family.inviteCode || family.invite_code || '').toUpperCase();
+
     const stmt = db.prepare(`
-      INSERT INTO families (id, name, invite_code, address, home_city, created_by_user_id)
-      VALUES (@id, @name, @inviteCode, @address, @homeCity, @createdByUserId)
+      INSERT INTO families (id, name, username, invite_code, address, home_city, created_by_user_id)
+      VALUES (@id, @name, @username, @inviteCode, @address, @homeCity, @createdByUserId)
     `);
     stmt.run({
       id: family.id,
       name: family.name,
-      inviteCode: family.inviteCode.toUpperCase(),
+      username: cleanUsername,
+      inviteCode: finalCode,
       address: family.address || 'Home',
       homeCity: family.homeCity || '',
       createdByUserId: family.createdByUserId || null,
     });
+    return familiesRepo.findById(family.id)!;
   },
 
   findById: (id: string): DbFamily | undefined => {
     const stmt = db.prepare('SELECT * FROM families WHERE id = ?');
     return stmt.get(id) as DbFamily | undefined;
+  },
+
+  findByUsername: (rawUsername: string): DbFamily | undefined => {
+    const clean = rawUsername.replace(/^@/, '').trim().toLowerCase();
+    if (!clean) return undefined;
+    const stmt = db.prepare('SELECT * FROM families WHERE LOWER(username) = LOWER(?) LIMIT 1');
+    return stmt.get(clean) as DbFamily | undefined;
   },
 
   findByInviteCode: (code: string): DbFamily | undefined => {
@@ -140,15 +169,23 @@ export const familiesRepo = {
          OR UPPER(invite_code) = UPPER(?)
       LIMIT 1
     `);
-    const found = stmt.get(normalized, clean) as DbFamily | undefined;
-    if (found) return found;
+    return stmt.get(normalized, clean) as DbFamily | undefined;
+  },
 
-    // Backward-compatible alias for Asmita Roy's household
-    if (normalized === 'KIN4402' || normalized === '4402' || normalized === 'KIN9608' || normalized === '9608') {
-      const alias = db.prepare(`SELECT * FROM families WHERE id = 'family_1789878985984'`).get() as DbFamily | undefined;
-      if (alias) return alias;
-    }
-    return undefined;
+  findByUsernameOrCode: (rawIdentifier: string): DbFamily | undefined => {
+    if (!rawIdentifier) return undefined;
+    const clean = rawIdentifier.trim();
+    const cleanWithoutAt = clean.replace(/^@/, '').trim().toLowerCase();
+    const normalizedCode = clean.replace(/[\s-]/g, '').toUpperCase();
+
+    const stmt = db.prepare(`
+      SELECT * FROM families
+      WHERE LOWER(username) = ?
+         OR REPLACE(UPPER(invite_code), '-', '') = ?
+         OR UPPER(invite_code) = ?
+      LIMIT 1
+    `);
+    return stmt.get(cleanWithoutAt, normalizedCode, clean.toUpperCase()) as DbFamily | undefined;
   },
 
   updateProfile: (id: string, profile: { name?: string; address?: string; homeCity?: string }) => {

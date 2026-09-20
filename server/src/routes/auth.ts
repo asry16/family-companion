@@ -54,66 +54,75 @@ router.post('/register', async (req: Request, res: Response) => {
       verificationCode,
     });
 
-    // 2. Create User Family Workspace
-    const familyId = `family_${Date.now()}`;
-    const customFamilyName = familyName?.trim() || `${cleanName}'s Family`;
-    const inviteCode = generateInviteCode();
+    // 2. Conditionally Create Family Workspace if familyName is explicitly provided
+    let familyId: string | undefined = undefined;
+    let memberId: string | undefined = undefined;
+    let customRelation: string | undefined = undefined;
+    let familyRecord: any = undefined;
+    let memberRecord: any = undefined;
 
-    familiesRepo.create({
-      id: familyId,
-      name: customFamilyName,
-      inviteCode,
-      address: 'Home Residence',
-      homeCity: 'Family Home',
-      createdByUserId: userId,
-    });
+    if (familyName && familyName.trim()) {
+      familyId = `family_${Date.now()}`;
+      const customFamilyName = familyName.trim();
+      const inviteCode = generateInviteCode();
 
-    // 3. Create Default Safe Place
-    const defaultPlaceId = `place_${Date.now()}`;
-    placesRepo.create({
-      id: defaultPlaceId,
-      family_id: familyId,
-      name: 'Home',
-      type: 'home',
-      address: 'Home Residence',
-      emoji: '🏡',
-      coords_x: 50.0,
-      coords_y: 50.0,
-      latitude: 28.4595,
-      longitude: 77.0266,
-      is_safe_zone: 1,
-    });
+      familiesRepo.create({
+        id: familyId,
+        name: customFamilyName,
+        inviteCode,
+        address: 'Home Residence',
+        homeCity: 'Family Home',
+        createdByUserId: userId,
+      });
 
-    // 4. Create Active Self Family Member
-    const memberId = `member_${Date.now()}`;
-    const customRelation = relation || 'Self';
-    const initials = cleanName
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
+      const defaultPlaceId = `place_${Date.now()}`;
+      placesRepo.create({
+        id: defaultPlaceId,
+        family_id: familyId,
+        name: 'Home',
+        type: 'home',
+        address: 'Home Residence',
+        emoji: '🏡',
+        coords_x: 50.0,
+        coords_y: 50.0,
+        latitude: 28.4595,
+        longitude: 77.0266,
+        is_safe_zone: 1,
+      });
 
-    membersRepo.create({
-      id: memberId,
-      family_id: familyId,
-      user_id: userId,
-      name: cleanName,
-      relation: customRelation,
-      initials,
-      avatar_color: '#3B82F6',
-      phone: '+1 555-0100',
-      is_self: 1,
-      status_message: 'Just joined Kinly!',
-      current_place_id: defaultPlaceId,
-      human_location: 'At Home',
-      battery_level: 100,
-      is_charging: 0,
-      ringer_mode: 'sound',
-      coords_x: 50.0,
-      coords_y: 50.0,
-      availability: 'available',
-    });
+      memberId = `member_${Date.now()}`;
+      customRelation = relation || 'Self';
+      const initials = cleanName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+      membersRepo.create({
+        id: memberId,
+        family_id: familyId,
+        user_id: userId,
+        name: cleanName,
+        relation: customRelation,
+        initials,
+        avatar_color: '#3B82F6',
+        phone: '+1 555-0100',
+        is_self: 1,
+        status_message: 'Just joined Kinly!',
+        current_place_id: defaultPlaceId,
+        human_location: 'At Home',
+        battery_level: 100,
+        is_charging: 0,
+        ringer_mode: 'sound',
+        coords_x: 50.0,
+        coords_y: 50.0,
+        availability: 'available',
+      });
+
+      familyRecord = familiesRepo.findById(familyId);
+      memberRecord = membersRepo.findById(memberId);
+    }
 
     // Issue JWT
     const token = jwt.sign(
@@ -135,8 +144,6 @@ router.post('/register', async (req: Request, res: Response) => {
     });
 
     const userRecord = usersRepo.findById(userId);
-    const familyRecord = familiesRepo.findById(familyId);
-    const memberRecord = membersRepo.findById(memberId);
 
     const responseData = {
       token,
@@ -151,6 +158,8 @@ router.post('/register', async (req: Request, res: Response) => {
         familyMemberId: memberId,
         familyName: familyRecord?.name,
         familyInviteCode: familyRecord?.invite_code,
+        familyUsername: familyRecord?.username,
+        hasCompletedFamilySetup: Boolean(familyId && familyRecord),
         relation: customRelation,
       },
       family: familyRecord,
@@ -242,6 +251,8 @@ router.post('/login', async (req: Request, res: Response) => {
         familyMemberId: member?.id,
         familyName: family?.name,
         familyInviteCode: family?.invite_code,
+        familyUsername: family?.username,
+        hasCompletedFamilySetup: Boolean(familyId && family),
         relation: member?.relation || 'Self',
       },
       family,
