@@ -17,6 +17,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Image,
+  LayoutAnimation,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -309,92 +310,26 @@ export default function LoginScreen() {
     return () => sub.remove();
   }, [phase, startHaloPulse, stopHaloPulse]);
 
-  // Keyboard listeners: scale brand group down and translate credentials card upwards
+  // Keyboard listeners: adapt layout when keyboard appears to push credentials card upward
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = (e: any) => {
       const kh = e?.endCoordinates?.height || 300;
+      try {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      } catch (err) {}
       setKeyboardHeight(kh);
       setIsKeyboardVisible(true);
-
-      const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
-
-      // Dynamic card lift: elevates credentials card so input fields and buttons are 100% visible
-      let targetCardLift = -205;
-      if (authState === 'signUp') {
-        targetCardLift = -Math.round(Math.max(225, kh * 0.65));
-      } else if (authState === 'verifySignUpOtp') {
-        targetCardLift = -Math.round(Math.max(160, kh * 0.48));
-      } else {
-        // signIn / default
-        targetCardLift = -Math.round(Math.max(205, kh * 0.58));
-      }
-
-      const targetBrandLift = -Math.round(Math.max(85, Math.min(105, kh * 0.28)));
-      const targetBrandScale = FrontPageTokens.timings.phase2LogoFinalScale * 0.42;
-
-      Animated.parallel([
-        Animated.timing(brandScale, {
-          toValue: targetBrandScale,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(brandTranslateY, {
-          toValue: targetBrandLift,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(keyboardOpacity, {
-          toValue: 0.25,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(cardTranslateY, {
-          toValue: targetCardLift,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start();
     };
 
-    const onHide = (e: any) => {
+    const onHide = () => {
+      try {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      } catch (err) {}
       setKeyboardHeight(0);
       setIsKeyboardVisible(false);
-
-      const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
-
-      Animated.parallel([
-        Animated.timing(brandScale, {
-          toValue: FrontPageTokens.timings.phase2LogoFinalScale,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(brandTranslateY, {
-          toValue: 0,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(keyboardOpacity, {
-          toValue: 1,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(cardTranslateY, {
-          toValue: 0,
-          duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start();
     };
 
     const showSub = Keyboard.addListener(showEvent, onShow);
@@ -404,7 +339,7 @@ export default function LoginScreen() {
       showSub.remove();
       hideSub.remove();
     };
-  }, [brandScale, brandTranslateY, keyboardOpacity, cardTranslateY, authState]);
+  }, []);
 
   // Handle tap anywhere during Phase 1 to skip straight to Phase 2
   const handlePhase1Tap = () => {
@@ -570,7 +505,7 @@ export default function LoginScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + finalTopY,
+            paddingTop: insets.top + (isKeyboardVisible ? 10 : finalTopY),
             paddingBottom: isKeyboardVisible ? keyboardHeight + 120 : insets.bottom + 120,
           },
         ]}
@@ -580,20 +515,34 @@ export default function LoginScreen() {
         {/* ========================================================================= */}
         {/* BRAND GROUP: LOGO + APP NAME + TAGLINE                                     */}
         {/* ========================================================================= */}
-        <Animated.View
-          onLayout={(e) => {
-            brandHeightRef.current = e.nativeEvent.layout.height;
-          }}
-          style={[
-            styles.brandGroup,
-            {
-              opacity: keyboardOpacity,
-              transform: [
-                { translateY: brandTranslateY },
-                { scale: brandScale },
-              ],
-            },
-          ]}>
+        {isKeyboardVisible ? (
+          <View style={styles.brandGroupCompact}>
+            <View style={styles.compactLogo}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+            </View>
+            <Text style={[styles.compactAppName, { color: themeTokens.nameText }]}>
+              {FrontPageTokens.appName}
+            </Text>
+          </View>
+        ) : (
+          <Animated.View
+            onLayout={(e) => {
+              brandHeightRef.current = e.nativeEvent.layout.height;
+            }}
+            style={[
+              styles.brandGroup,
+              {
+                opacity: keyboardOpacity,
+                transform: [
+                  { translateY: brandTranslateY },
+                  { scale: brandScale },
+                ],
+              },
+            ]}>
             {/* 1. LOGO: 72px violet circle with white family icon in 96px halo ring */}
             <Animated.View
               style={[
@@ -670,6 +619,7 @@ export default function LoginScreen() {
               "{FrontPageTokens.tagline}"
             </Animated.Text>
           </Animated.View>
+        )}
 
         {/* ========================================================================= */}
         {/* AUTH CARD: 3-State Glassmorphism Card                                     */}
@@ -678,7 +628,7 @@ export default function LoginScreen() {
           style={[
             styles.cardAnimatedWrapper,
             {
-              marginTop: FrontPageTokens.brandCardGap,
+              marginTop: isKeyboardVisible ? 10 : FrontPageTokens.brandCardGap,
               opacity: cardOpacity,
               transform: [{ translateY: cardTranslateY }],
             },
@@ -1124,6 +1074,25 @@ const styles = StyleSheet.create({
   brandGroup: {
     alignItems: 'center',
     width: '100%',
+  },
+  brandGroupCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 8,
+    height: 38,
+  },
+  compactLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  compactAppName: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   logoWrapper: {
     width: FrontPageTokens.haloSize,
