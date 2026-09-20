@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
+  Text,
+  Pressable,
+  Modal,
   StyleSheet,
   ScrollView,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -45,6 +49,7 @@ export default function CircleScreen() {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [manualAddVisible, setManualAddVisible] = useState(false);
+  const [fullMapModalVisible, setFullMapModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -207,6 +212,7 @@ export default function CircleScreen() {
           selectedMemberId={selectedMemberId}
           onSelectMember={handleSelectMemberFromPin}
           onPressViewList={handleScrollToMembers}
+          onFullScreen={() => setFullMapModalVisible(true)}
         />
 
         {/* 4. Family Members Card (72px row cards, header with "+ Add Member" pill) */}
@@ -286,6 +292,49 @@ export default function CircleScreen() {
           });
         }}
       />
+
+      {/* 4. Full Screen Live Family Map Modal */}
+      <Modal
+        visible={fullMapModalVisible}
+        animationType="fade"
+        onRequestClose={() => setFullMapModalVisible(false)}>
+        <View style={[styles.fullMapScreen, { backgroundColor: colors.background }]}>
+          {/* Ambient Backdrops in Full Screen */}
+          <LightBackdrop />
+          <DarkBackdrop />
+
+          {/* Top Bar with Title & Close Button */}
+          <View style={[styles.fullMapTopBar, { paddingTop: Math.max(insets.top + 6, 20) }]}>
+            <View style={styles.fullMapTitleRow}>
+              <Ionicons name="map" size={20} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+              <Text style={[styles.fullMapTitle, { color: colors.text }]}>Full Screen Family Map</Text>
+            </View>
+            <Pressable
+              onPress={() => setFullMapModalVisible(false)}
+              hitSlop={8}
+              style={[
+                styles.closeFullMapCircle,
+                {
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.90)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(140, 150, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                },
+              ]}>
+              <Ionicons name="close" size={20} color={colors.text} />
+            </Pressable>
+          </View>
+
+          {/* Full Screen Interactive Map */}
+          <View style={styles.fullMapContainer}>
+            <CircleLiveMapCard
+              members={displayMembers}
+              selectedMemberId={selectedMemberId}
+              onSelectMember={handleSelectMemberFromPin}
+              isFullScreen={true}
+              onFullScreen={() => setFullMapModalVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -303,5 +352,38 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
+  },
+  fullMapScreen: {
+    flex: 1,
+  },
+  fullMapTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(130, 140, 255, 0.15)',
+  },
+  fullMapTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  fullMapTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  closeFullMapCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullMapContainer: {
+    flex: 1,
   },
 });

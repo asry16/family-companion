@@ -24,6 +24,8 @@ interface CircleLiveMapCardProps {
   selectedMemberId?: string | null;
   onSelectMember?: (memberId: string) => void;
   onPressViewList?: () => void;
+  onFullScreen?: () => void;
+  isFullScreen?: boolean;
 }
 
 const MEMBER_ACCENT_COLORS = ['#4F8EF7', '#8B6CF0', '#2DD4BF', '#F59E0B'];
@@ -33,16 +35,20 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   selectedMemberId,
   onSelectMember,
   onPressViewList,
+  onFullScreen,
+  isFullScreen = false,
 }) => {
   const { height: windowHeight } = useWindowDimensions();
   const { colors, isDark } = useAppTheme();
   const { members: ctxMembers, activeUser, places } = useFamily();
 
-  // Clamped height: clamp(320, 42% window height, 440)
-  const mapHeight = Math.min(
-    Math.max(CircleTokens.mapHeightMin, Math.round(windowHeight * CircleTokens.mapHeightRatio)),
-    CircleTokens.mapHeightMax
-  );
+  // Clamped height when normal, or 100% when full screen
+  const mapHeight = isFullScreen
+    ? '100%'
+    : Math.min(
+        Math.max(CircleTokens.mapHeightMin, Math.round(windowHeight * CircleTokens.mapHeightRatio)),
+        CircleTokens.mapHeightMax
+      );
 
   const displayMembers = useMemo(() => {
     const list = propMembers && propMembers.length > 0 ? propMembers : ctxMembers;
@@ -247,7 +253,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   }, [centerTileX, centerTileY, isDark]);
 
   const centerX = cardLayout.width > 0 ? cardLayout.width / 2 : 180;
-  const centerY = cardLayout.height > 0 ? cardLayout.height / 2 : mapHeight / 2;
+  const centerY = cardLayout.height > 0 ? cardLayout.height / 2 : (typeof mapHeight === 'number' ? mapHeight / 2 : 200);
 
   // Pin positions calculation
   const memberPositions = useMemo(() => {
@@ -301,7 +307,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   };
 
   return (
-    <View style={styles.cardOuterWrapper}>
+    <View style={[styles.cardOuterWrapper, isFullScreen && styles.cardOuterWrapperFullScreen]}>
       <View
         onLayout={(e) => {
           const { width, height } = e.nativeEvent.layout;
@@ -313,6 +319,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           styles.mapContainer,
           {
             height: mapHeight,
+            borderRadius: isFullScreen ? 0 : CircleTokens.mapCardRadius,
+            borderWidth: isFullScreen ? 0 : 1,
             backgroundColor: isDark ? '#141A4A' : '#EFF6FF',
             borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.20)',
           },
@@ -570,8 +578,33 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           </Text>
         </View>
 
-        {/* 4. Right Side: 40px Locate Button + Grouped Vertical Zoom Control */}
+        {/* 4. Right Side: Full Screen Button + 40px Locate Button + Grouped Vertical Zoom Control */}
         <View style={styles.rightControlsContainer}>
+          {/* 40px Circular Full Screen Toggle Button */}
+          {onFullScreen && (
+            <Pressable
+              onPress={() => {
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                onFullScreen();
+              }}
+              hitSlop={6}
+              accessibilityLabel={isFullScreen ? 'Exit Full Screen' : 'View Full Screen Map'}
+              style={({ pressed }) => [
+                styles.locateButton,
+                {
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}>
+              <Ionicons
+                name={isFullScreen ? 'contract-outline' : 'scan-outline'}
+                size={18}
+                color={isDark ? '#C9CEFF' : '#5B628F'}
+              />
+            </Pressable>
+          )}
+
           {/* 40px Circular Locate Button */}
           <Pressable
             onPress={handleLocate}
@@ -648,6 +681,12 @@ const styles = StyleSheet.create({
   cardOuterWrapper: {
     paddingHorizontal: 16,
     marginVertical: 4,
+  },
+  cardOuterWrapperFullScreen: {
+    paddingHorizontal: 0,
+    marginVertical: 0,
+    flex: 1,
+    height: '100%',
   },
   mapContainer: {
     borderRadius: CircleTokens.mapCardRadius,

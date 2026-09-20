@@ -38,6 +38,9 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { DarkBackdrop } from '@/components/ui/DarkBackdrop';
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export interface FamilySettingsScreenProps {
   initialFamilyName?: string;
@@ -89,14 +92,16 @@ export default function FamilySettingsScreen() {
   const sectionPositions = useRef<{ [key: string]: number }>({});
 
   const [activeSectionId, setActiveSectionId] = useState<string>('profile');
+  
+  // Keep sections collapsed by default so user can scroll down accordingly
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
-    profile: true,
-    theme: true,
-    invite: true,
-    members: true,
-    privacy: true,
-    security: true,
-    account: true,
+    profile: false,
+    theme: false,
+    invite: false,
+    members: false,
+    privacy: false,
+    security: false,
+    account: false,
   });
 
   const familyName = profile?.name || user?.familyName || 'The Anderson Family';
@@ -158,20 +163,22 @@ export default function FamilySettingsScreen() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setActiveSectionId(id);
 
-    // Make sure section is opened
+    // Open the section
     setOpenSections((prev) => ({ ...prev, [id]: true }));
     try {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     } catch (e) {}
 
-    // Scroll to position
-    const targetY = sectionPositions.current[id];
-    if (targetY !== undefined) {
-      scrollViewRef.current?.scrollTo({
-        y: Math.max(0, targetY - 60),
-        animated: true,
-      });
-    }
+    // Scroll directly to position
+    setTimeout(() => {
+      const targetY = sectionPositions.current[id];
+      if (targetY !== undefined) {
+        scrollViewRef.current?.scrollTo({
+          y: Math.max(0, targetY - 70),
+          animated: true,
+        });
+      }
+    }, 60);
   };
 
   // Toggle individual section expansion
@@ -188,11 +195,11 @@ export default function FamilySettingsScreen() {
         const targetY = sectionPositions.current[id];
         if (targetY !== undefined) {
           scrollViewRef.current?.scrollTo({
-            y: Math.max(0, targetY - 60),
+            y: Math.max(0, targetY - 70),
             animated: true,
           });
         }
-      }, 50);
+      }, 60);
     }
   };
 
@@ -396,14 +403,29 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('profile')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(79, 142, 247, 0.15)' : 'rgba(59, 111, 240, 0.12)' }]}>
-                <Ionicons name="person-circle-outline" size={18} color={colors.blue} />
+                <Ionicons name="person-circle-outline" size={20} color={colors.blue} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Profile Details</Text>
-              <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)' }]}>
-                <Text style={[styles.badgePillText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Organizer</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Profile Details</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Organizer</Text>
+                  </View>
+                </View>
+                {!openSections['profile'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    {userName} • {userRelation === 'Self' ? 'Family Organizer' : userRelation}
+                  </Text>
+                )}
               </View>
             </View>
             <Ionicons
@@ -433,12 +455,32 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('theme')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.12)' }]}>
-                <Ionicons name="color-palette-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+                <Ionicons name="color-palette-outline" size={20} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Appearance & Modes</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Appearance & Theme</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(20, 32, 58, 0.06)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? colors.text : colors.textSecondary }]}>
+                      {isDark ? 'Dark' : 'Light'}
+                    </Text>
+                  </View>
+                </View>
+                {!openSections['theme'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    {isDark ? 'Deep Indigo Theme' : 'Lavender Theme'} • Tap to customize
+                  </Text>
+                )}
+              </View>
             </View>
             <Ionicons
               name={openSections['theme'] ? 'chevron-up' : 'chevron-down'}
@@ -457,12 +499,30 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('invite')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.15)' : 'rgba(34, 197, 139, 0.12)' }]}>
-                <Ionicons name="qr-code-outline" size={18} color={colors.green} />
+                <Ionicons name="qr-code-outline" size={20} color={colors.green} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Invitation & QR</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Invitation & QR</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.18)' : 'rgba(34, 197, 139, 0.12)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? '#34D399' : '#059669' }]}>Private</Text>
+                  </View>
+                </View>
+                {!openSections['invite'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    Invite Code: {inviteCode} • Scan or share QR
+                  </Text>
+                )}
+              </View>
             </View>
             <Ionicons
               name={openSections['invite'] ? 'chevron-up' : 'chevron-down'}
@@ -489,16 +549,31 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('members')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(79, 142, 247, 0.15)' : 'rgba(59, 111, 240, 0.12)' }]}>
-                <Ionicons name="people-outline" size={18} color={colors.blue} />
+                <Ionicons name="people-outline" size={20} color={colors.blue} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Members</Text>
-              <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(20, 32, 58, 0.06)' }]}>
-                <Text style={[styles.badgePillText, { color: isDark ? colors.text : colors.textSecondary }]}>
-                  {memberList.length} Connected
-                </Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Members</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(20, 32, 58, 0.06)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? colors.text : colors.textSecondary }]}>
+                      {memberList.length} Connected
+                    </Text>
+                  </View>
+                </View>
+                {!openSections['members'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    {memberList.length} household members connected • Tap to view & edit
+                  </Text>
+                )}
               </View>
             </View>
             <Ionicons
@@ -525,12 +600,30 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('privacy')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
-                <Ionicons name="shield-checkmark-outline" size={18} color={isDark ? '#60A5FA' : '#1E3A8A'} />
+                <Ionicons name="shield-checkmark-outline" size={20} color={isDark ? '#60A5FA' : '#1E3A8A'} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Places & Privacy Controls</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Places & Privacy Controls</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? '#60A5FA' : '#1E3A8A' }]}>Encrypted</Text>
+                  </View>
+                </View>
+                {!openSections['privacy'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    Ghost Mode, Precise GPS & Geofencing alerts
+                  </Text>
+                )}
+              </View>
             </View>
             <Ionicons
               name={openSections['privacy'] ? 'chevron-up' : 'chevron-down'}
@@ -549,12 +642,30 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('security')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.12)' }]}>
-                <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+                <Ionicons name="lock-closed-outline" size={20} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Security & Sessions</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Security & Sessions</Text>
+                  <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.18)' : 'rgba(34, 197, 139, 0.12)' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? '#34D399' : '#059669' }]}>Protected</Text>
+                  </View>
+                </View>
+                {!openSections['security'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    Vault Encrypted • Biometrics & active devices
+                  </Text>
+                )}
+              </View>
             </View>
             <Ionicons
               name={openSections['security'] ? 'chevron-up' : 'chevron-down'}
@@ -573,12 +684,27 @@ export default function FamilySettingsScreen() {
           style={styles.sectionContainer}>
           <Pressable
             onPress={() => toggleSection('account')}
-            style={styles.accordionHeader}>
-            <View style={styles.accordionHeaderLeft}>
+            style={[
+              styles.sectionCardHeader,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.16)',
+              },
+            ]}>
+            <View style={styles.headerLeftCol}>
               <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.10)' }]}>
-                <Ionicons name="log-out-outline" size={18} color="#EF4444" />
+                <Ionicons name="log-out-outline" size={20} color="#EF4444" />
               </View>
-              <Text style={[styles.accordionTitle, { color: colors.text }]}>Account & Sign Out</Text>
+              <View style={styles.headerTitleCol}>
+                <View style={styles.titleWithBadge}>
+                  <Text style={[styles.accordionTitle, { color: colors.text }]}>Account & Sign Out</Text>
+                </View>
+                {!openSections['account'] && (
+                  <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    {accountInfo.email || userName} • Manage active session
+                  </Text>
+                )}
+              </View>
             </View>
             <Ionicons
               name={openSections['account'] ? 'chevron-up' : 'chevron-down'}
@@ -679,7 +805,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 10,
-    gap: 12,
+    gap: 10,
     maxWidth: 520,
     width: '100%',
     alignSelf: 'center',
@@ -687,29 +813,54 @@ const styles = StyleSheet.create({
   sectionContainer: {
     gap: 6,
   },
-  accordionHeader: {
+  sectionCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 4,
+    marginHorizontal: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  accordionHeaderLeft: {
+  headerLeftCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    minWidth: 0,
+  },
+  headerIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  titleWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  headerIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   accordionTitle: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  summaryText: {
+    fontSize: 11.5,
+    fontWeight: '500',
   },
   badgePill: {
     paddingHorizontal: 6,
@@ -717,7 +868,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgePillText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '700',
   },
 });
