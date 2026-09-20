@@ -20,6 +20,9 @@ import { FamilyMember } from '@/types';
 import {
   lon2tile,
   lat2tile,
+  lon2tileFraction,
+  lat2tileFraction,
+  latLonToPixelOffset,
   getTileUrl,
   watchLocation,
   LiveLocation,
@@ -320,60 +323,73 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
     setZoomLevel(1);
   };
 
-  // Map Tile Coordinates Calculation
-  const baseLat = liveLoc?.latitude || 37.7749;
-  const baseLon = liveLoc?.longitude || -122.4194;
+  // Map Tile Coordinates Calculation (uses real live GPS or active user coordinates)
+  const baseLat = liveLoc?.latitude ?? activeUser?.coords?.latitude ?? 28.5498;
+  const baseLon = liveLoc?.longitude ?? activeUser?.coords?.longitude ?? 77.2005;
   const tileZoom = 14;
 
-  const centerTileX = lon2tile(baseLon, tileZoom);
-  const centerTileY = lat2tile(baseLat, tileZoom);
+  const centerFracX = lon2tileFraction(baseLon, tileZoom);
+  const centerFracY = lat2tileFraction(baseLat, tileZoom);
+  const centerTileX = Math.floor(centerFracX);
+  const centerTileY = Math.floor(centerFracY);
 
-  // 3x3 Tile Grid
+  // 5x5 Tile Grid with exact fractional pixel alignment
   const mapTiles = useMemo(() => {
-    const tiles: Array<{ x: number; y: number; tileX: number; tileY: number; url: string; key: string }> = [];
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const tx = centerTileX + dx;
-        const ty = centerTileY + dy;
+    const tiles: Array<{
+      offsetX: number;
+      offsetY: number;
+      url: string;
+      key: string;
+    }> = [];
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const tx = (centerTileX + dx + 16384) % 16384;
+        const ty = (centerTileY + dy + 16384) % 16384;
+        const offsetX = (tx - centerFracX) * 256;
+        const offsetY = (ty - centerFracY) * 256;
         tiles.push({
-          x: dx,
-          y: dy,
-          tileX: tx,
-          tileY: ty,
+          offsetX,
+          offsetY,
           url: getTileUrl(tx, ty, tileZoom, tileMode, isDark),
           key: `${tx}_${ty}_${tileMode}_${isDark ? 'dark' : 'light'}`,
         });
       }
     }
     return tiles;
-  }, [centerTileX, centerTileY, tileMode, isDark]);
+  }, [centerTileX, centerTileY, centerFracX, centerFracY, tileMode, isDark]);
 
   const centerX = cardLayout.width > 0 ? cardLayout.width / 2 : 180;
   const centerY = cardLayout.height > 0 ? cardLayout.height / 2 : (typeof mapHeight === 'number' ? mapHeight / 2 : 200);
 
-  // Pin positions calculation matching reference geometry
+  // Pin positions calculated from actual GPS coordinates or relative offsets
   const memberPositions = useMemo(() => {
     return displayMembers.map((member, idx) => {
       const isSelf = member.isSelf || member.id === activeUser?.id;
       let posX = centerX;
       let posY = centerY;
 
-      if (isSelf || idx === 0) {
-        // Ritu Raj / top-center-left
-        posX = centerX - 42;
-        posY = centerY - 52;
-      } else if (idx === 1) {
-        // Asmita / right side
-        posX = centerX + 68;
-        posY = centerY - 15;
-      } else if (idx === 2) {
-        // Sister / bottom-left
-        posX = centerX - 60;
-        posY = centerY + 48;
+      if (isSelf) {
+        posX = centerX;
+        posY = centerY;
+      } else if (
+        member.coords?.latitude &&
+        member.coords?.longitude &&
+        (member.coords.latitude !== baseLat || member.coords.longitude !== baseLon)
+      ) {
+        const { dx, dy } = latLonToPixelOffset(
+          member.coords.latitude,
+          member.coords.longitude,
+          baseLat,
+          baseLon,
+          tileZoom
+        );
+        const maxOffset = isFullScreen ? 280 : 150;
+        posX = centerX + Math.max(-maxOffset, Math.min(maxOffset, dx));
+        posY = centerY + Math.max(-maxOffset, Math.min(maxOffset, dy));
       } else {
-        const angle = (idx * (2 * Math.PI)) / displayMembers.length;
-        posX = centerX + Math.cos(angle) * 80;
-        posY = centerY + Math.sin(angle) * 60;
+        const angle = (idx * (2 * Math.PI)) / (displayMembers.length || 1);
+        posX = centerX + Math.cos(angle) * 70;
+        posY = centerY + Math.sin(angle) * 50;
       }
 
       const accentColor =
@@ -394,7 +410,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
         ringAnim,
       };
     });
-  }, [displayMembers, activeUser?.id, centerX, centerY, ringAnim1, ringAnim2, ringAnim3]);
+  }, [displayMembers, activeUser?.id, centerX, centerY, baseLat, baseLon, isFullScreen, ringAnim1, ringAnim2, ringAnim3]);
 
   // Center map on specific member if selected
   const handlePinPress = (memberId: string, posX: number, posY: number) => {
@@ -446,14 +462,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             },
           ]}>
           
-          {/* Vector Map Canvas matching reference image in light mode */}
-          {!isDark ? (
-            <VectorMapCanvas
-              width={cardLayout.width || 380}
-              height={typeof mapHeight === 'number' ? mapHeight : 340}
-              isDark={false}
-            />
-          ) : !tileError ? (
+          {/* Real Raster Map Tiles (Light / Dark OSM / Satellite) */}
+          {!tileError ? (
             <View style={styles.tileGridContainer}>
               {mapTiles.map((tile) => (
                 <Image
@@ -463,8 +473,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                   style={[
                     styles.rasterTile,
                     {
-                      left: centerX + tile.x * 256 - 128,
-                      top: centerY + tile.y * 256 - 128,
+                      left: centerX + tile.offsetX,
+                      top: centerY + tile.offsetY,
                     },
                   ]}
                   resizeMode="cover"
@@ -475,7 +485,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             <VectorMapCanvas
               width={cardLayout.width || 380}
               height={typeof mapHeight === 'number' ? mapHeight : 340}
-              isDark={true}
+              isDark={isDark}
             />
           )}
 

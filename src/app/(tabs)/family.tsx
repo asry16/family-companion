@@ -90,7 +90,12 @@ export default function CircleScreen() {
           isCharging: false,
           deviceModel: 'Smartphone',
           ringerMode: 'sound',
-          coords: { x: 50, y: 50, latitude: 37.7749, longitude: -122.4194 },
+          coords: {
+            x: 50,
+            y: 50,
+            latitude: 28.5498,
+            longitude: 77.2005,
+          },
         },
       ];
     }
@@ -99,13 +104,22 @@ export default function CircleScreen() {
 
     // When 1 member is connected, provide the companion family members matching the reference image
     if (baseList.length === 1) {
-      const self = baseList[0];
+      const currentSelf = baseList[0];
+      const centerLat = currentSelf.coords?.latitude ?? 28.5498;
+      const centerLon = currentSelf.coords?.longitude ?? 77.2005;
+
       const selfMember: FamilyMember = {
-        ...self,
-        name: self.name || 'Ritu Raj',
+        ...currentSelf,
+        name: currentSelf.name || 'Ritu Raj',
         avatarColor: '#3B82F6',
-        humanLocation: self.humanLocation || 'At Home',
-        lastUpdated: self.lastUpdated === 'Just now' ? '2 min ago' : self.lastUpdated,
+        humanLocation: currentSelf.humanLocation || 'At Home',
+        lastUpdated: currentSelf.lastUpdated === 'Just now' ? '2 min ago' : currentSelf.lastUpdated,
+        coords: {
+          x: 50,
+          y: 50,
+          latitude: centerLat,
+          longitude: centerLon,
+        },
       };
 
       const companionMembers: FamilyMember[] = [
@@ -128,7 +142,7 @@ export default function CircleScreen() {
           isCharging: false,
           deviceModel: 'iPhone 15',
           ringerMode: 'sound',
-          coords: { x: 70, y: 35, latitude: 37.7833, longitude: -122.4167 },
+          coords: { x: 70, y: 35, latitude: centerLat + 0.0084, longitude: centerLon + 0.0062 },
         },
         {
           id: 'member_sister',
@@ -149,7 +163,7 @@ export default function CircleScreen() {
           isCharging: false,
           deviceModel: 'Pixel 8',
           ringerMode: 'sound',
-          coords: { x: 30, y: 65, latitude: 37.7649, longitude: -122.4294 },
+          coords: { x: 30, y: 65, latitude: centerLat - 0.0076, longitude: centerLon - 0.0094 },
         },
       ];
 

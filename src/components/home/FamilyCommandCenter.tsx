@@ -98,6 +98,9 @@ export function getMemberPresence(member?: FamilyMember | null, isDark: boolean 
 import {
   lon2tile,
   lat2tile,
+  lon2tileFraction,
+  lat2tileFraction,
+  latLonToPixelOffset,
   getTileUrl,
   watchLocation,
   LiveLocation,
@@ -322,13 +325,15 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   }, [displayMembers, isDark]);
 
   // Real base coordinates for map tiles (User live coordinates or default)
-  // Real base coordinates for map tiles (User live coordinates or default)
   const baseLat = liveLoc?.latitude ?? realUserCoords?.latitude ?? activeUser?.coords?.latitude ?? 28.5498;
   const baseLon = liveLoc?.longitude ?? realUserCoords?.longitude ?? activeUser?.coords?.longitude ?? 77.2005;
   const humanPlace = liveLoc?.humanLocation || activeUser?.humanLocation || 'Live Safe Zone';
   const tileZoom = 14;
-  const centerTileX = lon2tile(baseLon, tileZoom);
-  const centerTileY = lat2tile(baseLat, tileZoom);
+
+  const centerFracX = lon2tileFraction(baseLon, tileZoom);
+  const centerFracY = lat2tileFraction(baseLat, tileZoom);
+  const centerTileX = Math.floor(centerFracX);
+  const centerTileY = Math.floor(centerFracY);
 
   // Dynamic layout calculations for full coverage without black gaps
   const containerW = mapLayout.width > 0 ? mapLayout.width : 500;
@@ -340,19 +345,26 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   const halfSpanX = Math.max(2, Math.ceil(containerW / 512) + 1);
   const halfSpanY = Math.max(1, Math.ceil(containerH / 512) + 1);
 
-  // Generate tile grid without any watermarks or API key requirements (using fast ArcGIS World Dark/Light Gray Base)
+  // Generate tile grid with exact fractional pixel alignment
   const mapTiles = useMemo(() => {
-    const tiles: Array<{ x: number; y: number; url: string; key: string }> = [];
+    const tiles: Array<{
+      offsetX: number;
+      offsetY: number;
+      url: string;
+      key: string;
+    }> = [];
     for (let dy = -halfSpanY; dy <= halfSpanY; dy++) {
       for (let dx = -halfSpanX; dx <= halfSpanX; dx++) {
         const tx = (centerTileX + dx + 16384) % 16384;
         const ty = (centerTileY + dy + 16384) % 16384;
+        const offsetX = (tx - centerFracX) * 256;
+        const offsetY = (ty - centerFracY) * 256;
         const url = getTileUrl(tx, ty, tileZoom, mapMode, isDark);
-        tiles.push({ x: dx, y: dy, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
+        tiles.push({ offsetX, offsetY, url, key: `${tx}_${ty}_${mapMode}_${isDark ? 'dark' : 'light'}` });
       }
     }
     return tiles;
-  }, [centerTileX, centerTileY, mapMode, isDark, halfSpanX, halfSpanY]);
+  }, [centerTileX, centerTileY, centerFracX, centerFracY, mapMode, isDark, halfSpanX, halfSpanY]);
 
   // Pan gesture responder for the interactive map
   const panResponder = useRef(
@@ -862,8 +874,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                   style={[
                     styles.mapRasterTile,
                     {
-                      left: centerX + tile.x * 256 - 128,
-                      top: centerY + tile.y * 256 - 128,
+                      left: centerX + tile.offsetX,
+                      top: centerY + tile.offsetY,
                     },
                   ]}
                   resizeMode="cover"
@@ -922,15 +934,19 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
                 member.coords?.longitude &&
                 (member.coords.latitude !== baseLat || member.coords.longitude !== baseLon)
               ) {
-                const memTileX = lon2tile(member.coords.longitude, tileZoom);
-                const memTileY = lat2tile(member.coords.latitude, tileZoom);
-                const deltaX = (memTileX - centerTileX) * 256;
-                const deltaY = (memTileY - centerTileY) * 256;
-                posX = centerX + Math.max(-200, Math.min(200, deltaX));
-                posY = centerY + Math.max(-120, Math.min(120, deltaY));
+                const { dx, dy } = latLonToPixelOffset(
+                  member.coords.latitude,
+                  member.coords.longitude,
+                  baseLat,
+                  baseLon,
+                  tileZoom
+                );
+                posX = centerX + Math.max(-240, Math.min(240, dx));
+                posY = centerY + Math.max(-140, Math.min(140, dy));
               } else {
-                posX = centerX + (idx % 2 === 0 ? 55 : -55) * idx;
-                posY = centerY + (idx % 2 === 0 ? -38 : 42) * idx;
+                const angle = (idx * (2 * Math.PI)) / (displayMembers.length || 1);
+                posX = centerX + Math.cos(angle) * 70;
+                posY = centerY + Math.sin(angle) * 50;
               }
               const memberName = (member?.name || 'Member').split(' ')[0];
 

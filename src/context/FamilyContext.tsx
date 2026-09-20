@@ -31,7 +31,7 @@ import { generateContextSuggestions } from '@/context/ContextEngine';
 import { processFamilyAIQuery, AIResponse } from '@/services/aiService';
 import { apiClient } from '@/services/apiClient';
 import { websocketClient } from '@/services/websocketClient';
-import { watchLocation } from '@/services/locationService';
+import { watchLocation, LiveLocation } from '@/services/locationService';
 
 const STORAGE_KEY = '@kinly_family_state_v1';
 
@@ -125,6 +125,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMemberId, setActiveMemberId] = useState<string>(user?.familyMemberId || '');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [sosAlert, setSosAlert] = useState<SosAlertPayload | null>(null);
+  const [userLiveLocation, setUserLiveLocation] = useState<LiveLocation | null>(null);
 
   const currentStorageKey = useMemo(() => {
     if (user?.id) {
@@ -545,8 +546,38 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Continuous Live GPS & IP Geolocation Watcher for Authenticated User
     const unwatchLocation = watchLocation((loc) => {
       if (!isSubscribed) return;
-      setMembers((prev) =>
-        prev.map((m) =>
+      setUserLiveLocation(loc);
+      setMembers((prev) => {
+        if (!prev || prev.length === 0) {
+          const selfMem: FamilyMember = {
+            id: user?.familyMemberId || 'self',
+            name: user?.name || 'You',
+            relation: (user?.relation as any) || 'Self',
+            initials: (user?.name || 'Y').charAt(0).toUpperCase(),
+            avatarColor: '#3B82F6',
+            isSelf: true,
+            statusMessage: 'Live Active',
+            currentPlaceId: 'place_home',
+            humanLocation: loc.humanLocation || 'At Home',
+            batteryLevel: 100,
+            isCharging: false,
+            isSharingLocation: true,
+            sharingDuration: 'always',
+            lastUpdated: 'Just now',
+            availability: 'available',
+            phone: user?.phone || '+1 555-0100',
+            ringerMode: 'sound',
+            deviceModel: 'Smartphone',
+            coords: {
+              x: 50,
+              y: 50,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+            },
+          };
+          return [selfMem];
+        }
+        return prev.map((m) =>
           m.isSelf || m.id === user?.familyMemberId
             ? {
                 ...m,
@@ -560,8 +591,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 lastUpdated: 'Just now',
               }
             : m
-        )
-      );
+        );
+      });
 
       // Broadcast real location update to backend SQLite & other family devices via websocket
       if (user?.familyMemberId) {
@@ -647,7 +678,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     isSelf: true,
     statusMessage: 'Family Space Ready',
     currentPlaceId: 'place_home',
-    humanLocation: 'At Home',
+    humanLocation: userLiveLocation?.humanLocation || 'At Home',
     batteryLevel: 100,
     isCharging: false,
     isSharingLocation: true,
@@ -657,8 +688,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     phone: '+1 555-0100',
     ringerMode: 'sound',
     deviceModel: 'iPhone 15',
-    coords: { x: 50, y: 50 },
-  }), [user]);
+    coords: {
+      x: 50,
+      y: 50,
+      latitude: userLiveLocation?.latitude ?? 28.5498,
+      longitude: userLiveLocation?.longitude ?? 77.2005,
+    },
+  }), [user, userLiveLocation]);
 
   const activeUser: FamilyMember = useMemo(() => {
     if (simpleMode) {

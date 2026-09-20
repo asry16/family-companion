@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { lon2tile, lat2tile, getTileUrl } from '@/services/locationService';
+import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
 import { HomeCardTokens } from '@/constants/theme';
 
 interface FamilyCardProps {
@@ -28,6 +28,15 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
   const { colors, isDark, isElderly } = useAppTheme();
   const { members, activeUser } = useFamily();
   const { user } = useAuth();
+
+  const [liveLocation, setLiveLocation] = useState<LiveLocation | null>(null);
+
+  useEffect(() => {
+    const unsub = watchLocation((loc) => {
+      setLiveLocation(loc);
+    });
+    return () => unsub();
+  }, []);
 
   const primaryMember = activeUser || members[0] || {
     id: 'self',
@@ -40,8 +49,8 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
     lastUpdated: 'Just now',
   };
 
-  const memberLat = primaryMember.coords?.latitude ?? 28.5498;
-  const memberLon = primaryMember.coords?.longitude ?? 77.2005;
+  const memberLat = liveLocation?.latitude ?? primaryMember.coords?.latitude ?? 28.5498;
+  const memberLon = liveLocation?.longitude ?? primaryMember.coords?.longitude ?? 77.2005;
   const tileX = lon2tile(memberLon, 14);
   const tileY = lat2tile(memberLat, 14);
   const tileUrl = getTileUrl(tileX, tileY, 14, isDark ? 'osm-dark' : 'osm-standard', isDark);
@@ -313,7 +322,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
                   styles.locationLabel,
                   { color: isDark ? colors.textMuted : '#7A7DB0' },
                 ]}>
-                {primaryMember.humanLocation || 'Home'}
+                {liveLocation?.humanLocation || primaryMember.humanLocation || 'Home'}
               </Text>
             </View>
           </View>

@@ -58,6 +58,12 @@
             "usesCleartextTraffic": true
           }
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Kinly to access your location to show where you are on the family radar map."
+        }
       ]
     ],
     "experiments": {
