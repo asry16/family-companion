@@ -94,12 +94,14 @@ function RootNavigator() {
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
     const onSetupScreen = (segments[0] as string) === 'family-setup';
 
+    const hasFamily = Boolean(user?.hasCompletedFamilySetup || (user?.familyName && user?.familyMemberId));
+
     // Gate unauthenticated users to start on the 1st page (/login)
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/login');
     } else if (isAuthenticated) {
       // If user has not completed family setup yet, gate them to /family-setup
-      if (!user?.hasCompletedFamilySetup) {
+      if (!hasFamily) {
         if (!onSetupScreen) {
           router.replace('/family-setup' as any);
         }
@@ -108,7 +110,7 @@ function RootNavigator() {
         router.replace('/(tabs)');
       }
     }
-  }, [isAuthenticated, isLoading, user?.hasCompletedFamilySetup, segments, router]);
+  }, [isAuthenticated, isLoading, user?.hasCompletedFamilySetup, user?.familyName, user?.familyMemberId, segments, router]);
 
   return (
     <View

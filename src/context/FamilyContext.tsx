@@ -90,7 +90,7 @@ interface FamilyContextValue {
     name: string,
     username?: string
   ) => Promise<{ success: boolean; familyUsername?: string; familyName?: string; inviteCode?: string; error?: string }>;
-  joinFamilyByCode: (inviteCode: string, relation?: MemberRelation) => Promise<{ success: boolean; familyName?: string; error?: string }>;
+  joinFamilyByCode: (inviteCode: string, relation?: MemberRelation) => Promise<{ success: boolean; familyId?: string; familyName?: string; familyUsername?: string; error?: string }>;
   updateFamilyProfile: (updates: Partial<FamilyProfile>) => void;
   createOrUpdateFamily: (name: string, address?: string, homeCity?: string) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => FamilyMember;
@@ -1405,7 +1405,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
           return {
             success: true,
+            familyId: famData?.profile?.id || joinData.familyId,
             familyName: famData?.profile?.name || joinData.familyName || 'Family Circle',
+            familyUsername: famData?.profile?.username || joinData.familyUsername,
           };
         }
         return { success: false, error: res.error || 'Invalid or expired family username or code.' };

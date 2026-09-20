@@ -645,17 +645,29 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Respons
     const member = membersRepo.findByUserId(userId);
     const family = member?.family_id ? familiesRepo.findById(member.family_id) : undefined;
 
+    const userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      age: user.age,
+      username: user.username,
+      isVerified: user.is_verified === 1,
+      familyMemberId: member?.id,
+      familyName: family?.name,
+      familyUsername: family?.username,
+      familyInviteCode: family?.invite_code,
+      relation: member?.relation || 'Self',
+      hasCompletedFamilySetup: Boolean(family && member),
+    };
+
     return res.json({
       success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-        isVerified: user.is_verified === 1,
-        familyMemberId: member?.id,
-        familyName: family?.name,
-        relation: member?.relation || 'Self',
+      user: userData,
+      data: {
+        user: userData,
+        family,
+        member,
       },
       family,
       member,

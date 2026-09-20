@@ -66,7 +66,7 @@ export default function FamilySetupScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
-  const { user } = useAuth();
+  const { user, completeFamilySetup } = useAuth();
   const { createFamily, joinFamilyByCode } = useFamily();
 
   // Mode: 'create' | 'join'
@@ -132,6 +132,33 @@ export default function FamilySetupScreen() {
     loop.start();
     return () => loop.stop();
   }, [pulseAnim]);
+
+  // Auto-redirect if user already has an active family connection
+  useEffect(() => {
+    let isCancelled = false;
+    async function checkExistingFamily() {
+      try {
+        const res = await apiClient.family.getFamily();
+        const famData = (res.data || res) as any;
+        const prof = famData?.profile;
+        if (!isCancelled && res.success && prof?.name && prof.name !== 'My Family' && prof.id !== 'fam_empty') {
+          if (completeFamilySetup) {
+            await completeFamilySetup({
+              familyId: prof.id,
+              familyName: prof.name,
+              familyUsername: prof.username,
+              familyInviteCode: prof.code,
+            });
+          }
+          router.replace('/(tabs)');
+        }
+      } catch {}
+    }
+    checkExistingFamily();
+    return () => {
+      isCancelled = true;
+    };
+  }, [completeFamilySetup, router]);
 
   // Handle Tab Switch
   const handleTabSwitch = (tab: 'create' | 'join') => {
@@ -237,6 +264,11 @@ export default function FamilySetupScreen() {
             useNativeDriver: true,
           }),
         ]).start();
+
+        // Automatically transition to the home dashboard
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 800);
       } else {
         setCreateError(res.error || 'Failed to create family circle. Please try again.');
       }
@@ -275,6 +307,15 @@ export default function FamilySetupScreen() {
           familyName: res.familyName || foundFamily?.name || 'Your Family Circle',
         });
 
+        if (completeFamilySetup) {
+          await completeFamilySetup({
+            familyId: res.familyId || foundFamily?.id || '',
+            familyName: res.familyName || foundFamily?.name || 'Your Family Circle',
+            familyUsername: (res.familyUsername || foundFamily?.username) || undefined,
+            relation: selectedRelation,
+          });
+        }
+
         Animated.parallel([
           Animated.timing(successOpacityAnim, {
             toValue: 1,
@@ -288,6 +329,11 @@ export default function FamilySetupScreen() {
             useNativeDriver: true,
           }),
         ]).start();
+
+        // Automatically transition to the home dashboard
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 800);
       } else {
         setJoinError(res.error || 'Failed to join family circle. Please verify the username.');
       }
