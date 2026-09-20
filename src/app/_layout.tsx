@@ -8,29 +8,62 @@ import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { VoiceProvider } from '@/context/VoiceContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-// Filter out React Native Web deprecation noise for shadow*, pointerEvents, and useNativeDriver
+// Filter out React Native / Expo CLI reconnection & deprecation noise in development
 LogBox.ignoreLogs([
-  '"shadow*" style props are deprecated. Use "boxShadow".',
-  'props.pointerEvents is deprecated. Use style.pointerEvents',
-  'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.',
-  'Animated: `useNativeDriver` is not supported because the native animated module is missing.',
-  'Cannot connect to Expo CLI',
+  /Cannot connect to Expo CLI/i,
+  /Expo CLI/i,
+  /"shadow\*" style props are deprecated/i,
+  /props\.pointerEvents is deprecated/i,
+  /setLayoutAnimationEnabledExperimental/i,
+  /useNativeDriver.*not supported/i,
 ]);
 
 if (typeof console !== 'undefined') {
   const origWarn = console.warn;
   console.warn = (...args: any[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('"shadow*" style props are deprecated') ||
-        args[0].includes('props.pointerEvents is deprecated') ||
-        args[0].includes('setLayoutAnimationEnabledExperimental') ||
-        args[0].includes('useNativeDriver` is not supported') ||
-        args[0].includes('Cannot connect to Expo CLI'))
-    ) {
-      return;
+    try {
+      const msg = args
+        .map((a) => {
+          if (typeof a === 'string') return a;
+          if (a instanceof Error) return a.message + ' ' + (a.stack || '');
+          if (typeof a === 'object' && a !== null) {
+            try {
+              return JSON.stringify(a);
+            } catch {
+              return String(a);
+            }
+          }
+          return String(a);
+        })
+        .join(' ');
+
+      if (
+        /Cannot connect to Expo CLI/i.test(msg) ||
+        /Expo CLI/i.test(msg) ||
+        /"shadow\*" style props are deprecated/i.test(msg) ||
+        /props\.pointerEvents is deprecated/i.test(msg) ||
+        /setLayoutAnimationEnabledExperimental/i.test(msg) ||
+        /useNativeDriver/i.test(msg)
+      ) {
+        return;
+      }
+    } catch {
+      // Fallback to origWarn if matching fails
     }
     origWarn(...args);
+  };
+
+  const origError = console.error;
+  console.error = (...args: any[]) => {
+    try {
+      const msg = args
+        .map((a) => (typeof a === 'string' ? a : a?.message || ''))
+        .join(' ');
+      if (/Cannot connect to Expo CLI/i.test(msg)) {
+        return;
+      }
+    } catch {}
+    origError(...args);
   };
 }
 
