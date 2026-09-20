@@ -76,6 +76,7 @@ export default function LoginScreen() {
   const brandScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? FrontPageTokens.timings.phase2LogoFinalScale : 1)).current;
   const keyboardScale = useRef(new Animated.Value(1)).current;
   const keyboardTranslateY = useRef(new Animated.Value(0)).current;
+  const keyboardOpacity = useRef(new Animated.Value(1)).current;
 
   // Phase 1 Intro Elements
   const logoOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
@@ -315,13 +316,19 @@ export default function LoginScreen() {
     const onShow = (e: any) => {
       Animated.parallel([
         Animated.timing(keyboardScale, {
-          toValue: 0.55,
+          toValue: 0.45,
           duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardTranslateY, {
-          toValue: -40,
+          toValue: -60,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(keyboardOpacity, {
+          toValue: 0.35,
           duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
@@ -339,6 +346,12 @@ export default function LoginScreen() {
         }),
         Animated.timing(keyboardTranslateY, {
           toValue: 0,
+          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(keyboardOpacity, {
+          toValue: 1,
           duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
@@ -518,32 +531,32 @@ export default function LoginScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: authState === 'choose' ? insets.top + finalTopY : insets.top + 16,
-            paddingBottom: insets.bottom + (authState === 'choose' ? 32 : 120),
+            paddingTop: insets.top + finalTopY,
+            paddingBottom: insets.bottom + 120,
           },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}>
         {/* ========================================================================= */}
-        {/* BRAND GROUP: LOGO + APP NAME + TAGLINE (Shown only on landing 'choose')    */}
+        {/* BRAND GROUP: LOGO + APP NAME + TAGLINE                                     */}
         {/* ========================================================================= */}
-        {authState === 'choose' && (
-          <Animated.View
-            onLayout={(e) => {
-              brandHeightRef.current = e.nativeEvent.layout.height;
-            }}
-            style={[
-              styles.brandGroup,
-              {
-                transform: [
-                  { translateY: brandTranslateY },
-                  { scale: brandScale },
-                  { translateY: keyboardTranslateY },
-                  { scale: keyboardScale },
-                ],
-              },
-            ]}>
+        <Animated.View
+          onLayout={(e) => {
+            brandHeightRef.current = e.nativeEvent.layout.height;
+          }}
+          style={[
+            styles.brandGroup,
+            {
+              opacity: keyboardOpacity,
+              transform: [
+                { translateY: brandTranslateY },
+                { scale: brandScale },
+                { translateY: keyboardTranslateY },
+                { scale: keyboardScale },
+              ],
+            },
+          ]}>
             {/* 1. LOGO: 72px violet circle with white family icon in 96px halo ring */}
             <Animated.View
               style={[
@@ -620,7 +633,6 @@ export default function LoginScreen() {
               "{FrontPageTokens.tagline}"
             </Animated.Text>
           </Animated.View>
-        )}
 
         {/* ========================================================================= */}
         {/* AUTH CARD: 3-State Glassmorphism Card                                     */}
@@ -629,9 +641,9 @@ export default function LoginScreen() {
           style={[
             styles.cardAnimatedWrapper,
             {
-              marginTop: authState === 'choose' ? FrontPageTokens.brandCardGap : 0,
-              opacity: authState === 'choose' ? cardOpacity : 1,
-              transform: [{ translateY: authState === 'choose' ? cardTranslateY : 0 }],
+              marginTop: FrontPageTokens.brandCardGap,
+              opacity: cardOpacity,
+              transform: [{ translateY: cardTranslateY }],
             },
           ]}>
           <AuthCard
