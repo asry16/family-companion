@@ -26,6 +26,7 @@ export interface AuthUser {
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   rememberMe?: boolean;
+  mode?: 'elderly' | 'default';
 }
 
 interface StoredUserAccount {
@@ -36,6 +37,7 @@ interface StoredUserAccount {
   phone?: string;
   age?: number;
   dateOfBirth?: string;
+  mode?: 'elderly' | 'default';
   passwordHash: string; // SHA-256 hashed, NEVER plain text
   familyMemberId?: string;
   familyName?: string;
@@ -45,7 +47,6 @@ interface StoredUserAccount {
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   verificationCode?: string;
-  mode?: 'elderly' | 'default';
 }
 
 interface AuthContextValue {
@@ -224,12 +225,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const hasCompleted = Boolean(
               sUser.hasCompletedFamilySetup ?? (sUser.familyName && sUser.familyMemberId)
             );
+            const isElderly = Boolean(sUser.age && Number(sUser.age) > 50);
             const authenticatedUser: AuthUser = {
               id: sUser.id,
               name: sUser.name,
               username: sUser.username || undefined,
               email: sUser.email,
               phone: sUser.phone || undefined,
+              age: sUser.age ? Number(sUser.age) : undefined,
+              mode: isElderly ? 'elderly' : 'default',
               provider: 'email',
               familyMemberId: sUser.familyMemberId,
               familyName: sUser.familyName,
@@ -276,12 +280,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const hasCompleted = Boolean(
               found.hasCompletedFamilySetup ?? (found.familyName && found.familyMemberId)
             );
+            const isElderly = Boolean(found.age && Number(found.age) > 50);
             const authenticatedUser: AuthUser = {
               id: found.id,
               name: found.name,
               username: found.username,
               email: found.email,
               phone: found.phone,
+              age: found.age,
+              mode: isElderly ? 'elderly' : (found.mode || 'default'),
               provider: 'email',
               familyMemberId: found.familyMemberId,
               familyName: found.familyName,
@@ -695,12 +702,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           account.hasCompletedFamilySetup ?? (account.familyName && account.familyMemberId)
         );
 
+        const isElderly = Boolean(account.age && Number(account.age) > 50);
         const verifiedUser: AuthUser = {
           id: account.id,
           name: account.name,
           username: account.username,
           email: account.email,
           phone: account.phone,
+          age: account.age,
+          mode: isElderly ? 'elderly' : 'default',
           provider: 'email',
           familyMemberId: account.familyMemberId,
           familyName: account.familyName,

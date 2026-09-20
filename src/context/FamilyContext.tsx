@@ -177,7 +177,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (data.memories) setMemories(data.memories);
             if (data.documents) setDocuments(data.documents);
             if (data.notifications) setNotifications(data.notifications);
-            if (typeof data.simpleMode === 'boolean') setSimpleModeState(data.simpleMode);
+            const isElderlyUser = Boolean(user?.age && Number(user.age) > 50) || user?.mode === 'elderly';
+            if (isElderlyUser) {
+              setSimpleModeState(true);
+            } else if (typeof data.simpleMode === 'boolean') {
+              setSimpleModeState(data.simpleMode);
+            }
             if (user?.familyMemberId) {
               setActiveMemberId(user.familyMemberId);
             } else {
@@ -188,6 +193,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } else {
           // No saved state found for this user key
           if (user) {
+            const isElderlyUser = Boolean(user?.age && Number(user.age) > 50) || user?.mode === 'elderly';
+            if (isElderlyUser) {
+              setSimpleModeState(true);
+            }
             // Initialize fresh user-defined family
             const memberId = user.familyMemberId || `member_${user.id}`;
             const userMember: FamilyMember = {
@@ -674,6 +683,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const setSimpleMode = useCallback((enabled: boolean) => {
     setSimpleModeState(enabled);
   }, []);
+
+  // Automatically activate elderly/simple mode if user's age is greater than 50
+  useEffect(() => {
+    if ((user?.age && Number(user.age) > 50) || user?.mode === 'elderly') {
+      setSimpleModeState(true);
+    }
+  }, [user?.age, user?.mode]);
 
   const toggleTask = useCallback((taskId: string) => {
     let nextStatus = false;

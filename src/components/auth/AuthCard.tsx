@@ -275,6 +275,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       });
 
       if (res.success) {
+        if (parsedAge > 50) {
+          setSimpleMode(true);
+        }
         setPendingVerificationEmail(res.email || cleanEmail);
         setPendingVerificationCode(res.verificationCode || null);
         setIsCodeDelivered(Boolean(res.delivered));
@@ -830,6 +833,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       const numeric = t.replace(/[^0-9]/g, '');
                       setSignUpAge(numeric);
                       if (errors.age) setErrors((prev) => ({ ...prev, age: '' }));
+                      const val = parseInt(numeric, 10);
+                      if (!isNaN(val) && val > 50) {
+                        setSimpleMode(true);
+                      } else if (!isNaN(val) && val <= 50) {
+                        setSimpleMode(false);
+                      }
                     }}
                     onFocus={() => setFocusedField('age')}
                     onBlur={() => setFocusedField(null)}
@@ -843,6 +852,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     selectionColor={themeTokens.linkViolet}
                   />
                 </Pressable>
+                {parseInt(signUpAge, 10) > 50 ? (
+                  <View style={styles.elderlyBadgeWrap}>
+                    <Ionicons name="heart" size={13} color="#F59E0B" />
+                    <Text style={styles.elderlyBadgeText}>
+                      Elderly Mode Activated (Age 50+)
+                    </Text>
+                  </View>
+                ) : null}
                 {errors.age ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.age}
@@ -1480,5 +1497,17 @@ const styles = StyleSheet.create({
   otpResendLink: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  elderlyBadgeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  elderlyBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#F59E0B',
   },
 });
