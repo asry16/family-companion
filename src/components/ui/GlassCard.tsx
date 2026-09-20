@@ -102,12 +102,11 @@ export const GlassCard: React.FC<GlassCardProps> = ({
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
         />
       )}
       {/* Faint inner top highlight rgba(255, 255, 255, 0.04) in dark mode */}
-      {isDark && <View style={styles.innerTopHighlight} pointerEvents="none" />}
+      {isDark && <View style={[styles.innerTopHighlight, { pointerEvents: 'none' }]} />}
       <View style={[styles.innerContent, contentStyle]}>{children}</View>
     </>
   );

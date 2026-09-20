@@ -1105,10 +1105,10 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
 
         {/* Bottom-Left: Legal OpenStreetMap Attribution */}
         <View
-          pointerEvents="none"
           style={[
             styles.osmAttributionBadge,
             {
+              pointerEvents: 'none',
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.70)' : 'rgba(255, 255, 255, 0.75)',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
             },

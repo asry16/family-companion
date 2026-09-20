@@ -459,14 +459,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   return (
     <View
-      pointerEvents="auto"
-      style={[cardContainerStyle, style]}>
+      style={[cardContainerStyle, { pointerEvents: 'auto' }, style]}>
       {/* Subtle Inner Top Highlight for glass depth */}
       <View
-        pointerEvents="none"
         style={[
           styles.innerTopHighlight,
-          { backgroundColor: themeTokens.cardInnerHighlight },
+          { pointerEvents: 'none', backgroundColor: themeTokens.cardInnerHighlight },
         ]}
       />
 

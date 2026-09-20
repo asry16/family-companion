@@ -357,8 +357,7 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
         />
 
         {/* Left Column */}
@@ -479,10 +478,10 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
             <>
               {/* Ring 1 */}
               <Animated.View
-                pointerEvents="none"
                 style={[
                   styles.haloRing,
                   {
+                    pointerEvents: 'none',
                     transform: [{ scale: ring1Scale }],
                     opacity: ring1Opacity,
                   },
@@ -490,10 +489,10 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
               />
               {/* Ring 2 (delayed 700ms) */}
               <Animated.View
-                pointerEvents="none"
                 style={[
                   styles.haloRing,
                   {
+                    pointerEvents: 'none',
                     transform: [{ scale: ring2Scale }],
                     opacity: ring2Opacity,
                   },
@@ -505,10 +504,10 @@ export const EmergencySosCard: React.FC<EmergencySosCardProps> = ({
           {/* Active Hold Progress Ring (4px stroke around 56px core) */}
           {isHolding && (
             <Animated.View
-              pointerEvents="none"
               style={[
                 styles.holdProgressRing,
                 {
+                  pointerEvents: 'none',
                   opacity: progressStroke,
                   transform: [
                     {

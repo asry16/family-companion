@@ -532,10 +532,10 @@ export default function LoginScreen() {
               ]}>
               {/* Animated Pulsing Outer Halo Layer */}
               <Animated.View
-                pointerEvents="none"
                 style={[
                   styles.logoHaloPulse,
                   {
+                    pointerEvents: 'none',
                     borderColor: themeTokens.haloBorder,
                     backgroundColor: themeTokens.haloBg,
                     opacity: haloOpacity,

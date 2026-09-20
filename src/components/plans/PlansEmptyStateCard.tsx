@@ -68,7 +68,7 @@ export const PlansEmptyStateCard: React.FC<PlansEmptyStateCardProps> = ({
       contentStyle={styles.cardContent}>
       
       {/* Soft Ambient Background Blobs */}
-      <View style={styles.ambientBlobWrap} pointerEvents="none">
+      <View style={[styles.ambientBlobWrap, { pointerEvents: 'none' }]}>
         <View
           style={[
             styles.blobTopLeft,

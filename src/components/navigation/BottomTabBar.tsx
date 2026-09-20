@@ -307,7 +307,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
         },
       ]}>
       {/* Dark mode: Faint inner top highlight line */}
-      {isDark && <View style={styles.darkTopHighlight} pointerEvents="none" />}
+      {isDark && <View style={[styles.darkTopHighlight, { pointerEvents: 'none' }]} />}
 
       {TAB_CONFIGS.map((tab) => {
         const isActive = currentTabKey === tab.key;
@@ -341,10 +341,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               <View style={styles.assistantOrbContainer}>
                 {/* 1. Pulsing Halo Ring behind orb */}
                 <Animated.View
-                  pointerEvents="none"
                   style={[
                     styles.haloRing,
                     {
+                      pointerEvents: 'none',
                       backgroundColor: isDark
                         ? 'rgba(56, 189, 248, 0.25)'
                         : TabBarTokens.light.orbHalo,
@@ -356,10 +356,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
 
                 {/* 2. Soft Breathing Outer Glow */}
                 <Animated.View
-                  pointerEvents="none"
                   style={[
                     styles.orbGlowShadow,
                     {
+                      pointerEvents: 'none',
                       shadowColor: isDark
                         ? isAssistantActive
                           ? TabBarTokens.dark.orbGlowActive

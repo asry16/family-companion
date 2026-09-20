@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, LogBox } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +7,28 @@ import { FamilyProvider, useFamily } from '@/context/FamilyContext';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { VoiceProvider } from '@/context/VoiceContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+
+// Filter out React Native Web deprecation noise for shadow* and pointerEvents
+LogBox.ignoreLogs([
+  '"shadow*" style props are deprecated. Use "boxShadow".',
+  'props.pointerEvents is deprecated. Use style.pointerEvents',
+  'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.',
+]);
+
+if (typeof console !== 'undefined') {
+  const origWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('"shadow*" style props are deprecated') ||
+        args[0].includes('props.pointerEvents is deprecated') ||
+        args[0].includes('setLayoutAnimationEnabledExperimental'))
+    ) {
+      return;
+    }
+    origWarn(...args);
+  };
+}
 
 SplashScreen.preventAutoHideAsync();
 

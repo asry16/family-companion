@@ -14,7 +14,7 @@ export const HeaderAmbientArt: React.FC = () => {
 
   // Light Mode: Faint Leaf Illustration top-right
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       <View style={styles.leafCluster}>
         {/* Main Leaf */}
         <LinearGradient

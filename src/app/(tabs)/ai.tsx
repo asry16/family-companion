@@ -217,7 +217,7 @@ export default function AIScreen({
           style={styles.chatCardWrapper}
           contentStyle={styles.chatCardContent}>
           {/* Ambient Background Blobs */}
-          <View style={styles.ambientBlobWrap} pointerEvents="none">
+          <View style={[styles.ambientBlobWrap, { pointerEvents: 'none' }]}>
             <View
               style={[
                 styles.blobTopLeft,

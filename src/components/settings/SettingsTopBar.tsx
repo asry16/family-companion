@@ -58,7 +58,7 @@ export const SettingsTopBar: React.FC<SettingsTopBarProps> = ({
       ]}>
       {/* Light Mode Faint Sparkles / Accents */}
       {!isDark && (
-        <View style={styles.sparkleWrap} pointerEvents="none">
+        <View style={[styles.sparkleWrap, { pointerEvents: 'none' }]}>
           <Ionicons
             name="sparkles"
             size={12}

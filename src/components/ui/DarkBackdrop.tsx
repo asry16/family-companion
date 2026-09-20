@@ -19,7 +19,7 @@ export const DarkBackdrop: React.FC = () => {
   if (!isDark) return null;
 
   return (
-    <View style={styles.backdropContainer} pointerEvents="none">
+    <View style={[styles.backdropContainer, { pointerEvents: 'none' }]}>
       {/* 1. Base Deep Indigo Gradient (#0B1030 top to #151A52 bottom) */}
       <LinearGradient
         colors={['#0B1030', '#101542', '#151A52']}

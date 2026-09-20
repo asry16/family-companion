@@ -13,7 +13,7 @@ export const LightBackdrop: React.FC = () => {
   if (isDark) return null;
 
   return (
-    <View style={styles.backdropContainer} pointerEvents="none">
+    <View style={[styles.backdropContainer, { pointerEvents: 'none' }]}>
       {/* 1. Base Soft Lavender Gradient: #F8F7FF at top to #EFEDFB at bottom */}
       <LinearGradient
         colors={['#F8F7FF', '#F3F0FC', '#EFEDFB']}

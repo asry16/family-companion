@@ -195,8 +195,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
       />
 
       {/* 1. Header Row */}
@@ -205,10 +204,10 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           {/* 48px Glowing Green Circle with White Shield-Check Outline */}
           <View style={styles.shieldWrap}>
             <Animated.View
-              pointerEvents="none"
               style={[
                 styles.shieldPulseRing,
                 {
+                  pointerEvents: 'none',
                   transform: [{ scale: shieldScale }],
                   opacity: shieldOpacity,
                 },
@@ -290,10 +289,10 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
               {/* Green dot with animated halo */}
               <View style={styles.dotWrap}>
                 <Animated.View
-                  pointerEvents="none"
                   style={[
                     styles.dotHalo,
                     {
+                      pointerEvents: 'none',
                       transform: [{ scale: dotScale }],
                       opacity: dotOpacity,
                     },
@@ -384,7 +383,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
           />
 
           {/* Legal OSM Watermark */}
-          <View style={styles.thumbnailOsmBadge} pointerEvents="none">
+          <View style={[styles.thumbnailOsmBadge, { pointerEvents: 'none' }]}>
             <Text style={[styles.thumbnailOsmText, { color: isDark ? 'rgba(255, 255, 255, 0.50)' : 'rgba(0, 0, 0, 0.40)' }]}>
               © OSM
             </Text>
