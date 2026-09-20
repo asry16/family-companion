@@ -177,6 +177,11 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
     });
   };
 
+  // Sync tile mode when theme changes
+  useEffect(() => {
+    setTileMode(isDark ? 'osm-dark' : 'osm-standard');
+  }, [isDark]);
+
   // Check reduced motion preference
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {

@@ -72,7 +72,7 @@ SplashScreen.preventAutoHideAsync();
 function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
-  const { colors, theme } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { setActiveMemberId } = useFamily();
 
@@ -119,9 +119,9 @@ function RootNavigator() {
         {
           backgroundColor:
             Platform.OS === 'web'
-              ? theme === 'light'
-                ? '#E2E8F0'
-                : '#070A12'
+              ? isDark
+                ? '#070A12'
+                : '#E2E8F0'
               : colors.background,
         },
       ]}>
@@ -132,13 +132,13 @@ function RootNavigator() {
             backgroundColor: colors.background,
             borderColor:
               Platform.OS === 'web'
-                ? theme === 'light'
-                  ? '#CBD5E1'
-                  : '#1E293B'
+                ? isDark
+                  ? '#1E293B'
+                  : '#CBD5E1'
                 : 'transparent',
           },
         ]}>
-        <StatusBar style={theme === 'light' ? 'dark' : 'light'} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerShown: false,

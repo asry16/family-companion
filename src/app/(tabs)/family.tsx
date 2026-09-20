@@ -286,8 +286,7 @@ export default function CircleScreen() {
         onRequestClose={() => setFullMapModalVisible(false)}>
         <View style={[styles.fullMapScreen, { backgroundColor: colors.background }]}>
           {/* Ambient Backdrops in Full Screen */}
-          <LightBackdrop />
-          <DarkBackdrop />
+          {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
           {/* Top Bar with Title & Close Button */}
           <View style={[styles.fullMapTopBar, { paddingTop: Math.max(insets.top + 6, 20) }]}>

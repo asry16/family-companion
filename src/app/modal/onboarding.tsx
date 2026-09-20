@@ -60,8 +60,7 @@ export default function OnboardingModal() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>

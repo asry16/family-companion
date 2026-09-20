@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Colors, Typography, Spacing, Radius, Shadows, TouchTargets, ThemeType } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
 
@@ -52,25 +53,29 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // Determine active theme mode based on preference and system scheme
   const theme: ThemeType = useMemo(() => {
-    if (simpleMode) return 'elderly';
     if (themePreference === 'dark') return 'dark';
     if (themePreference === 'light') return 'light';
     return systemScheme === 'dark' ? 'dark' : 'light';
-  }, [simpleMode, themePreference, systemScheme]);
+  }, [themePreference, systemScheme]);
+
+  const isDark = theme === 'dark';
 
   const toggleTheme = useCallback(() => {
-    const nextPref: ThemePreference = theme === 'dark' ? 'light' : 'dark';
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (_) {}
+    }
+    const nextPref: ThemePreference = isDark ? 'light' : 'dark';
     setThemePreference(nextPref);
-  }, [theme, setThemePreference]);
-
-  const isDark = useMemo(() => theme === 'dark' || theme === 'elderly', [theme]);
+  }, [isDark, setThemePreference]);
 
   const colors = useMemo(() => {
-    if (theme === 'elderly') return Colors.elderly as unknown as typeof Colors.light;
-    if (theme === 'dark') return Colors.dark as unknown as typeof Colors.light;
+    if (isDark) return Colors.dark as unknown as typeof Colors.light;
     return Colors.light;
-  }, [theme]);
+  }, [isDark]);
 
   const value = useMemo(
     () => ({

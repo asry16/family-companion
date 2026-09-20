@@ -144,8 +144,11 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
 
           {/* Theme Toggle */}
           <Pressable
-            onPress={toggleTheme}
-            accessibilityLabel="Toggle Theme"
+            onPress={() => {
+              triggerHaptic();
+              toggleTheme();
+            }}
+            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
             style={({ pressed }) => [
               styles.circularBtn,
               {
@@ -154,7 +157,7 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
-            <Ionicons name="moon" size={18} color={isDark ? '#C9CEFF' : '#1E1B4B'} />
+            <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={isDark ? '#FBBF24' : '#7C5CE0'} />
           </Pressable>
 
           {/* Settings Gear */}

@@ -43,7 +43,7 @@ export default function PlansScreen({
 }: PlansScreenProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuth();
   const {
     tasks,
@@ -233,8 +233,7 @@ export default function PlansScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
       {/* 1. Header: Avatar with dynamic initials, title, subtitle, Bell, Theme toggle, Settings */}
       <PlansHeader
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'plans' } })}

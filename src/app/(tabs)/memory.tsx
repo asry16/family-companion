@@ -112,8 +112,7 @@ export default function MemoryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Ambient Backdrops (Light / Dark) */}
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* 1. Vault Header */}
       <VaultHeader

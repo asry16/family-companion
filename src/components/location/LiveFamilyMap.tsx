@@ -44,6 +44,10 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
   // Map mode: OpenStreetMap / Satellite
   const [mapStyle, setMapStyle] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-standard');
 
+  useEffect(() => {
+    setMapStyle(isDark ? 'osm-dark' : 'osm-standard');
+  }, [isDark]);
+
   // Live Location & Layout State
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
   const [mapLayout, setMapLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });

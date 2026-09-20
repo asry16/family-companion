@@ -29,6 +29,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
 
   const currentHour = new Date().getHours();
   const timeGreeting = currentHour < 12 ? 'Good morning,' : currentHour < 17 ? 'Good afternoon,' : 'Good evening,';
+  const greetingEmoji = isDark ? '🌙' : currentHour < 12 ? '☀️' : currentHour < 17 ? '🌤️' : '🌙';
 
   const handleSignOut = async () => {
     setProfileModalVisible(false);
@@ -70,7 +71,7 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 ]}>
                 {firstName}
               </Text>
-              <Text style={styles.moonEmoji}>🌙</Text>
+              <Text style={styles.moonEmoji}>{greetingEmoji}</Text>
             </View>
 
             {/* Below it: green dot + "Your family is safe" */}

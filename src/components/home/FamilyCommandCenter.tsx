@@ -144,6 +144,10 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   // Map mode: OpenStreetMap / Satellite
   const [mapMode, setMapMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-standard');
 
+  useEffect(() => {
+    setMapMode(isDark ? 'osm-dark' : 'osm-standard');
+  }, [isDark]);
+
   // Animation drivers
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(400)).current;

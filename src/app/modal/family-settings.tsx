@@ -311,8 +311,7 @@ export default function FamilySettingsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* 1. Top Bar */}
       <SettingsTopBar

@@ -97,8 +97,7 @@ export default function ScanDocumentModal() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* Modern Frosted Header */}
       <View

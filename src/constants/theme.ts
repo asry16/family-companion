@@ -172,12 +172,18 @@ export const Colors = {
   elderly: {
     // High-contrast simple mode tokens
     background: '#060B1F',
+    backgroundBottom: '#0A1228',
+    backgroundBlobs: 'rgba(59, 63, 168, 0.25)',
+    backgroundGradient: ['#060B1F', '#0B1030', '#101540'] as const,
+    backgroundRadialTopGlow: 'rgba(59, 63, 168, 0.25)',
     cardBackground: '#0F1A3A',
     cardSolid: '#0F1A3A',
     elevatedBackground: '#1E293B',
     border: '#3B6FF0',
     borderSubtle: '#334155',
     separator: '#334155',
+    cardInnerHighlight: 'rgba(255, 255, 255, 0.08)',
+    cardShadow: 'rgba(0, 0, 10, 0.50)',
 
     text: '#FFFFFF',
     textSecondary: '#F1F5F9',
@@ -185,9 +191,21 @@ export const Colors = {
     textTertiary: '#CBD5E1',
     textInverse: '#000000',
 
+    accentViolet: '#8B7CF6',
+    accentVioletLinks: '#8B7CF6',
+    violet: '#8B7CF6',
+    violetSoft: 'rgba(139, 124, 246, 0.25)',
+    violetBorder: '#8B7CF6',
+
+    primaryGradientStart: '#3B6FF0',
+    primaryGradientEnd: '#8B7CF6',
+    primaryGradient: ['#3B6FF0', '#8B7CF6'] as const,
+
     green: '#22C58B',
+    headlineGreen: '#22C58B',
     greenSoft: 'rgba(34, 197, 139, 0.25)',
     greenBorder: '#22C58B',
+    greenGlow: 'rgba(34, 197, 139, 0.45)',
 
     yellow: '#FDE047',
     yellowSoft: '#713F12',
@@ -196,6 +214,10 @@ export const Colors = {
     red: '#F0524D',
     redSoft: '#7F1D1D',
     redBorder: '#F0524D',
+    sosCardBg: ['#2A0A10', '#1F060B'] as const,
+    sosBorder: '#F0524D',
+    sosGradient: ['#FF334B', '#C81E32'] as const,
+    notificationBadge: '#F0524D',
 
     blue: '#3B6FF0',
     blueSoft: '#1E3A8A',
@@ -209,6 +231,22 @@ export const Colors = {
     pinkSoft: 'rgba(236, 72, 153, 0.25)',
     pinkBorder: '#EC4899',
 
+    teal: '#2DD4BF',
+    tealSoft: 'rgba(45, 212, 191, 0.25)',
+    tealBorder: '#2DD4BF',
+
+    inputBg: 'rgba(255, 255, 255, 0.08)',
+    inputBorder: '#3B6FF0',
+    inputFocusBorder: '#FDE047',
+    headerBtnBg: 'rgba(255, 255, 255, 0.08)',
+    headerBtnBorder: '#3B6FF0',
+    headerBtnIcon: '#FFFFFF',
+
+    mapLand: '#0F1535',
+    mapRoads: '#1E2568',
+    mapParks: '#142838',
+    mapWater: '#1E3A8A',
+
     brand: '#FFFFFF',
     brandAccent: '#FDE047',
     brandWarm: '#F97316',
@@ -216,6 +254,9 @@ export const Colors = {
 
     activeTab: '#FDE047',
     inactiveTab: '#9AA6C4',
+    tabBarBackground: 'rgba(15, 26, 58, 0.95)',
+    tabBarBorder: '#3B6FF0',
+    tabBarShadow: 'rgba(0, 0, 10, 0.5)',
     ripple: 'rgba(255, 255, 255, 0.2)',
 
     // High-contrast button typography tokens

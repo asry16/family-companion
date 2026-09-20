@@ -192,8 +192,7 @@ export default function AIScreen({
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Ambient Backdrops (Light / Dark) */}
-      <LightBackdrop />
-      <DarkBackdrop />
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
