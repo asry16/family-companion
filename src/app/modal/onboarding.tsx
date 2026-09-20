@@ -12,14 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useFamily } from '@/context/FamilyContext';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { SecondaryButton } from '@/components/ui/SecondaryButton';
 
 export default function OnboardingModal() {
   const router = useRouter();
   const { colors, isElderly } = useAppTheme();
+  const { profile, members, updateFamilyProfile } = useFamily();
   const [step, setStep] = useState(1);
-  const [familyName, setFamilyName] = useState('My Family');
+  const [familyName, setFamilyName] = useState(profile?.name || 'My Family');
   const [locationPref, setLocationPref] = useState<'tonight' | 'always'>('tonight');
 
   const totalSteps = 6;
@@ -30,6 +32,11 @@ export default function OnboardingModal() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch (e) {}
     }
+
+    if (step === 2 && familyName.trim() && familyName !== profile?.name) {
+      updateFamilyProfile({ name: familyName.trim() });
+    }
+
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
@@ -129,26 +136,40 @@ export default function OnboardingModal() {
                 <Text style={{ fontSize: 40 }}>👨‍👩‍👦</Text>
               </View>
               <Text style={[styles.title, { color: colors.text }]}>
-                Add Family Members
+                Family Members
               </Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                We initialized your space with 5 members:
+                {members.length === 1
+                  ? 'Your family space currently has 1 member:'
+                  : `Your family space currently has ${members.length} members:`}
               </Text>
               <View style={styles.membersReview}>
-                {['Dad (Father)', 'Mom (Mother)', 'Aman (Brother)', 'Dadi (Grandmother)'].map((m) => (
+                {members.map((m) => (
                   <View
-                    key={m}
+                    key={m.id}
                     style={[
                       styles.memberItem,
                       { backgroundColor: colors.cardBackground, borderColor: colors.border },
                     ]}>
                     <Ionicons name="checkmark-circle" size={18} color="#10B981" />
                     <Text style={[styles.memberItemText, { color: colors.text }]}>
-                      {m}
+                      {m.name} ({m.relation || (m.isSelf ? 'Self' : 'Member')})
                     </Text>
                   </View>
                 ))}
               </View>
+              {profile?.username ? (
+                <View
+                  style={[
+                    styles.pillCard,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border, marginTop: 4 },
+                  ]}>
+                  <Ionicons name="at-circle-outline" size={20} color={colors.brandAccent} />
+                  <Text style={[styles.pillCardText, { color: colors.textSecondary, fontSize: 13 }]}>
+                    Family Username: <Text style={{ color: colors.brandAccent, fontWeight: '800' }}>@{profile.username}</Text>
+                  </Text>
+                </View>
+              ) : null}
             </View>
           )}
 

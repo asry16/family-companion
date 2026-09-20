@@ -11,6 +11,7 @@ export interface FamilyPlace {
   address: string;
   emoji: string;
   coords: { x: number; y: number }; // normalized 0-100 for vector map
+  isSafeZone?: boolean;
 }
 
 export interface FamilyMember {
@@ -157,6 +158,7 @@ export interface SmartNotification {
 export interface FamilyProfile {
   id: string;
   name: string;
+  username?: string;
   code: string;
   address: string;
   homeCity: string;

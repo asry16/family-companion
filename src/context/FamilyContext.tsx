@@ -86,6 +86,10 @@ interface FamilyContextValue {
   sendFamilyPing: (memberId: string, message: string) => void;
   sendEmergencySos: (reason?: string, details?: any) => Promise<{ success: boolean; error?: string }>;
   dismissSosAlert: () => void;
+  createFamily: (
+    name: string,
+    username?: string
+  ) => Promise<{ success: boolean; familyUsername?: string; familyName?: string; inviteCode?: string; error?: string }>;
   joinFamilyByCode: (inviteCode: string, relation?: MemberRelation) => Promise<{ success: boolean; familyName?: string; error?: string }>;
   updateFamilyProfile: (updates: Partial<FamilyProfile>) => void;
   createOrUpdateFamily: (name: string, address?: string, homeCity?: string) => void;
@@ -99,7 +103,7 @@ interface FamilyContextValue {
 const FamilyContext = createContext<FamilyContextValue | null>(null);
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, completeFamilySetup } = useAuth();
   const [profile, setProfile] = useState<FamilyProfile>({
     id: 'fam_empty',
     name: 'My Family',
@@ -1090,16 +1094,266 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [activeMemberId, activeUser, members, user]
   );
 
-  const joinFamilyByCode = useCallback(
-    async (inviteCode: string, relation?: MemberRelation) => {
-      try {
-        const cleanCode = inviteCode.trim().toUpperCase();
-        const currentCode = (profile?.code || '').trim().toUpperCase();
+  const createFamily = useCallback(
+    async (
+      name: string,
+      username?: string
+    ): Promise<{ success: boolean; familyUsername?: string; familyName?: string; inviteCode?: string; error?: string }> => {
+      const cleanName = name.trim();
+      if (!cleanName) {
+        return { success: false, error: 'Please enter a family name.' };
+      }
 
-        // If user enters their own household invite code, confirm connection
+      try {
+        // 1. Try Backend creation
+        const apiRes = await apiClient.family.createFamily(cleanName, username);
+        if (apiRes.success && apiRes.data?.family) {
+          const f = apiRes.data.family;
+          const newProfile: FamilyProfile = {
+            id: f.id,
+            name: f.name,
+            username: f.username,
+            code: f.inviteCode || f.invite_code,
+            address: f.address || 'Home',
+            homeCity: f.homeCity || '',
+            membersCount: 1,
+          };
+
+          const memberId = apiRes.data.member?.id || user?.familyMemberId || `member_${Date.now()}`;
+          const initials = (user?.name || cleanName)
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+
+          const selfMember: FamilyMember = {
+            id: memberId,
+            name: user?.name || cleanName,
+            relation: (user?.relation as MemberRelation) || 'Self',
+            initials,
+            avatarColor: '#3B82F6',
+            isSelf: true,
+            statusMessage: 'Just created our family space!',
+            currentPlaceId: 'place_home',
+            humanLocation: 'At Home',
+            batteryLevel: 100,
+            isCharging: false,
+            isSharingLocation: true,
+            sharingDuration: 'always',
+            lastUpdated: 'Just now',
+            availability: 'available',
+            phone: user?.phone || '+1 555-0100',
+            ringerMode: 'sound',
+            deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
+            coords: { x: 50, y: 50 },
+          };
+
+          const defaultPlace: FamilyPlace = {
+            id: 'place_home',
+            name: 'Home',
+            address: 'Family Sanctuary',
+            type: 'home',
+            emoji: '🏡',
+            coords: { x: 50, y: 50 },
+            isSafeZone: true,
+          };
+
+          const welcomeNotif: SmartNotification = {
+            id: `notif_${Date.now()}`,
+            title: `Welcome to ${cleanName}!`,
+            body: `Your private family vault is active. Share @${f.username} with your members to invite them.`,
+            priority: 'important',
+            timestamp: 'Just now',
+            isRead: false,
+            category: 'ai',
+          };
+
+          setProfile(newProfile);
+          setMembers([selfMember]);
+          setPlaces([defaultPlace]);
+          setTasks([]);
+          setEvents([]);
+          setReminders([]);
+          setMemories([]);
+          setDocuments([]);
+          setNotifications([welcomeNotif]);
+          setActiveMemberId(memberId);
+
+          const newState = {
+            profile: newProfile,
+            members: [selfMember],
+            places: [defaultPlace],
+            tasks: [],
+            events: [],
+            reminders: [],
+            memories: [],
+            documents: [],
+            notifications: [welcomeNotif],
+            simpleMode: false,
+          };
+
+          if (user?.id) {
+            await AsyncStorage.setItem(`@kinly_family_state_${user.id}`, JSON.stringify(newState));
+          }
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+
+          if (completeFamilySetup) {
+            await completeFamilySetup({
+              familyId: f.id,
+              familyName: f.name,
+              familyUsername: f.username,
+              familyInviteCode: f.inviteCode || f.invite_code,
+              relation: 'Self',
+              memberId,
+            });
+          }
+
+          return {
+            success: true,
+            familyName: f.name,
+            familyUsername: f.username,
+            inviteCode: f.inviteCode || f.invite_code,
+          };
+        }
+      } catch {}
+
+      // Local / Offline fallback
+      const familyId = `family_${Date.now()}`;
+      const baseSlug = cleanName
+        .toLowerCase()
+        .replace(/^the\s+/, '')
+        .replace(/\s+(family|household)$/, '')
+        .replace(/[^a-z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '') || 'family';
+      const cleanUsername = username
+        ? username.replace(/^@/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+        : `${baseSlug}_${Math.floor(1000 + Math.random() * 9000)}`;
+      const inviteCode = `KIN-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const newProfile: FamilyProfile = {
+        id: familyId,
+        name: cleanName,
+        username: cleanUsername,
+        code: inviteCode,
+        address: 'Home',
+        homeCity: '',
+        membersCount: 1,
+      };
+
+      const memberId = user?.familyMemberId || `member_${user?.id || Date.now()}`;
+      const initials = (user?.name || cleanName)
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+      const selfMember: FamilyMember = {
+        id: memberId,
+        name: user?.name || cleanName,
+        relation: (user?.relation as MemberRelation) || 'Self',
+        initials,
+        avatarColor: '#3B82F6',
+        isSelf: true,
+        statusMessage: 'Just created our family space!',
+        currentPlaceId: 'place_home',
+        humanLocation: 'At Home',
+        batteryLevel: 100,
+        isCharging: false,
+        isSharingLocation: true,
+        sharingDuration: 'always',
+        lastUpdated: 'Just now',
+        availability: 'available',
+        phone: user?.phone || '+1 555-0100',
+        ringerMode: 'sound',
+        deviceModel: Platform.OS === 'ios' ? 'iPhone 15 Pro' : 'Android Device',
+        coords: { x: 50, y: 50 },
+      };
+
+      const defaultPlace: FamilyPlace = {
+        id: 'place_home',
+        name: 'Home',
+        address: 'Family Sanctuary',
+        type: 'home',
+        emoji: '🏡',
+        coords: { x: 50, y: 50 },
+        isSafeZone: true,
+      };
+
+      const welcomeNotif: SmartNotification = {
+        id: `notif_${Date.now()}`,
+        title: `Welcome to ${cleanName}!`,
+        body: `Your private family vault is active. Share @${cleanUsername} with your members to invite them.`,
+        priority: 'important',
+        timestamp: 'Just now',
+        isRead: false,
+        category: 'ai',
+      };
+
+      setProfile(newProfile);
+      setMembers([selfMember]);
+      setPlaces([defaultPlace]);
+      setTasks([]);
+      setEvents([]);
+      setReminders([]);
+      setMemories([]);
+      setDocuments([]);
+      setNotifications([welcomeNotif]);
+      setActiveMemberId(memberId);
+
+      const newState = {
+        profile: newProfile,
+        members: [selfMember],
+        places: [defaultPlace],
+        tasks: [],
+        events: [],
+        reminders: [],
+        memories: [],
+        documents: [],
+        notifications: [welcomeNotif],
+        simpleMode: false,
+      };
+
+      if (user?.id) {
+        await AsyncStorage.setItem(`@kinly_family_state_${user.id}`, JSON.stringify(newState));
+      }
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+
+      if (completeFamilySetup) {
+        await completeFamilySetup({
+          familyId,
+          familyName: cleanName,
+          familyUsername: cleanUsername,
+          familyInviteCode: inviteCode,
+          relation: 'Self',
+          memberId,
+        });
+      }
+
+      return {
+        success: true,
+        familyName: cleanName,
+        familyUsername: cleanUsername,
+        inviteCode,
+      };
+    },
+    [user, completeFamilySetup]
+  );
+
+  const joinFamilyByCode = useCallback(
+    async (usernameOrCode: string, relation?: MemberRelation) => {
+      try {
+        const cleanInput = usernameOrCode.trim();
+        const cleanCode = cleanInput.toUpperCase();
+        const currentCode = (profile?.code || '').trim().toUpperCase();
+        const currentUsername = (profile?.username || '').trim().toLowerCase();
+
+        // If user enters their own household invite code or username, confirm connection
         if (
-          currentCode &&
-          cleanCode.replace(/[\s-]/g, '') === currentCode.replace(/[\s-]/g, '')
+          (currentCode && cleanCode.replace(/[\s-]/g, '') === currentCode.replace(/[\s-]/g, '')) ||
+          (currentUsername && cleanInput.replace(/^@/, '').toLowerCase() === currentUsername)
         ) {
           return {
             success: true,
@@ -1107,8 +1361,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
         }
 
-        const res = await apiClient.family.joinFamily(cleanCode, relation);
-        if (res.success) {
+        const res = await apiClient.family.joinFamily(cleanInput, relation);
+        if (res.success && res.data) {
           const famRes = await apiClient.family.getFamily();
           if (famRes.success && famRes.data) {
             if (famRes.data.profile) setProfile(famRes.data.profile);
@@ -1120,18 +1374,29 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (famRes.data.documents) setDocuments(famRes.data.documents);
             if (famRes.data.memories) setMemories(famRes.data.memories);
             if (famRes.data.notifications) setNotifications(famRes.data.notifications);
+
+            const joinedFamily = famRes.data.profile || {};
+            if (completeFamilySetup) {
+              await completeFamilySetup({
+                familyId: joinedFamily.id || res.data.familyId,
+                familyName: joinedFamily.name || res.data.familyName || 'Family Circle',
+                familyUsername: joinedFamily.username || res.data.familyUsername,
+                familyInviteCode: joinedFamily.code || res.data.inviteCode,
+                relation,
+              });
+            }
           }
           return {
             success: true,
-            familyName: famRes.data?.profile?.name || (res as any).familyName || 'Family Circle',
+            familyName: famRes.data?.profile?.name || res.data.familyName || 'Family Circle',
           };
         }
-        return { success: false, error: res.error || 'Invalid or expired invite code' };
+        return { success: false, error: res.error || 'Invalid or expired family username or code.' };
       } catch (err: any) {
-        return { success: false, error: err.message || 'Failed to join family circle' };
+        return { success: false, error: err.message || 'Failed to join family circle.' };
       }
     },
-    [profile]
+    [profile, completeFamilySetup]
   );
 
   const resetToDefaults = useCallback(() => {
@@ -1190,6 +1455,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sendFamilyPing,
         sendEmergencySos,
         dismissSosAlert,
+        createFamily,
         joinFamilyByCode,
         updateFamilyProfile,
         createOrUpdateFamily,

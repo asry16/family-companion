@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS families (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  username TEXT UNIQUE,
   invite_code TEXT UNIQUE NOT NULL,
   address TEXT DEFAULT 'Home',
   home_city TEXT DEFAULT '',

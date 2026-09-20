@@ -29,7 +29,7 @@ export type AuthCardState = 'choose' | 'signIn' | 'signUp' | 'verifySignUpOtp';
 export interface AuthCardProps {
   initialState?: AuthCardState;
   showSocialSignIn?: boolean;
-  onSuccess: () => void;
+  onSuccess: (params?: { isNewSignUp?: boolean }) => void;
   onJoinWithCode: () => void;
   onForgotPassword?: (prefilledIdentifier?: string) => void;
   onOpenTerms?: () => void;
@@ -210,7 +210,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           } catch (e) {}
         }
-        onSuccess();
+        onSuccess({ isNewSignUp: false });
       } else {
         setErrors({ general: res.error || 'Sign in failed. Please check your credentials.' });
       }
@@ -366,7 +366,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (e) {}
           }
-          onSuccess();
+          onSuccess({ isNewSignUp: true });
         }
       } else {
         setErrors({ general: res.error || 'Registration failed. Please try again.' });
@@ -405,7 +405,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           } catch (e) {}
         }
-        onSuccess();
+        onSuccess({ isNewSignUp: true });
       } else {
         setOtpError(res.error || 'Invalid verification code. Please check and try again.');
         if (Platform.OS !== 'web') {

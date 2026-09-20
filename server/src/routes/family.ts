@@ -1,5 +1,6 @@
-import { Router, Response } from 'express';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
+import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { authMiddleware, AuthenticatedRequest, JWT_SECRET } from '../middleware/auth';
 import {
   familiesRepo,
   membersRepo,
@@ -14,6 +15,38 @@ import {
 import { broadcastToFamily } from '../websocket';
 
 const router = Router();
+
+// -------------------------------------------------------------
+// GET /api/family/lookup - Public Preview for Joining
+// -------------------------------------------------------------
+router.get('/lookup', async (req: Request, res: Response) => {
+  try {
+    const rawQuery = ((req.query.query as string) || (req.query.username as string) || (req.query.code as string) || '').trim();
+    if (!rawQuery) {
+      return res.status(400).json({ success: false, error: 'Please provide a family username or invite code.' });
+    }
+
+    const family = familiesRepo.findByUsernameOrCode(rawQuery);
+    if (!family) {
+      return res.status(404).json({ success: false, error: 'No family found with that username or invite code.' });
+    }
+
+    const members = membersRepo.findByFamilyId(family.id);
+    return res.json({
+      success: true,
+      family: {
+        id: family.id,
+        name: family.name,
+        username: family.username,
+        inviteCode: family.invite_code,
+        membersCount: members.length,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Lookup failed.' });
+  }
+});
+
 router.use(authMiddleware);
 
 // -------------------------------------------------------------
@@ -178,21 +211,178 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+function generateFamilyUsername(name: string): string {
+  const base = name
+    .toLowerCase()
+    .replace(/^the\s+/, '')
+    .replace(/\s+(family|household)$/, '')
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '') || 'family';
+  const discriminator = Math.floor(1000 + Math.random() * 9000);
+  return `${base}_${discriminator}`;
+}
+
+function generateInviteCode(): string {
+  return `KIN-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 // -------------------------------------------------------------
-// POST /api/family/join - Join family via invite code
+// POST /api/family/create - Create New Family Circle
+// -------------------------------------------------------------
+router.post('/create', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Authentication required.' });
+    }
+
+    const { name, username } = req.body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'Family name is required.' });
+    }
+
+    const cleanName = name.trim();
+    let familyUsername = username
+      ? username.replace(/^@/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+      : '';
+
+    if (!familyUsername) {
+      familyUsername = generateFamilyUsername(cleanName);
+    }
+
+    // Ensure uniqueness
+    let existing = familiesRepo.findByUsername(familyUsername);
+    let attempts = 0;
+    while (existing && attempts < 10) {
+      familyUsername = generateFamilyUsername(cleanName);
+      existing = familiesRepo.findByUsername(familyUsername);
+      attempts++;
+    }
+
+    let inviteCode = generateInviteCode();
+    let codeAttempts = 0;
+    while (familiesRepo.findByInviteCode(inviteCode) && codeAttempts < 10) {
+      inviteCode = generateInviteCode();
+      codeAttempts++;
+    }
+
+    const familyId = `family_${Date.now()}`;
+    familiesRepo.create({
+      id: familyId,
+      name: cleanName,
+      username: familyUsername,
+      inviteCode,
+      address: 'Home',
+      homeCity: '',
+      createdByUserId: req.user.id,
+    });
+
+    // Create 1 Default Safe Home Place
+    const defaultPlaceId = `place_${Date.now()}`;
+    placesRepo.create({
+      id: defaultPlaceId,
+      family_id: familyId,
+      name: 'Home',
+      type: 'home',
+      address: 'Family Sanctuary',
+      emoji: '🏡',
+      coords_x: 50.0,
+      coords_y: 50.0,
+      latitude: 28.4595,
+      longitude: 77.0266,
+      is_safe_zone: 1,
+    });
+
+    // Create Founding Self Member (ONLY the user - zero presets!)
+    const memberId = `member_${Date.now()}`;
+    const initials = req.user.name
+      .split(' ')
+      .map((n: string) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+    membersRepo.create({
+      id: memberId,
+      family_id: familyId,
+      user_id: req.user.id,
+      name: req.user.name,
+      relation: 'Self',
+      initials,
+      avatar_color: '#3B82F6',
+      phone: '+1 555-0100',
+      is_self: 1,
+      status_message: 'Just created our family space!',
+      current_place_id: defaultPlaceId,
+      human_location: 'At Home',
+      battery_level: 100,
+      is_charging: 0,
+      ringer_mode: 'sound',
+      coords_x: 50.0,
+      coords_y: 50.0,
+      availability: 'available',
+    });
+
+    // Single Welcome Notification
+    notificationsRepo.create({
+      id: `notif_${Date.now()}`,
+      family_id: familyId,
+      title: `Welcome to ${cleanName}!`,
+      body: `Your private family vault is active. Share @${familyUsername} with your family members to invite them.`,
+      priority: 'important',
+      is_read: 0,
+      category: 'ai',
+    });
+
+    // Issue refreshed JWT token containing familyId
+    const token = jwt.sign(
+      { userId: req.user.id, email: req.user.email, familyId },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    return res.status(201).json({
+      success: true,
+      token,
+      family: {
+        id: familyId,
+        name: cleanName,
+        username: familyUsername,
+        inviteCode,
+        address: 'Home',
+        homeCity: '',
+        membersCount: 1,
+      },
+      member: {
+        id: memberId,
+        name: req.user.name,
+        relation: 'Self',
+        initials,
+      },
+    });
+  } catch (err: any) {
+    console.error('Create family error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to create family circle.' });
+  }
+});
+
+// -------------------------------------------------------------
+// POST /api/family/join - Join family via username or invite code
 // -------------------------------------------------------------
 router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { inviteCode, relation } = req.body || {};
-    if (!inviteCode) {
-      return res.status(400).json({ success: false, error: 'Family invite code is required.' });
+    const { inviteCode, username, usernameOrCode, relation } = req.body || {};
+    const query = (usernameOrCode || username || inviteCode || '').trim();
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'Family username or invite code is required.' });
     }
 
-    const cleanCode = inviteCode.trim().toUpperCase();
-    const targetFamily = familiesRepo.findByInviteCode(cleanCode);
-
+    const targetFamily = familiesRepo.findByUsernameOrCode(query);
     if (!targetFamily) {
-      return res.status(404).json({ success: false, error: 'Invalid invite code. No family found.' });
+      return res.status(404).json({
+        success: false,
+        error: `No family circle found matching "${query}". Please check the username or code.`,
+      });
     }
 
     const userId = req.user!.id;
@@ -204,11 +394,21 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
       if (relation && relation !== existingMember.relation) {
         membersRepo.update(existingMember.id, { relation });
       }
+
+      const token = jwt.sign(
+        { userId, email: req.user!.email, familyId: targetFamily.id },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
       return res.json({
         success: true,
-        message: 'You are already connected to this family circle.',
+        message: 'You are connected to this family circle.',
         familyId: targetFamily.id,
         familyName: targetFamily.name,
+        familyUsername: targetFamily.username,
+        inviteCode: targetFamily.invite_code,
+        token,
       });
     }
 
@@ -243,11 +443,20 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
       relation: relation || 'Family Member',
     });
 
+    const token = jwt.sign(
+      { userId, email: req.user!.email, familyId: targetFamily.id },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
     return res.json({
       success: true,
       message: `Successfully joined ${targetFamily.name}!`,
       familyId: targetFamily.id,
       familyName: targetFamily.name,
+      familyUsername: targetFamily.username,
+      inviteCode: targetFamily.invite_code,
+      token,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to join family.' });
