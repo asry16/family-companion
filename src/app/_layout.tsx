@@ -16,6 +16,8 @@ LogBox.ignoreLogs([
   /props\.pointerEvents is deprecated/i,
   /setLayoutAnimationEnabledExperimental/i,
   /useNativeDriver.*not supported/i,
+  /The Geocoding API has been removed/i,
+  /Geocoding API/i,
 ]);
 
 if (typeof console !== 'undefined') {
@@ -43,7 +45,9 @@ if (typeof console !== 'undefined') {
         /"shadow\*" style props are deprecated/i.test(msg) ||
         /props\.pointerEvents is deprecated/i.test(msg) ||
         /setLayoutAnimationEnabledExperimental/i.test(msg) ||
-        /useNativeDriver/i.test(msg)
+        /useNativeDriver/i.test(msg) ||
+        /The Geocoding API has been removed/i.test(msg) ||
+        /Geocoding API/i.test(msg)
       ) {
         return;
       }

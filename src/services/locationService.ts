@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
@@ -200,18 +201,20 @@ export function getTileUrl(
 }
 
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  // 1. Primary: Native Expo Location reverseGeocodeAsync
-  try {
-    const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lon });
-    if (results && results.length > 0) {
-      const r = results[0];
-      const place = r.name || r.street || r.district || r.subregion || '';
-      const city = r.city || r.subregion || r.region || '';
-      if (place && city && place !== city) return `${place}, ${city}`;
-      if (place) return place;
-      if (city) return city;
-    }
-  } catch (e) {}
+  // 1. Primary: Native Expo Location reverseGeocodeAsync (iOS/Android native only)
+  if (Platform.OS !== 'web') {
+    try {
+      const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lon });
+      if (results && results.length > 0) {
+        const r = results[0];
+        const place = r.name || r.street || r.district || r.subregion || '';
+        const city = r.city || r.subregion || r.region || '';
+        if (place && city && place !== city) return `${place}, ${city}`;
+        if (place) return place;
+        if (city) return city;
+      }
+    } catch (e) {}
+  }
 
   // 2. OpenStreetMap Nominatim reverse geocoder
   try {
