@@ -23,10 +23,6 @@ import { FrontPageTokens, Colors } from '@/constants/theme';
 import { authService } from '@/services/authService';
 import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 export type AuthCardState = 'choose' | 'signIn' | 'signUp' | 'verifySignUpOtp';
 
 export interface AuthCardProps {
@@ -39,6 +35,7 @@ export interface AuthCardProps {
   onOpenPrivacy?: () => void;
   style?: StyleProp<ViewStyle>;
   interactive?: boolean;
+  onStateChange?: (state: AuthCardState) => void;
 }
 
 export const AuthCard: React.FC<AuthCardProps> = ({
@@ -51,6 +48,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   onOpenPrivacy,
   style,
   interactive = true,
+  onStateChange,
 }) => {
   const { colors, isDark } = useAppTheme();
   const { setSimpleMode } = useFamily();
@@ -100,6 +98,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // Field Focus States
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  // Field Input Refs for direct touch response and keyboard navigation
+  const signInEmailRef = useRef<TextInput>(null);
+  const signInPasswordRef = useRef<TextInput>(null);
+  const nameInputRef = useRef<TextInput>(null);
+  const contactInputRef = useRef<TextInput>(null);
+  const dobInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
+  const inviteCodeRef = useRef<TextInput>(null);
+  const otpInputRef = useRef<TextInput>(null);
+
   // Validation Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -112,6 +121,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       } catch (e) {}
     }
     setErrors({});
+    onStateChange?.(nextState);
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 120,
@@ -408,8 +418,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     backgroundColor: themeTokens.cardBg,
     borderColor: themeTokens.cardBorder,
     borderWidth: 1,
-    borderRadius: FrontPageTokens.cardRadius,
-    padding: FrontPageTokens.cardPadding,
+    borderRadius: cardState === 'signUp' ? 24 : FrontPageTokens.cardRadius,
+    padding: cardState === 'signUp' ? 20 : FrontPageTokens.cardPadding,
     maxWidth: FrontPageTokens.cardMaxWidth,
     width: '100%',
     shadowColor: isDark ? themeTokens.cardGlow : themeTokens.cardShadow,
@@ -449,7 +459,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   return (
     <View
-      pointerEvents={interactive ? 'auto' : 'none'}
+      pointerEvents="auto"
       style={[cardContainerStyle, style]}>
       {/* Subtle Inner Top Highlight for glass depth */}
       <View
@@ -567,9 +577,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 <Text style={[styles.cardTitle, { color: colors.text, textAlign: 'left' }]}>
                   Welcome back
                 </Text>
-                <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left' }]}>
+                <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left', marginBottom: 0 }]}>
                   Sign in to your family space
                 </Text>
+              </View>
+              <View
+                style={[
+                  styles.headerBrandBadge,
+                  { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.10)' },
+                ]}>
+                <Ionicons name="people" size={15} color={themeTokens.linkViolet} />
+                <Text style={[styles.headerBrandBadgeText, { color: themeTokens.linkViolet }]}>KinLy</Text>
               </View>
             </View>
 
@@ -587,7 +605,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             <View style={styles.fieldsContainer}>
               {/* Email Field */}
               <View>
-                <View style={inputStyle('email')}>
+                <Pressable
+                  onPress={() => signInEmailRef.current?.focus()}
+                  style={inputStyle('email')}>
                   <Ionicons
                     name="mail-outline"
                     size={18}
@@ -595,6 +615,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={signInEmailRef}
                     value={signInEmail}
                     onChangeText={(t) => {
                       setSignInEmail(t);
@@ -607,9 +628,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => signInPasswordRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
-                </View>
+                </Pressable>
                 {errors.email ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.email}
@@ -619,7 +643,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
               {/* Password Field */}
               <View>
-                <View style={inputStyle('password')}>
+                <Pressable
+                  onPress={() => signInPasswordRef.current?.focus()}
+                  style={inputStyle('password')}>
                   <Ionicons
                     name="lock-closed-outline"
                     size={18}
@@ -627,6 +653,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={signInPasswordRef}
                     value={signInPassword}
                     onChangeText={(t) => {
                       setSignInPassword(t);
@@ -638,7 +665,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignInPassword}
                     autoCapitalize="none"
+                    returnKeyType="done"
+                    onSubmitEditing={handleSignIn}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
                   <Pressable
                     onPress={() => setShowSignInPassword(!showSignInPassword)}
@@ -650,7 +680,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       color={themeTokens.inputPlaceholder}
                     />
                   </Pressable>
-                </View>
+                </Pressable>
                 {errors.password ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.password}
@@ -723,7 +753,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         {/* ========================================================================= */}
         {cardState === 'signUp' && (
           <View style={styles.stateWrapper}>
-            {/* Header with Back Chevron */}
+            {/* Header with Back Chevron and compact KinLy badge */}
             <View style={styles.formHeader}>
               <Pressable
                 onPress={() => switchState('choose')}
@@ -735,9 +765,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 <Text style={[styles.cardTitle, { color: colors.text, textAlign: 'left' }]}>
                   Create your account
                 </Text>
-                <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left' }]}>
+                <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left', marginBottom: 0 }]}>
                   Set up your private family space
                 </Text>
+              </View>
+              <View
+                style={[
+                  styles.headerBrandBadge,
+                  { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.10)' },
+                ]}>
+                <Ionicons name="people" size={15} color={themeTokens.linkViolet} />
+                <Text style={[styles.headerBrandBadgeText, { color: themeTokens.linkViolet }]}>KinLy</Text>
               </View>
             </View>
 
@@ -752,10 +790,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             )}
 
             {/* Form Fields */}
-            <View style={styles.fieldsContainer}>
+            <View style={[styles.fieldsContainer, { gap: 10 }]}>
               {/* Full Name */}
               <View>
-                <View style={inputStyle('name')}>
+                <Pressable
+                  onPress={() => nameInputRef.current?.focus()}
+                  style={inputStyle('name')}>
                   <Ionicons
                     name="person-outline"
                     size={18}
@@ -763,6 +803,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={nameInputRef}
                     value={signUpName}
                     onChangeText={(t) => {
                       setSignUpName(t);
@@ -773,9 +814,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     placeholder="Full name"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     autoCapitalize="words"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => contactInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
-                </View>
+                </Pressable>
                 {errors.name ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.name}
@@ -785,7 +830,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
               {/* Email & Phone Number in One Bar */}
               <View>
-                <View style={inputStyle('contact')}>
+                <Pressable
+                  onPress={() => contactInputRef.current?.focus()}
+                  style={inputStyle('contact')}>
                   <Ionicons
                     name={
                       signUpContact.includes('@')
@@ -799,6 +846,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={contactInputRef}
                     value={signUpContact}
                     onChangeText={(t) => {
                       setSignUpContact(t);
@@ -813,9 +861,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => dobInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
-                </View>
+                </Pressable>
                 {errors.contact ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.contact}
@@ -825,7 +876,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
               {/* Date of Birth (YYYY/MM/DD) */}
               <View>
-                <View style={inputStyle('dob')}>
+                <Pressable
+                  onPress={() => dobInputRef.current?.focus()}
+                  style={inputStyle('dob')}>
                   <Ionicons
                     name="calendar-outline"
                     size={18}
@@ -833,6 +886,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={dobInputRef}
                     value={signUpDob}
                     onChangeText={handleDobChange}
                     onFocus={() => setFocusedField('dob')}
@@ -842,9 +896,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     keyboardType="number-pad"
                     maxLength={10}
                     autoCapitalize="none"
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
-                </View>
+                </Pressable>
                 {errors.dob ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.dob}
@@ -924,7 +981,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
               {/* Password */}
               <View>
-                <View style={inputStyle('password')}>
+                <Pressable
+                  onPress={() => passwordInputRef.current?.focus()}
+                  style={inputStyle('password')}>
                   <Ionicons
                     name="lock-closed-outline"
                     size={18}
@@ -932,6 +991,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={passwordInputRef}
                     value={signUpPassword}
                     onChangeText={(t) => {
                       setSignUpPassword(t);
@@ -943,7 +1003,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignUpPassword}
                     autoCapitalize="none"
+                    returnKeyType="next"
+                    onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
                   <Pressable
                     onPress={() => setShowSignUpPassword(!showSignUpPassword)}
@@ -955,7 +1018,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       color={themeTokens.inputPlaceholder}
                     />
                   </Pressable>
-                </View>
+                </Pressable>
                 {errors.password ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.password}
@@ -964,7 +1027,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
                 {/* Password Strength Meter */}
                 {signUpPassword.length > 0 && (
-                  <View style={{ marginTop: 8 }}>
+                  <View style={{ marginTop: 6 }}>
                     <PasswordStrengthMeter password={signUpPassword} />
                   </View>
                 )}
@@ -972,7 +1035,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
               {/* Confirmation Password */}
               <View>
-                <View style={inputStyle('confirmPassword')}>
+                <Pressable
+                  onPress={() => confirmPasswordInputRef.current?.focus()}
+                  style={inputStyle('confirmPassword')}>
                   <Ionicons
                     name="lock-closed-outline"
                     size={18}
@@ -980,6 +1045,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
+                    ref={confirmPasswordInputRef}
                     value={signUpConfirmPassword}
                     onChangeText={(t) => {
                       setSignUpConfirmPassword(t);
@@ -991,7 +1057,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignUpConfirmPassword}
                     autoCapitalize="none"
+                    returnKeyType="done"
+                    onSubmitEditing={handleSignUp}
                     style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
                   />
                   <Pressable
                     onPress={() => setShowSignUpConfirmPassword(!showSignUpConfirmPassword)}
@@ -1003,7 +1072,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       color={themeTokens.inputPlaceholder}
                     />
                   </Pressable>
-                </View>
+                </Pressable>
                 {errors.confirmPassword ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
                     {errors.confirmPassword}
@@ -1041,7 +1110,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
                 {inviteCodeExpanded && (
                   <View style={{ marginTop: 8 }}>
-                    <View style={inputStyle('inviteCode')}>
+                    <Pressable
+                      onPress={() => inviteCodeRef.current?.focus()}
+                      style={inputStyle('inviteCode')}>
                       <Ionicons
                         name="qr-code-outline"
                         size={18}
@@ -1049,6 +1120,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         style={{ marginRight: 10 }}
                       />
                       <TextInput
+                        ref={inviteCodeRef}
                         value={signUpInviteCode}
                         onChangeText={setSignUpInviteCode}
                         onFocus={() => setFocusedField('inviteCode')}
@@ -1056,9 +1128,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         placeholder="e.g. KIN-9428"
                         placeholderTextColor={themeTokens.inputPlaceholder}
                         autoCapitalize="characters"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSignUp}
                         style={[styles.textInput, { color: colors.text }]}
+                        selectionColor={themeTokens.linkViolet}
                       />
-                    </View>
+                    </Pressable>
                   </View>
                 )}
               </View>
@@ -1196,7 +1271,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             )}
 
             {/* 6-digit OTP input */}
-            <View
+            <Pressable
+              onPress={() => otpInputRef.current?.focus()}
               style={[
                 inputStyle('otp'),
                 {
@@ -1213,6 +1289,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 style={{ marginRight: 10 }}
               />
               <TextInput
+                ref={otpInputRef}
                 value={signUpOtp}
                 onChangeText={(t) => {
                   const clean = t.replace(/\D/g, '').slice(0, 6);
@@ -1229,6 +1306,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 keyboardType="number-pad"
                 maxLength={6}
                 autoFocus
+                selectionColor={themeTokens.linkViolet}
                 style={[
                   styles.textInput,
                   {
@@ -1239,7 +1317,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   },
                 ]}
               />
-            </View>
+            </Pressable>
 
             {/* Resend Code row */}
             <View style={styles.otpResendRow}>
@@ -1322,24 +1400,40 @@ const styles = StyleSheet.create({
   },
   formHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 16,
   },
   backButton: {
     padding: 4,
     marginRight: 8,
-    marginTop: -2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTextWrap: {
     flex: 1,
+  },
+  headerBrandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  headerBrandBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   fieldsContainer: {
     gap: 12,
   },
   textInput: {
     flex: 1,
+    height: '100%',
     fontSize: 15,
-    padding: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     margin: 0,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },

@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,7 +26,7 @@ import { useAuth } from '@/context/AuthContext';
 import { FrontPageTokens } from '@/constants/theme';
 import { authService } from '@/services/authService';
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
-import { AuthCard } from '@/components/auth/AuthCard';
+import { AuthCard, AuthCardState } from '@/components/auth/AuthCard';
 import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
 
 const { height: WINDOW_HEIGHT, width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -42,11 +43,14 @@ export default function LoginScreen() {
   // Screen height reference
   const [screenHeight, setScreenHeight] = useState(WINDOW_HEIGHT);
 
+  // Current Auth Form state ('choose' | 'signIn' | 'signUp' | 'verifySignUpOtp')
+  const [authState, setAuthState] = useState<AuthCardState>('choose');
+
   // Animation Phase: 'phase1' (centered brand intro) | 'phase2' (brand at top, card visible)
   const [phase, setPhase] = useState<'phase1' | 'phase2'>(
     hasPlayedIntroGlobal ? 'phase2' : 'phase1'
   );
-  const [isCardInteractive, setIsCardInteractive] = useState(hasPlayedIntroGlobal);
+  const [isCardInteractive, setIsCardInteractive] = useState(true);
 
   // Modals
   const [joinModalVisible, setJoinModalVisible] = useState(false);
@@ -480,117 +484,116 @@ export default function LoginScreen() {
   }
 
   return (
-    <View
-      onLayout={(e) => {
-        const { height } = e.nativeEvent.layout;
-        if (height > 0 && Math.abs(height - screenHeight) > 10) {
-          setScreenHeight(height);
-        }
-      }}
-      style={[styles.rootContainer, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.rootContainer, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Background Backdrops: Light (lavender + botanicals) & Dark (deep indigo + faint feathers) */}
       {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* Screen container: safe-area aware, centered column max width 440 */}
       <ScrollView
+        style={styles.rootContainer}
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + finalTopY,
-            paddingBottom: insets.bottom + 32,
+            paddingTop: authState === 'choose' ? insets.top + finalTopY : insets.top + 16,
+            paddingBottom: insets.bottom + (authState === 'choose' ? 32 : 120),
           },
         ]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}>
         {/* ========================================================================= */}
-        {/* BRAND GROUP: LOGO + APP NAME + TAGLINE                                    */}
+        {/* BRAND GROUP: LOGO + APP NAME + TAGLINE (Shown only on landing 'choose')    */}
         {/* ========================================================================= */}
-        <Animated.View
-          onLayout={(e) => {
-            brandHeightRef.current = e.nativeEvent.layout.height;
-          }}
-          style={[
-            styles.brandGroup,
-            {
-              transform: [
-                { translateY: brandTranslateY },
-                { scale: brandScale },
-                { scale: keyboardScale },
-              ],
-            },
-          ]}>
-          {/* 1. LOGO: 72px violet circle with white family icon in 96px halo ring */}
+        {authState === 'choose' && (
           <Animated.View
+            onLayout={(e) => {
+              brandHeightRef.current = e.nativeEvent.layout.height;
+            }}
             style={[
-              styles.logoWrapper,
+              styles.brandGroup,
               {
-                opacity: logoOpacity,
-                transform: [{ scale: logoScale }],
+                transform: [
+                  { translateY: brandTranslateY },
+                  { scale: brandScale },
+                  { scale: keyboardScale },
+                ],
               },
             ]}>
-            {/* Animated Pulsing Outer Halo Layer */}
+            {/* 1. LOGO: 72px violet circle with white family icon in 96px halo ring */}
             <Animated.View
-              pointerEvents="none"
               style={[
-                styles.logoHaloPulse,
+                styles.logoWrapper,
                 {
-                  borderColor: themeTokens.haloBorder,
-                  backgroundColor: themeTokens.haloBg,
-                  opacity: haloOpacity,
-                  transform: [{ scale: haloScale }],
-                },
-              ]}
-            />
-
-            {/* Static Halo Ring (96px) */}
-            <View
-              style={[
-                styles.logoHalo,
-                {
-                  borderColor: themeTokens.haloBorder,
-                  backgroundColor: themeTokens.haloBg,
+                  opacity: logoOpacity,
+                  transform: [{ scale: logoScale }],
                 },
               ]}>
-              {/* Violet Circle (72px) with Family Icon */}
+              {/* Animated Pulsing Outer Halo Layer */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.logoHaloPulse,
+                  {
+                    borderColor: themeTokens.haloBorder,
+                    backgroundColor: themeTokens.haloBg,
+                    opacity: haloOpacity,
+                    transform: [{ scale: haloScale }],
+                  },
+                ]}
+              />
+
+              {/* Static Halo Ring (96px) */}
               <View
                 style={[
-                  styles.logoCore,
+                  styles.logoHalo,
                   {
-                    backgroundColor: themeTokens.logoBg,
-                    shadowColor: themeTokens.logoBg,
+                    borderColor: themeTokens.haloBorder,
+                    backgroundColor: themeTokens.haloBg,
                   },
                 ]}>
-                <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
+                {/* Violet Circle (72px) with Family Icon */}
+                <View
+                  style={[
+                    styles.logoCore,
+                    {
+                      backgroundColor: themeTokens.logoBg,
+                      shadowColor: themeTokens.logoBg,
+                    },
+                  ]}>
+                  <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
+                </View>
               </View>
-            </View>
+            </Animated.View>
+
+            {/* 2. APP NAME: 40px, heavy weight, -1 letter spacing */}
+            <Animated.Text
+              style={[
+                styles.appNameText,
+                {
+                  color: themeTokens.nameText,
+                  opacity: nameOpacity,
+                  transform: [{ translateY: nameTranslateY }],
+                },
+              ]}>
+              {FrontPageTokens.appName}
+            </Animated.Text>
+
+            {/* 3. TAGLINE: italic 16px, muted lavender-gray, max width 300, in quotes */}
+            <Animated.Text
+              style={[
+                styles.taglineText,
+                {
+                  color: themeTokens.taglineText,
+                  opacity: taglineOpacity,
+                  transform: [{ translateY: taglineTranslateY }],
+                },
+              ]}>
+              "{FrontPageTokens.tagline}"
+            </Animated.Text>
           </Animated.View>
-
-          {/* 2. APP NAME: 40px, heavy weight, -1 letter spacing */}
-          <Animated.Text
-            style={[
-              styles.appNameText,
-              {
-                color: themeTokens.nameText,
-                opacity: nameOpacity,
-                transform: [{ translateY: nameTranslateY }],
-              },
-            ]}>
-            {FrontPageTokens.appName}
-          </Animated.Text>
-
-          {/* 3. TAGLINE: italic 16px, muted lavender-gray, max width 300, in quotes */}
-          <Animated.Text
-            style={[
-              styles.taglineText,
-              {
-                color: themeTokens.taglineText,
-                opacity: taglineOpacity,
-                transform: [{ translateY: taglineTranslateY }],
-              },
-            ]}>
-            "{FrontPageTokens.tagline}"
-          </Animated.Text>
-        </Animated.View>
+        )}
 
         {/* ========================================================================= */}
         {/* AUTH CARD: 3-State Glassmorphism Card                                     */}
@@ -599,12 +602,14 @@ export default function LoginScreen() {
           style={[
             styles.cardAnimatedWrapper,
             {
-              opacity: cardOpacity,
-              transform: [{ translateY: cardTranslateY }],
+              marginTop: authState === 'choose' ? FrontPageTokens.brandCardGap : 0,
+              opacity: authState === 'choose' ? cardOpacity : 1,
+              transform: [{ translateY: authState === 'choose' ? cardTranslateY : 0 }],
             },
           ]}>
           <AuthCard
-            interactive={isCardInteractive}
+            interactive={true}
+            onStateChange={(nextState) => setAuthState(nextState)}
             onSuccess={() => {
               if (Platform.OS !== 'web') {
                 try {
@@ -639,7 +644,7 @@ export default function LoginScreen() {
       </ScrollView>
 
       {/* Phase 1 Skip Overlay: Tap anywhere during intro to glide up to Phase 2 */}
-      {phase === 'phase1' && (
+      {phase === 'phase1' && authState === 'choose' && (
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={handlePhase1Tap}
@@ -1015,7 +1020,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

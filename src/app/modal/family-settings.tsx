@@ -38,9 +38,6 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { DarkBackdrop } from '@/components/ui/DarkBackdrop';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export interface FamilySettingsScreenProps {
   initialFamilyName?: string;
