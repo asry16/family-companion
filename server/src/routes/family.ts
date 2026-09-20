@@ -32,8 +32,7 @@ router.get('/lookup', async (req: Request, res: Response) => {
     }
 
     const members = membersRepo.findByFamilyId(family.id);
-    return res.json({
-      success: true,
+    const lookupData = {
       family: {
         id: family.id,
         name: family.name,
@@ -41,6 +40,11 @@ router.get('/lookup', async (req: Request, res: Response) => {
         inviteCode: family.invite_code,
         membersCount: members.length,
       },
+    };
+    return res.json({
+      success: true,
+      ...lookupData,
+      data: lookupData,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Lookup failed.' });
@@ -343,8 +347,7 @@ router.post('/create', async (req: AuthenticatedRequest, res: Response) => {
       { expiresIn: '30d' }
     );
 
-    return res.status(201).json({
-      success: true,
+    const createData = {
       token,
       family: {
         id: familyId,
@@ -361,6 +364,12 @@ router.post('/create', async (req: AuthenticatedRequest, res: Response) => {
         relation: 'Self',
         initials,
       },
+    };
+
+    return res.status(201).json({
+      success: true,
+      ...createData,
+      data: createData,
     });
   } catch (err: any) {
     console.error('Create family error:', err);
@@ -403,14 +412,19 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
         { expiresIn: '30d' }
       );
 
-      return res.json({
-        success: true,
+      const joinData = {
         message: 'You are connected to this family circle.',
         familyId: targetFamily.id,
         familyName: targetFamily.name,
         familyUsername: targetFamily.username,
         inviteCode: targetFamily.invite_code,
         token,
+      };
+
+      return res.json({
+        success: true,
+        ...joinData,
+        data: joinData,
       });
     }
 
@@ -451,14 +465,19 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
       { expiresIn: '30d' }
     );
 
-    return res.json({
-      success: true,
+    const joinData = {
       message: `Successfully joined ${targetFamily.name}!`,
       familyId: targetFamily.id,
       familyName: targetFamily.name,
       familyUsername: targetFamily.username,
       inviteCode: targetFamily.invite_code,
       token,
+    };
+
+    return res.json({
+      success: true,
+      ...joinData,
+      data: joinData,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to join family.' });

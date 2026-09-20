@@ -83,7 +83,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (!response.ok) {
       return { success: false, error: json.error || `HTTP ${response.status}` };
     }
-    return json;
+    const data = (json && typeof json === 'object') ? (json.data !== undefined ? json.data : json) : json;
+    return {
+      success: true,
+      ...json,
+      data,
+    };
   } catch (err: any) {
     if (err.name === 'AbortError') {
       return { success: false, error: 'Network request timed out. Please check your network connection.' };

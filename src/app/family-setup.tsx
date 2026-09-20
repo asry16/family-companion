@@ -163,8 +163,9 @@ export default function FamilySetupScreen() {
     const timer = setTimeout(async () => {
       try {
         const res = await apiClient.family.lookupFamily(clean);
-        if (res.success && res.data?.family) {
-          setFoundFamily(res.data.family);
+        const familyData = res.data?.family || (res as any).family;
+        if (res.success && familyData) {
+          setFoundFamily(familyData);
           setLookupError(null);
         } else {
           setFoundFamily(null);

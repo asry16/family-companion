@@ -1368,33 +1368,44 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         const res = await apiClient.family.joinFamily(cleanInput, relation);
-        if (res.success && res.data) {
+        const joinData = (res.data || (res as any)) as any;
+        if (res.success && joinData && (joinData.familyId || joinData.token || joinData.familyName)) {
           const famRes = await apiClient.family.getFamily();
-          if (famRes.success && famRes.data) {
-            if (famRes.data.profile) setProfile(famRes.data.profile);
-            if (famRes.data.members && famRes.data.members.length > 0) setMembers(famRes.data.members);
-            if (famRes.data.places) setPlaces(famRes.data.places);
-            if (famRes.data.tasks) setTasks(famRes.data.tasks);
-            if (famRes.data.events) setEvents(famRes.data.events);
-            if (famRes.data.reminders) setReminders(famRes.data.reminders);
-            if (famRes.data.documents) setDocuments(famRes.data.documents);
-            if (famRes.data.memories) setMemories(famRes.data.memories);
-            if (famRes.data.notifications) setNotifications(famRes.data.notifications);
+          const famData = ((famRes.data || famRes) as any);
+          if (famRes.success && famData) {
+            const loadedProfile = famData.profile || famData;
+            if (loadedProfile) setProfile(loadedProfile);
+            if (famData.members && famData.members.length > 0) setMembers(famData.members);
+            if (famData.places) setPlaces(famData.places);
+            if (famData.tasks) setTasks(famData.tasks);
+            if (famData.events) setEvents(famData.events);
+            if (famData.reminders) setReminders(famData.reminders);
+            if (famData.documents) setDocuments(famData.documents);
+            if (famData.memories) setMemories(famData.memories);
+            if (famData.notifications) setNotifications(famData.notifications);
 
-            const joinedFamily = famRes.data.profile || {};
+            const joinedFamily = loadedProfile || {};
             if (completeFamilySetup) {
               await completeFamilySetup({
-                familyId: joinedFamily.id || res.data.familyId,
-                familyName: joinedFamily.name || res.data.familyName || 'Family Circle',
-                familyUsername: joinedFamily.username || res.data.familyUsername,
-                familyInviteCode: joinedFamily.code || res.data.inviteCode,
+                familyId: joinedFamily.id || joinData.familyId,
+                familyName: joinedFamily.name || joinData.familyName || 'Family Circle',
+                familyUsername: joinedFamily.username || joinData.familyUsername,
+                familyInviteCode: joinedFamily.code || joinData.inviteCode,
                 relation,
               });
             }
+          } else if (completeFamilySetup) {
+            await completeFamilySetup({
+              familyId: joinData.familyId,
+              familyName: joinData.familyName || 'Family Circle',
+              familyUsername: joinData.familyUsername,
+              familyInviteCode: joinData.inviteCode,
+              relation,
+            });
           }
           return {
             success: true,
-            familyName: famRes.data?.profile?.name || res.data.familyName || 'Family Circle',
+            familyName: famData?.profile?.name || joinData.familyName || 'Family Circle',
           };
         }
         return { success: false, error: res.error || 'Invalid or expired family username or code.' };
