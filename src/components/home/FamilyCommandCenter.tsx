@@ -95,7 +95,15 @@ export function getMemberPresence(member?: FamilyMember | null, isDark: boolean 
   };
 }
 
-import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
+import {
+  lon2tile,
+  lat2tile,
+  getTileUrl,
+  watchLocation,
+  LiveLocation,
+  MapTileMode,
+  getOsmAttribution,
+} from '@/services/locationService';
 
 export interface FamilyCommandCenterProps {
   isFullScreen?: boolean;
@@ -127,8 +135,8 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  // Map mode: 'streets' | 'satellite'
-  const [mapMode, setMapMode] = useState<'streets' | 'satellite'>('streets');
+  // Map mode: OpenStreetMap / Satellite
+  const [mapMode, setMapMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
 
   // Animation drivers
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -1019,11 +1027,15 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
 
         {/* Top-Right Controls Row: Mode Toggle & Full Screen */}
         <View style={styles.overlayControlsRow}>
-          {/* Map Style Toggle: Canvas vs Satellite */}
+          {/* Map Style Toggle: OSM Canvas vs Standard vs Satellite */}
           <Pressable
             onPress={() => {
               triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-              setMapMode((m) => (m === 'streets' ? 'satellite' : 'streets'));
+              setMapMode((m) => {
+                if (m === 'osm-dark' || m === 'osm-positron') return 'osm-standard';
+                if (m === 'osm-standard') return 'satellite';
+                return isDark ? 'osm-dark' : 'osm-positron';
+              });
             }}
             style={({ pressed }) => [
               styles.overlayMapModeBtn,
@@ -1034,12 +1046,12 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               },
             ]}>
             <Ionicons
-              name={mapMode === 'satellite' ? 'map-outline' : 'earth-outline'}
+              name={mapMode === 'satellite' ? 'earth-outline' : 'layers-outline'}
               size={13}
               color={colors.text}
             />
             <Text style={[styles.overlayMapModeText, { color: colors.text }]}>
-              {mapMode === 'satellite' ? 'Canvas' : 'Satellite'}
+              {mapMode === 'satellite' ? 'Satellite' : mapMode === 'osm-standard' ? 'OSM Standard' : 'OSM Canvas'}
             </Text>
           </Pressable>
 
@@ -1089,6 +1101,25 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             ]}>
             <Ionicons name="remove" size={16} color={colors.text} />
           </Pressable>
+        </View>
+
+        {/* Bottom-Left: Legal OpenStreetMap Attribution */}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.osmAttributionBadge,
+            {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
+            },
+          ]}>
+          <Text
+            style={[
+              styles.osmAttributionText,
+              { color: isDark ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)' },
+            ]}>
+            {getOsmAttribution(mapMode)}
+          </Text>
         </View>
 
         {/* Bottom-Right Overlay: ⊙ Recenter */}
@@ -1981,5 +2012,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  osmAttributionBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    zIndex: 20,
+  },
+  osmAttributionText: {
+    fontSize: 9,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });

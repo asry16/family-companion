@@ -74,9 +74,8 @@ export default function HomeScreen() {
           backgroundColor: colors.background,
         },
       ]}>
-      {/* Ambient Backdrops (Light / Dark) */}
-      <LightBackdrop />
-      <DarkBackdrop />
+      {/* Ambient Backdrop (Theme-responsive) */}
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* 1. Personalized Header (Deco greeting, User avatar, Safety status, Action icons) */}
       <PersonalizedHeader

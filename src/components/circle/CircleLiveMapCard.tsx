@@ -16,7 +16,15 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember } from '@/types';
-import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
+import {
+  lon2tile,
+  lat2tile,
+  getTileUrl,
+  watchLocation,
+  LiveLocation,
+  MapTileMode,
+  getOsmAttribution,
+} from '@/services/locationService';
 import { CircleTokens } from '@/constants/theme';
 
 interface CircleLiveMapCardProps {
@@ -97,11 +105,23 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   // Live Location from GPS
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
   const [isGpsLive, setIsGpsLive] = useState<boolean>(true);
+  const [tileMode, setTileMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
   const [tileError, setTileError] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cardLayout, setCardLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
+
+  // Cycle through OpenStreetMap layers (Dark -> Standard OSM -> Satellite -> Positron)
+  const cycleMapMode = () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    setTileMode((prev) => {
+      if (prev === 'osm-dark') return 'osm-standard';
+      if (prev === 'osm-standard') return 'satellite';
+      if (prev === 'satellite') return isDark ? 'osm-dark' : 'osm-positron';
+      return 'osm-dark';
+    });
+  };
 
   // Check reduced motion preference
   useEffect(() => {
@@ -244,13 +264,13 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           y: dy,
           tileX: tx,
           tileY: ty,
-          url: getTileUrl(tx, ty, tileZoom, 'streets', isDark),
-          key: `${tx}_${ty}_${isDark ? 'dark' : 'light'}`,
+          url: getTileUrl(tx, ty, tileZoom, tileMode, isDark),
+          key: `${tx}_${ty}_${tileMode}_${isDark ? 'dark' : 'light'}`,
         });
       }
     }
     return tiles;
-  }, [centerTileX, centerTileY, isDark]);
+  }, [centerTileX, centerTileY, tileMode, isDark]);
 
   const centerX = cardLayout.width > 0 ? cardLayout.width / 2 : 180;
   const centerY = cardLayout.height > 0 ? cardLayout.height / 2 : (typeof mapHeight === 'number' ? mapHeight / 2 : 200);
@@ -611,7 +631,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           </Text>
         </View>
 
-        {/* 4. Right Side: Full Screen Button + 40px Locate Button + Grouped Vertical Zoom Control */}
+        {/* 4. Right Side: Full Screen + Layer Switcher + 40px Locate Button + Grouped Vertical Zoom Control */}
         <View style={styles.rightControlsContainer}>
           {/* 40px Circular Full Screen Toggle Button */}
           {onFullScreen && (
@@ -637,6 +657,26 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               />
             </Pressable>
           )}
+
+          {/* Map Layer Switcher Button */}
+          <Pressable
+            onPress={cycleMapMode}
+            hitSlop={6}
+            accessibilityLabel={`Map style: ${tileMode}`}
+            style={({ pressed }) => [
+              styles.locateButton,
+              {
+                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons
+              name={tileMode === 'satellite' ? 'earth' : 'layers-outline'}
+              size={18}
+              color={tileMode === 'satellite' ? '#2DD4BF' : isDark ? '#C9CEFF' : '#5B628F'}
+            />
+          </Pressable>
 
           {/* 40px Circular Locate Button */}
           <Pressable
@@ -704,6 +744,25 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               />
             </Pressable>
           </View>
+        </View>
+
+        {/* 5. Legal OpenStreetMap Attribution */}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.osmAttributionBadge,
+            {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
+            },
+          ]}>
+          <Text
+            style={[
+              styles.osmAttributionText,
+              { color: isDark ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)' },
+            ]}>
+            {getOsmAttribution(tileMode)}
+          </Text>
         </View>
       </View>
     </View>
@@ -997,5 +1056,21 @@ const styles = StyleSheet.create({
   zoomDivider: {
     width: 24,
     height: 1,
+  },
+  osmAttributionBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: '50%',
+    transform: [{ translateX: -100 }],
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    zIndex: 10,
+  },
+  osmAttributionText: {
+    fontSize: 9,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });

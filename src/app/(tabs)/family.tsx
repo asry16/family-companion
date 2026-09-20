@@ -180,9 +180,8 @@ export default function CircleScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Ambient Backdrops */}
-      <LightBackdrop />
-      <DarkBackdrop />
+      {/* Ambient Backdrop (Theme-responsive) */}
+      {isDark ? <DarkBackdrop /> : <LightBackdrop />}
 
       {/* 1. Header: 40px back, 44px group icon, title, subtitle with pulsing green dot, 3 right buttons */}
       <CircleHeader

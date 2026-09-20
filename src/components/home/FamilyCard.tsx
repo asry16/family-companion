@@ -44,7 +44,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
   const memberLon = primaryMember.coords?.longitude ?? 77.2005;
   const tileX = lon2tile(memberLon, 14);
   const tileY = lat2tile(memberLat, 14);
-  const tileUrl = getTileUrl(tileX, tileY, 14, 'streets', isDark);
+  const tileUrl = getTileUrl(tileX, tileY, 14, isDark ? 'osm-dark' : 'osm-positron', isDark);
 
   // Accessibility: reduced motion
   const [isReducedMotion, setIsReducedMotion] = useState(false);
@@ -382,6 +382,13 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
             end={{ x: 1, y: 0.5 }}
             style={styles.mapLeftEdgeFade}
           />
+
+          {/* Legal OSM Watermark */}
+          <View style={styles.thumbnailOsmBadge} pointerEvents="none">
+            <Text style={[styles.thumbnailOsmText, { color: isDark ? 'rgba(255, 255, 255, 0.50)' : 'rgba(0, 0, 0, 0.40)' }]}>
+              © OSM
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -676,5 +683,20 @@ const styles = StyleSheet.create({
   viewLiveMapText: {
     fontSize: HomeCardTokens.familyPulse.viewLiveMapFontSize,
     fontWeight: '600',
+  },
+  thumbnailOsmBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    zIndex: 5,
+  },
+  thumbnailOsmText: {
+    fontSize: 8,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });

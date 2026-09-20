@@ -5,28 +5,36 @@ import Constants from 'expo-constants';
 export const JWT_TOKEN_KEY = '@kinly_jwt_token_v1';
 
 export function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL || process.env.EXPO_PUBLIC_API_URL;
+
+  // When running on native devices (iOS/Android via Expo Go), "localhost" or "127.0.0.1" refers
+  // to the phone itself, failing network requests. Dynamically resolve developer machine IP.
+  if (Platform.OS !== 'web') {
+    const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+    if (hostUri) {
+      const devIp = hostUri.split(':')[0];
+      if (devIp && devIp !== 'localhost' && devIp !== '127.0.0.1') {
+        if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+          return `http://${devIp}:3001`;
+        }
+      }
+    }
+    if (Platform.OS === 'android' && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return 'http://10.0.2.2:3001';
+    }
   }
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+
+  if (envUrl) {
+    return envUrl;
   }
+
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
       return `http://${window.location.hostname}:3001`;
     }
     return 'http://localhost:3001';
   }
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:3001';
-  }
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const ip = hostUri.split(':')[0];
-    if (ip) {
-      return `http://${ip}:3001`;
-    }
-  }
+
   return 'http://localhost:3001';
 }
 

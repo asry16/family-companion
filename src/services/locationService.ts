@@ -24,11 +24,23 @@ export function lat2tile(lat: number, zoom: number): number {
   );
 }
 
+export type MapTileMode = 'osm-dark' | 'osm-standard' | 'osm-positron' | 'satellite' | 'streets';
+
+export function getOsmAttribution(mode: MapTileMode = 'osm-dark'): string {
+  if (mode === 'satellite') {
+    return '© Esri, Maxar, Earthstar';
+  }
+  if (mode === 'osm-standard') {
+    return '© OpenStreetMap contributors';
+  }
+  return '© OpenStreetMap contributors, © CARTO';
+}
+
 export function getTileUrl(
   x: number,
   y: number,
   zoom: number,
-  mode: 'streets' | 'satellite' = 'streets',
+  mode: MapTileMode = 'streets',
   isDark: boolean = true
 ): string {
   const normX = ((x % Math.pow(2, zoom)) + Math.pow(2, zoom)) % Math.pow(2, zoom);
@@ -38,48 +50,67 @@ export function getTileUrl(
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${normY}/${normX}`;
   }
 
-  return isDark
-    ? `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${zoom}/${normY}/${normX}`
-    : `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${zoom}/${normY}/${normX}`;
+  if (mode === 'osm-standard') {
+    // Official OpenStreetMap Standard tiles (Slippy Map format: {z}/{x}/{y}.png)
+    return `https://tile.openstreetmap.org/${zoom}/${normX}/${normY}.png`;
+  }
+
+  if (mode === 'osm-positron' || (mode === 'streets' && !isDark)) {
+    // CartoDB Positron - Light OpenStreetMap tiles
+    const subdomains = ['a', 'b', 'c', 'd'];
+    const s = subdomains[Math.abs(normX + normY) % subdomains.length];
+    return `https://${s}.basemaps.cartocdn.com/rastertiles/light_all/${zoom}/${normX}/${normY}.png`;
+  }
+
+  // CartoDB Dark Matter - High-contrast Deep Indigo OpenStreetMap tiles
+  const subdomains = ['a', 'b', 'c', 'd'];
+  const s = subdomains[Math.abs(normX + normY) % subdomains.length];
+  return `https://${s}.basemaps.cartocdn.com/rastertiles/dark_all/${zoom}/${normX}/${normY}.png`;
 }
 
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  // 1. Primary: OpenStreetMap Nominatim reverse geocoder
+  try {
+    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`;
+    const res = await fetch(osmUrl, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'KinlyFamilyCompanion/1.0 (https://kinly.family)',
+      },
+    });
+    if (res.ok) {
+      const osmData = await res.json();
+      const a = osmData?.address;
+      if (a) {
+        const place = a.neighbourhood || a.suburb || a.quarter || a.village || a.road || '';
+        const city = a.city || a.town || a.county || a.state_district || '';
+        if (place && city && place !== city) return `${place}, ${city}`;
+        if (city) return city;
+        if (place) return place;
+        if (osmData.display_name) return osmData.display_name.split(',')[0];
+      }
+    }
+  } catch (err) {}
+
+  // 2. High-availability Fallback: ArcGIS World Geocoding
   try {
     const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&location=${lon},${lat}`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('ArcGIS reverse geocode failed');
-    const data = await res.json();
-    const addr = data?.address;
-    if (!addr) throw new Error('No address found');
-
-    const primaryPlace = addr.Neighborhood || addr.District || addr.ShortLabel || addr.Address || '';
-    const city = addr.City || addr.MetroArea || addr.Subregion || '';
-
-    if (primaryPlace && city && primaryPlace !== city) {
-      return `${primaryPlace}, ${city}`;
-    }
-    return addr.LongLabel || addr.Match_addr || city || primaryPlace || 'Current Location';
-  } catch (e) {
-    // Fallback using OpenStreetMap Nominatim
-    try {
-      const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`;
-      const res = await fetch(osmUrl, {
-        headers: { Accept: 'application/json', 'User-Agent': 'KinlyFamilyCompanion/1.0' },
-      });
-      if (res.ok) {
-        const osmData = await res.json();
-        const a = osmData?.address;
-        if (a) {
-          const suburb = a.suburb || a.neighbourhood || a.road || '';
-          const city = a.city || a.town || a.county || '';
-          if (suburb && city) return `${suburb}, ${city}`;
-          return city || suburb || osmData.display_name?.split(',')[0] || 'Current Location';
+    if (res.ok) {
+      const data = await res.json();
+      const addr = data?.address;
+      if (addr) {
+        const primaryPlace = addr.Neighborhood || addr.District || addr.ShortLabel || addr.Address || '';
+        const city = addr.City || addr.MetroArea || addr.Subregion || '';
+        if (primaryPlace && city && primaryPlace !== city) {
+          return `${primaryPlace}, ${city}`;
         }
+        return addr.LongLabel || addr.Match_addr || city || primaryPlace || 'Current Location';
       }
-    } catch (err) {}
+    }
+  } catch (e) {}
 
-    return 'Current Location';
-  }
+  return 'Current Location';
 }
 
 export async function getIpLocation(): Promise<LiveLocation | null> {

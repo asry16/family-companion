@@ -16,7 +16,15 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
-import { lon2tile, lat2tile, getTileUrl, watchLocation, LiveLocation } from '@/services/locationService';
+import {
+  lon2tile,
+  lat2tile,
+  getTileUrl,
+  watchLocation,
+  LiveLocation,
+  MapTileMode,
+  getOsmAttribution,
+} from '@/services/locationService';
 
 interface LiveFamilyMapProps {
   onMemberPress?: (member: FamilyMember) => void;
@@ -33,8 +41,8 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
   // Selected or focused member on map
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
-  // Map mode: 'streets' or 'satellite'
-  const [mapStyle, setMapStyle] = useState<'streets' | 'satellite'>('streets');
+  // Map mode: OpenStreetMap / Satellite
+  const [mapStyle, setMapStyle] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
 
   // Live Location & Layout State
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
@@ -144,19 +152,23 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
         <Pressable
           onPress={() => {
             triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-            setMapStyle(mapStyle === 'streets' ? 'satellite' : 'streets');
+            setMapStyle((prev) => {
+              if (prev === 'osm-dark' || prev === 'osm-positron') return 'osm-standard';
+              if (prev === 'osm-standard') return 'satellite';
+              return isDark ? 'osm-dark' : 'osm-positron';
+            });
           }}
           style={[
             styles.mapStyleToggle,
             { backgroundColor: colors.separator, borderColor: colors.border },
           ]}>
           <Ionicons
-            name={mapStyle === 'streets' ? 'layers-outline' : 'map-outline'}
+            name={mapStyle === 'satellite' ? 'earth-outline' : 'layers-outline'}
             size={13}
             color={colors.textSecondary}
           />
           <Text style={[styles.mapStyleText, { color: colors.textSecondary }]}>
-            {mapStyle === 'streets' ? 'Vector' : 'Satellite'}
+            {mapStyle === 'satellite' ? 'Satellite' : mapStyle === 'osm-standard' ? 'OSM Standard' : 'OSM Canvas'}
           </Text>
         </Pressable>
       </View>
@@ -458,6 +470,25 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
             </Pressable>
           );
         })}
+
+        {/* Legal OpenStreetMap Attribution */}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.osmAttributionBadge,
+            {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
+            },
+          ]}>
+          <Text
+            style={[
+              styles.osmAttributionText,
+              { color: isDark ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)' },
+            ]}>
+            {getOsmAttribution(mapStyle)}
+          </Text>
+        </View>
       </View>
 
       {/* Selected Member Live Telemetry Card (Opens on Pin or Chip Tap) */}
@@ -890,5 +921,20 @@ const styles = StyleSheet.create({
   cardActionText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  osmAttributionBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    zIndex: 10,
+  },
+  osmAttributionText: {
+    fontSize: 9,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });
