@@ -9,13 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
-import { IconCircleButton } from '@/components/ui/IconCircleButton';
 import { CircleTokens } from '@/constants/theme';
 
 interface CircleHeaderProps {
@@ -35,9 +33,9 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
   const { profile, members, unreadCount } = useFamily();
   const { user } = useAuth();
 
-  const familyName = profile?.name || user?.familyName || 'Family';
+  const familyName = profile?.name || user?.familyName || 'Ritu Raj\'s Family';
   const memberCount = members?.length || 1;
-  const memberText = memberCount === 1 ? '1 member' : `${memberCount} members`;
+  const memberText = memberCount === 1 ? '1 member connected' : `${memberCount} members connected`;
 
   // Green dot pulse animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -58,231 +56,116 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
       ])
     );
     pulseLoop.start();
-
-    return () => {
-      pulseLoop.stop();
-    };
+    return () => pulseLoop.stop();
   }, [pulseAnim]);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
+      try { Haptics.impactAsync(style); } catch (e) {}
     }
   };
 
   const handleBack = () => {
     triggerHaptic();
-    if (onBack) {
-      onBack();
-    } else {
-      router.navigate('/(tabs)');
-    }
-  };
-
-  const handleSettings = () => {
-    triggerHaptic();
-    if (onOpenSettings) {
-      onOpenSettings();
-    } else {
-      router.push('/modal/family-settings');
-    }
-  };
-
-  const handleNotifications = () => {
-    triggerHaptic();
-    if (onOpenNotifications) {
-      onOpenNotifications();
-    } else {
-      router.push('/modal/notifications');
-    }
+    if (onBack) onBack();
+    else router.navigate('/(tabs)');
   };
 
   return (
-    <View
-      style={[
-        styles.headerContainer,
-        { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) },
-      ]}>
+    <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) }]}>
       <View style={styles.contentRow}>
-        {/* Left: 40px Circular Back Button */}
+        
+        {/* Left: Simple Arrow Back Button */}
         <Pressable
           onPress={handleBack}
-          hitSlop={8}
-          accessibilityLabel="Back to Home"
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.backButton,
-            {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
-              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
-              opacity: pressed ? 0.75 : 1,
-            },
-          ]}>
-          <Ionicons
-            name="chevron-back"
-            size={20}
-            color={isDark ? '#C9CEFF' : '#475569'}
-          />
+          hitSlop={12}
+          style={({ pressed }) => [styles.backButton, { opacity: pressed ? 0.75 : 1 }]}>
+          <Ionicons name="arrow-back" size={24} color="#C9CEFF" />
         </Pressable>
 
-        {/* Center-Left Cluster: 44px Circular Group Icon + Titles */}
+        {/* Center: Group Icon + Titles */}
         <View style={styles.titleCluster}>
-          <LinearGradient
-            colors={['#4F8EF7', '#8B6CF0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.groupIconCircle,
-              {
-                borderColor: isDark ? 'rgba(140, 150, 255, 0.35)' : 'rgba(124, 92, 224, 0.25)',
-              },
-            ]}>
-            <Ionicons name="people" size={22} color="#FFFFFF" />
-          </LinearGradient>
+          <View style={styles.groupIconCircle}>
+            <Ionicons name="people" size={20} color="#FFFFFF" />
+          </View>
 
           <View style={styles.textColumn}>
-            <Text
-              numberOfLines={1}
-              style={[styles.headerTitle, { color: colors.text }]}>
+            <Text numberOfLines={1} style={[styles.headerTitle, { color: '#FFFFFF' }]}>
               Family Circle
             </Text>
             <View style={styles.subtitleRow}>
               <Animated.View
                 style={[
                   styles.pulsingGreenDot,
-                  {
-                    backgroundColor: colors.green,
-                    opacity: pulseAnim,
-                  },
+                  { backgroundColor: '#10B981', opacity: pulseAnim },
                 ]}
               />
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                  styles.subtitleText,
-                  { color: isDark ? colors.textMuted : colors.textSecondary },
-                ]}>
+              <Text numberOfLines={1} style={styles.subtitleText}>
                 {familyName} • {memberText}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Right: Three 40px Circular Buttons */}
+        {/* Right: Icon Buttons */}
         <View style={styles.actionCluster}>
-          {/* Bell with red badge */}
-          <IconCircleButton
-            name="notifications-outline"
-            size={CircleTokens.headerButtonSize}
-            iconSize={18}
-            color={isDark ? '#C9CEFF' : '#5B628F'}
-            badgeCount={unreadCount > 0 ? unreadCount : 1}
-            badgeColor="#FF4D6A"
-            onPress={handleNotifications}
-            accessibilityLabel="Notifications"
-          />
+          {/* Bell with badge */}
+          <Pressable onPress={onOpenNotifications || (() => router.push('/modal/notifications'))} style={styles.iconBtn}>
+            <Ionicons name="notifications-outline" size={20} color="#C9CEFF" />
+            <View style={styles.badge}>
+              <Text style={styles.badgeTxt}>{unreadCount > 0 ? unreadCount : 1}</Text>
+            </View>
+          </Pressable>
 
-          {/* Theme Toggle: Moon in dark, Sun in light */}
-          <IconCircleButton
-            name={isDark ? 'moon' : 'sunny'}
-            size={CircleTokens.headerButtonSize}
-            iconSize={18}
-            color={isDark ? '#C9CEFF' : '#F59E0B'}
-            onPress={toggleTheme}
-            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-          />
+          {/* Theme Toggle */}
+          <Pressable onPress={toggleTheme} style={styles.iconBtn}>
+            <Ionicons name="moon" size={18} color="#C9CEFF" />
+          </Pressable>
 
           {/* Settings Gear */}
-          <IconCircleButton
-            name="settings-outline"
-            size={CircleTokens.headerButtonSize}
-            iconSize={18}
-            color={isDark ? '#C9CEFF' : '#5B628F'}
-            onPress={handleSettings}
-            accessibilityLabel="Family Settings"
-          />
+          <Pressable onPress={onOpenSettings || (() => router.push('/modal/family-settings'))} style={styles.iconBtn}>
+            <Ionicons name="settings-outline" size={18} color="#C9CEFF" />
+          </Pressable>
         </View>
+
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  headerContainer: { paddingHorizontal: 16, paddingBottom: 16 },
+  contentRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backButton: {
-    width: CircleTokens.headerButtonSize,
-    height: CircleTokens.headerButtonSize,
-    borderRadius: CircleTokens.headerButtonSize / 2,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+    width: 36, height: 36,
+    alignItems: 'center', justifyContent: 'center',
   },
-  titleCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-    minWidth: 0,
-  },
+  titleCluster: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   groupIconCircle: {
-    width: CircleTokens.headerGroupIconSize,
-    height: CircleTokens.headerGroupIconSize,
-    borderRadius: CircleTokens.headerGroupIconSize / 2,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    shadowColor: '#8B6CF0',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    width: 44, height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1E2568', // matching reference color for icon bg
+    borderWidth: 1,
+    borderColor: 'rgba(139, 124, 246, 0.5)',
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#8B6CF0', shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6, shadowRadius: 8, elevation: 4,
   },
-  textColumn: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
+  textColumn: { flex: 1, justifyContent: 'center', gap: 2 },
+  headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
+  subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pulsingGreenDot: { width: 8, height: 8, borderRadius: 4 },
+  subtitleText: { fontSize: 13, fontWeight: '500', color: '#94A3B8' },
+  actionCluster: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-    includeFontPadding: false,
+  badge: {
+    position: 'absolute', top: -2, right: -4,
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
   },
-  subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  pulsingGreenDot: {
-    width: 6.5,
-    height: 6.5,
-    borderRadius: 3.5,
-    flexShrink: 0,
-  },
-  subtitleText: {
-    fontSize: 12,
-    fontWeight: '500',
-    flexShrink: 1,
-    includeFontPadding: false,
-  },
-  actionCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-  },
+  badgeTxt: { color: '#FFF', fontSize: 9, fontWeight: '800' },
 });

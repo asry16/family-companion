@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyMember } from '@/types';
-import { CircleTokens } from '@/constants/theme';
 
 interface CircleMemberRowProps {
   member: FamilyMember;
@@ -28,20 +27,15 @@ export const CircleMemberRow: React.FC<CircleMemberRowProps> = ({
   isSelected = false,
   onPress,
 }) => {
-  const { colors, isDark, isElderly } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
 
   const initials = member.name.charAt(0).toUpperCase();
   const relation = member.relation || (isSelf ? 'Self' : 'Family');
   const place = member.humanLocation || 'At Home';
   const time = member.lastUpdated || 'Just now';
-  const subtitle = `${relation} • ${place} • ${time}`;
-
-  const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
-    }
+  
+  const triggerHaptic = () => {
+    if (Platform.OS !== 'web') { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
   };
 
   const handlePress = () => {
@@ -52,210 +46,91 @@ export const CircleMemberRow: React.FC<CircleMemberRowProps> = ({
   return (
     <Pressable
       onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel={`View details for ${member.name}`}
       style={({ pressed }) => [
         styles.rowCard,
         {
-          backgroundColor: isDark
-            ? isSelected
-              ? 'rgba(30, 39, 95, 0.85)'
-              : 'rgba(20, 27, 74, 0.72)'
-            : isSelected
-            ? 'rgba(240, 237, 255, 0.95)'
-            : 'rgba(255, 255, 255, 0.80)',
-          borderColor: isSelected
-            ? accentColor
-            : isDark
-            ? 'rgba(130, 140, 255, 0.22)'
-            : 'rgba(124, 92, 224, 0.16)',
+          backgroundColor: isSelected ? 'rgba(30, 39, 95, 0.6)' : 'rgba(20, 27, 74, 0.4)',
+          borderColor: isSelected ? accentColor : 'rgba(130, 140, 255, 0.2)',
           opacity: pressed ? 0.85 : 1,
         },
       ]}>
-      {/* 48px Avatar with member color & green online dot */}
+      {/* Avatar */}
       <View style={styles.avatarContainer}>
-        <View
-          style={[
-            styles.avatarCircle,
-            {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F0FC',
-              borderColor: accentColor,
-            },
-          ]}>
+        <View style={[styles.avatarCircle, { borderColor: accentColor }]}>
           {member.photoUrl ? (
-            <Image
-              source={{ uri: member.photoUrl }}
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: member.photoUrl }} style={styles.avatarImage} />
           ) : (
-            <Text style={[styles.initialText, { color: accentColor }]}>
-              {initials}
-            </Text>
+            <Text style={[styles.initialText, { color: accentColor }]}>{initials}</Text>
           )}
         </View>
-        <View style={[styles.onlineDot, { backgroundColor: colors.green }]} />
+        <View style={[styles.onlineDot, { backgroundColor: '#10B981' }]} />
       </View>
 
-      {/* Name, Badge, Relation, Place & Time */}
+      {/* Info Column */}
       <View style={styles.infoCol}>
-        {/* Name Row */}
         <View style={styles.nameRow}>
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.nameText,
-              {
-                color: colors.text,
-                fontSize: isElderly ? 17 : 15.5,
-              },
-            ]}>
+          <Text numberOfLines={1} style={[styles.nameText, { color: '#FFFFFF' }]}>
             {member.name}
           </Text>
           {isSelf && (
-            <View
-              style={[
-                styles.youBadge,
-                {
-                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)',
-                  borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(124, 92, 224, 0.30)',
-                },
-              ]}>
-              <Text style={[styles.youBadgeText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
-                You
-              </Text>
+            <View style={styles.youBadge}>
+              <Text style={styles.youBadgeText}>You</Text>
             </View>
           )}
         </View>
 
-        {/* Subtitle Row: Pin icon + Relation • Place • Time */}
         <View style={styles.subtitleRow}>
-          <Ionicons
-            name="location-sharp"
-            size={12}
-            color={isDark ? colors.textMuted : colors.textSecondary}
-            style={styles.pinIcon}
-          />
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[
-              styles.subtitleText,
-              {
-                color: isDark ? colors.textMuted : colors.textSecondary,
-                fontSize: isElderly ? 13 : 12,
-              },
-            ]}>
-            {subtitle}
+          <Ionicons name="location-sharp" size={11} color="#94A3B8" />
+          <Text numberOfLines={1} style={styles.subtitleText}>
+            {relation} • {place} • {time}
           </Text>
         </View>
       </View>
 
-      {/* Right Chevron */}
-      <Ionicons
-        name="chevron-forward"
-        size={18}
-        color={isDark ? colors.textMuted : '#8A8EB2'}
-        style={styles.chevron}
-      />
+      {/* Chevron */}
+      <Ionicons name="chevron-forward" size={18} color="#C9CEFF" />
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   rowCard: {
-    height: CircleTokens.memberRowHeight,
-    borderRadius: CircleTokens.memberRowRadius,
+    height: 72,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    paddingHorizontal: 16,
+    gap: 14,
+    marginBottom: 8,
   },
   avatarContainer: {
     position: 'relative',
-    width: CircleTokens.memberAvatarSize,
-    height: CircleTokens.memberAvatarSize,
-    flexShrink: 0,
+    width: 44, height: 44,
   },
   avatarCircle: {
-    width: CircleTokens.memberAvatarSize,
-    height: CircleTokens.memberAvatarSize,
-    borderRadius: CircleTokens.memberAvatarSize / 2,
+    width: 44, height: 44,
+    borderRadius: 22,
     borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarImage: {
-    width: CircleTokens.memberAvatarSize,
-    height: CircleTokens.memberAvatarSize,
-    borderRadius: CircleTokens.memberAvatarSize / 2,
-  },
-  initialText: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
+  avatarImage: { width: 44, height: 44, borderRadius: 22 },
+  initialText: { fontSize: 18, fontWeight: '700' },
   onlineDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    position: 'absolute', bottom: -2, right: -2,
+    width: 12, height: 12, borderRadius: 6,
+    borderWidth: 2, borderColor: '#141A4A',
   },
-  infoCol: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-    gap: 3,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  nameText: {
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    flexShrink: 1,
-    includeFontPadding: false,
-  },
+  infoCol: { flex: 1, justifyContent: 'center', gap: 4 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  nameText: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
   youBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexShrink: 0,
+    backgroundColor: 'rgba(139, 124, 246, 0.2)',
+    paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: 6,
   },
-  youBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    includeFontPadding: false,
-  },
-  subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minWidth: 0,
-  },
-  pinIcon: {
-    flexShrink: 0,
-  },
-  subtitleText: {
-    fontWeight: '500',
-    flexShrink: 1,
-    includeFontPadding: false,
-  },
-  chevron: {
-    flexShrink: 0,
-  },
+  youBadgeText: { color: '#8B7CF6', fontSize: 10, fontWeight: '800' },
+  subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  subtitleText: { color: '#94A3B8', fontSize: 12, fontWeight: '500' },
 });

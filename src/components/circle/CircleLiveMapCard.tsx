@@ -303,8 +303,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             height: mapHeight,
             borderRadius: isFullScreen ? 0 : CircleTokens.mapCardRadius,
             borderWidth: isFullScreen ? 0 : 1,
-            backgroundColor: isDark ? '#141A4A' : '#EFF6FF',
-            borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.20)',
+            backgroundColor: '#0F1535',
+            borderColor: 'rgba(130, 140, 255, 0.22)',
           },
         ]}
         {...panResponder.panHandlers}>
@@ -453,12 +453,10 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                       styles.nameBubble,
                       isBubbleOnLeft ? styles.nameBubbleLeft : styles.nameBubbleRight,
                       {
-                        backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+                        backgroundColor: 'rgba(20, 27, 74, 0.85)',
                         borderColor: isSelected
                           ? accentColor
-                          : isDark
-                          ? 'rgba(130, 140, 255, 0.28)'
-                          : 'rgba(124, 92, 224, 0.22)',
+                          : 'rgba(130, 140, 255, 0.3)',
                       },
                     ]}>
                     <Text
@@ -490,8 +488,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           style={[
             styles.topLeftPill,
             {
-              backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : 'rgba(255, 255, 255, 0.90)',
-              borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
+              backgroundColor: 'rgba(20, 27, 74, 0.6)',
+              borderColor: 'rgba(130, 140, 255, 0.3)',
             },
           ]}>
           <Animated.View
@@ -548,8 +546,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               style={({ pressed }) => [
                 styles.topRightPill,
                 {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
-                  borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(124, 92, 224, 0.40)',
+                  backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                  borderColor: 'rgba(130, 140, 255, 0.3)',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
@@ -579,8 +577,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           style={[
             styles.bottomLeftPill,
             {
-              backgroundColor: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(16, 185, 129, 0.15)',
-              borderColor: isDark ? 'rgba(52, 211, 153, 0.40)' : 'rgba(16, 185, 129, 0.35)',
+              backgroundColor: 'rgba(20, 27, 74, 0.6)',
+              borderColor: 'rgba(130, 140, 255, 0.3)',
             },
           ]}>
           <View style={[styles.bottomLeftDot, { backgroundColor: isDark ? '#34D399' : '#059669' }]} />
@@ -607,8 +605,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
               style={({ pressed }) => [
                 styles.locateButton,
                 {
-                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-                  borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                  backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                  borderColor: 'rgba(130, 140, 255, 0.3)',
                   opacity: pressed ? 0.8 : 1,
                 },
               ]}>
@@ -628,8 +626,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={({ pressed }) => [
               styles.locateButton,
               {
-                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-                borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                borderColor: 'rgba(130, 140, 255, 0.3)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
@@ -648,8 +646,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={({ pressed }) => [
               styles.locateButton,
               {
-                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-                borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                borderColor: 'rgba(130, 140, 255, 0.3)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
@@ -665,8 +663,8 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
             style={[
               styles.zoomGroup,
               {
-                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-                borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
+                backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                borderColor: 'rgba(130, 140, 255, 0.3)',
               },
             ]}>
             <Pressable

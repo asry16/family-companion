@@ -5,21 +5,20 @@ import {
   StyleSheet,
   Platform,
   Animated,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { CircleTokens } from '@/constants/theme';
 
 interface CircleSafetyBannerProps {
   onPress?: () => void;
 }
 
 export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress }) => {
-  const { colors, isDark, isElderly } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { members, sosAlert } = useFamily();
 
   // Subtle continuous pulse for shield halo
@@ -28,16 +27,8 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0, duration: 1800, useNativeDriver: true }),
       ])
     );
     loop.start();
@@ -45,11 +36,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
   }, [pulseAnim]);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
-    }
+    if (Platform.OS !== 'web') { try { Haptics.impactAsync(style); } catch (e) {} }
   };
 
   // Safety state logic
@@ -58,8 +45,8 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
     (m) => (m.batteryLevel && m.batteryLevel < 15 && !m.isCharging) || m.availability === 'busy'
   );
   const isAlertState = isEmergency || Boolean(memberNeedingAttention);
-
   const activeCount = members.length > 0 ? members.length : 1;
+
   const bannerTitle = isEmergency
     ? 'EMERGENCY SOS ALERT ACTIVE'
     : isAlertState
@@ -74,64 +61,27 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
         : `${memberNeedingAttention?.name || 'Member'} is currently busy • Locations synced`)
     : `${activeCount} active family ${activeCount === 1 ? 'member' : 'members'} • Location encrypted`;
 
-  const bannerColor = isEmergency
-    ? colors.red
-    : isAlertState
-    ? colors.yellow
-    : isDark
-    ? '#4ADE9A'
-    : '#059669';
-
-  const shieldGradient: [string, string] = isEmergency
-    ? ['#FF4D7A', '#E11D48']
-    : isAlertState
-    ? ['#F59E0B', '#D97706']
-    : ['#34D399', '#10B981'];
-
-  const haloBg = isEmergency
-    ? 'rgba(239, 68, 68, 0.28)'
-    : isAlertState
-    ? 'rgba(245, 158, 11, 0.28)'
-    : 'rgba(52, 211, 153, 0.25)';
+  const bannerColor = isEmergency ? '#EF4444' : isAlertState ? '#F59E0B' : '#34D399';
+  const shieldGradient: [string, string] = isEmergency ? ['#EF4444', '#DC2626'] : isAlertState ? ['#F59E0B', '#D97706'] : ['#34D399', '#059669'];
+  const haloBg = isEmergency ? 'rgba(239, 68, 68, 0.15)' : isAlertState ? 'rgba(245, 158, 11, 0.15)' : 'rgba(52, 211, 153, 0.15)';
+  const glowColor = isEmergency ? 'rgba(239, 68, 68, 0.15)' : isAlertState ? 'rgba(245, 158, 11, 0.15)' : 'rgba(52, 211, 153, 0.1)';
 
   return (
-    <GlassCard
-      borderRadius={24}
-      glowColor={isDark ? (isEmergency ? colors.red : isAlertState ? colors.yellow : 'rgba(52, 211, 153, 0.2)') : undefined}
-      borderAccentColor={
-        isDark
-          ? isEmergency
-            ? 'rgba(240, 82, 77, 0.45)'
-            : isAlertState
-            ? 'rgba(245, 158, 11, 0.45)'
-            : 'rgba(52, 211, 153, 0.35)'
-          : undefined
-      }
-      onPress={() => {
-        triggerHaptic();
-        if (onPress) onPress();
-      }}
-      style={styles.cardWrapper}
-      contentStyle={styles.cardContent}>
-      
-      {/* Light Mode tint gradient */}
-      {!isDark && (
-        <LinearGradient
-          colors={
-            isEmergency
-              ? ['#FFF1F4', '#FFE6F0']
-              : isAlertState
-              ? ['#FEF3C7', '#FDE68A']
-              : ['rgba(240, 253, 244, 0.95)', 'rgba(236, 253, 245, 0.85)']
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-
+    <Pressable
+      onPress={() => { triggerHaptic(); if (onPress) onPress(); }}
+      style={({ pressed }) => [
+        styles.cardWrapper,
+        {
+          opacity: pressed ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          backgroundColor: 'rgba(20, 27, 74, 0.6)',
+          borderColor: isEmergency ? 'rgba(239, 68, 68, 0.4)' : isAlertState ? 'rgba(245, 158, 11, 0.4)' : 'rgba(52, 211, 153, 0.3)',
+          shadowColor: bannerColor,
+        },
+      ]}>
       <View style={styles.bannerRow}>
-        {/* 48px Glowing Shield Icon */}
+        
+        {/* Shield Icon with glowing ring */}
         <View style={styles.shieldWrap}>
           <Animated.View
             style={[
@@ -139,130 +89,76 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
               {
                 backgroundColor: haloBg,
                 transform: [
-                  {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.95, 1.25],
-                    }),
-                  },
+                  { scale: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) },
                 ],
-                opacity: pulseAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.7, 0.2],
-                }),
+                opacity: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
               },
             ]}
           />
-          <LinearGradient
-            colors={shieldGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.shieldCircle}>
-            <Ionicons
-              name={isEmergency ? 'alert-circle' : isAlertState ? 'warning' : 'shield-checkmark'}
-              size={24}
-              color="#FFFFFF"
-            />
-          </LinearGradient>
+          <View style={[styles.shieldOuterRing, { borderColor: bannerColor }]}>
+            <LinearGradient colors={shieldGradient} style={styles.shieldInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Ionicons
+                name={isEmergency ? 'alert' : isAlertState ? 'warning' : 'shield-checkmark'}
+                size={18}
+                color="#FFFFFF"
+              />
+            </LinearGradient>
+          </View>
         </View>
 
-        {/* Title & Subtitle Column */}
+        {/* Text */}
         <View style={styles.textColumn}>
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.titleText,
-              {
-                color: bannerColor,
-                fontSize: isElderly ? 16 : 14,
-              },
-            ]}>
+          <Text numberOfLines={1} style={[styles.titleText, { color: bannerColor }]}>
             {bannerTitle}
           </Text>
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.subtitleText,
-              {
-                color: isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#BE123C' : '#475569',
-                fontSize: isElderly ? 13 : 11.5,
-              },
-            ]}>
+          <Text numberOfLines={1} style={[styles.subtitleText, { color: '#94A3B8' }]}>
             {bannerSubtitle}
           </Text>
         </View>
 
-        {/* Chevron Forward */}
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={isDark ? colors.textMuted : '#64748B'}
-          style={styles.chevronIcon}
-        />
+        {/* Chevron */}
+        <Ionicons name="chevron-forward" size={18} color="#C9CEFF" />
       </View>
-    </GlassCard>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    padding: 0,
     marginHorizontal: 16,
     marginVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  cardContent: {
-    paddingHorizontal: 14,
-    minHeight: CircleTokens.safetyBannerHeight,
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  bannerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
+  bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   shieldWrap: {
-    width: CircleTokens.safetyShieldSize,
-    height: CircleTokens.safetyShieldSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    flexShrink: 0,
+    width: 36, height: 36,
+    alignItems: 'center', justifyContent: 'center',
   },
   shieldHalo: {
     position: 'absolute',
-    width: CircleTokens.safetyShieldSize + 8,
-    height: CircleTokens.safetyShieldSize + 8,
-    borderRadius: (CircleTokens.safetyShieldSize + 8) / 2,
+    width: 44, height: 44,
+    borderRadius: 22,
   },
-  shieldCircle: {
-    width: CircleTokens.safetyShieldSize,
-    height: CircleTokens.safetyShieldSize,
-    borderRadius: CircleTokens.safetyShieldSize / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
+  shieldOuterRing: {
+    width: 36, height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  textColumn: {
-    flex: 1,
-    minWidth: 0,
-    gap: 3,
+  shieldInner: {
+    width: 26, height: 26,
+    borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
   },
-  titleText: {
-    fontWeight: '800',
-    letterSpacing: 0.4,
-    includeFontPadding: false,
-  },
-  subtitleText: {
-    fontWeight: '500',
-    includeFontPadding: false,
-  },
-  chevronIcon: {
-    flexShrink: 0,
-  },
+  textColumn: { flex: 1, gap: 4 },
+  titleText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  subtitleText: { fontSize: 12, fontWeight: '500' },
 });

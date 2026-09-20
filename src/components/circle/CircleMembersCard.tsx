@@ -59,13 +59,13 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           <Ionicons
             name="people"
             size={18}
-            color={isDark ? '#8B7CF6' : '#7C5CE0'}
+            color="#C9CEFF"
           />
           <Text
             style={[
               styles.sectionTitle,
               {
-                color: colors.text,
+                color: '#FFFFFF',
                 fontSize: isElderly ? 18 : 16,
               },
             ]}>
@@ -74,7 +74,7 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           <Text
             style={[
               styles.countMuted,
-              { color: isDark ? colors.textMuted : colors.textSecondary },
+              { color: '#94A3B8' },
             ]}>
             ({members.length})
           </Text>
@@ -88,20 +88,20 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           style={({ pressed }) => [
             styles.addMemberPill,
             {
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.06)',
-              borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(124, 92, 224, 0.40)',
+              backgroundColor: 'rgba(20, 27, 74, 0.4)',
+              borderColor: 'rgba(130, 140, 255, 0.3)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
           <Ionicons
             name="add"
             size={15}
-            color={isDark ? '#8B7CF6' : '#7C5CE0'}
+            color="#C9CEFF"
           />
           <Text
             style={[
               styles.addMemberText,
-              { color: isDark ? '#8B7CF6' : '#7C5CE0' },
+              { color: '#C9CEFF' },
             ]}>
             Add Member
           </Text>
