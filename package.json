@@ -50,6 +50,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "postinstall": "node ./scripts/patch-warn-once.js",
     "server": "npm --prefix server start"
   },
   "private": true

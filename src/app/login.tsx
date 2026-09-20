@@ -16,6 +16,7 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -469,8 +470,12 @@ export default function LoginScreen() {
                 backgroundColor: themeTokens.haloBg,
               },
             ]}>
-            <View style={[styles.logoCore, { backgroundColor: themeTokens.logoBg }]}>
-              <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
+            <View style={[styles.logoCore, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={{ width: '100%', height: '100%', borderRadius: 36 }}
+                resizeMode="cover"
+              />
             </View>
           </View>
           <ActivityIndicator
@@ -553,16 +558,20 @@ export default function LoginScreen() {
                     backgroundColor: themeTokens.haloBg,
                   },
                 ]}>
-                {/* Violet Circle (72px) with Family Icon */}
+                {/* Luminous Brand Logo (72px) */}
                 <View
                   style={[
                     styles.logoCore,
                     {
-                      backgroundColor: themeTokens.logoBg,
-                      shadowColor: themeTokens.logoBg,
+                      backgroundColor: 'transparent',
+                      overflow: 'hidden',
                     },
                   ]}>
-                  <Ionicons name="people" size={FrontPageTokens.iconSize} color="#FFFFFF" />
+                  <Image
+                    source={require('../../assets/images/logo.png')}
+                    style={{ width: '100%', height: '100%', borderRadius: 36 }}
+                    resizeMode="cover"
+                  />
                 </View>
               </View>
             </Animated.View>
