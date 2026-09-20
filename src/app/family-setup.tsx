@@ -172,8 +172,8 @@ export default function FamilySetupScreen() {
   // Live Debounced Lookup when typing in Join tab
   useEffect(() => {
     if (activeTab !== 'join') return;
-    const clean = joinInput.trim();
-    if (!clean || clean.length < 3) {
+    const clean = joinInput.replace(/^@\s*/, '').trim();
+    if (!clean || clean.length < 2) {
       setFoundFamily(null);
       setLookupError(null);
       setIsSearching(false);
@@ -193,9 +193,9 @@ export default function FamilySetupScreen() {
           setFoundFamily(null);
           setLookupError(res.error || 'No family found with this username or code.');
         }
-      } catch {
+      } catch (err: any) {
         setFoundFamily(null);
-        setLookupError('Unable to connect to server. Please try again.');
+        setLookupError(err?.message || 'Unable to connect to server. Please try again.');
       } finally {
         setIsSearching(false);
       }
@@ -259,7 +259,7 @@ export default function FamilySetupScreen() {
 
   // Handle Join Family
   const handleJoinSubmit = async () => {
-    const cleanInput = joinInput.trim();
+    const cleanInput = joinInput.replace(/^@\s*/, '').trim();
     if (!cleanInput) {
       setJoinError('Please enter the family username or invite code.');
       if (Platform.OS !== 'web') {

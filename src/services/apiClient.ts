@@ -7,35 +7,47 @@ export const JWT_TOKEN_KEY = '@kinly_jwt_token_v1';
 export function getApiBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL || process.env.EXPO_PUBLIC_API_URL;
 
-  // When running on native devices (iOS/Android via Expo Go), "localhost" or "127.0.0.1" refers
-  // to the phone itself, failing network requests. Dynamically resolve developer machine IP.
-  if (Platform.OS !== 'web') {
-    const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
-    if (hostUri) {
-      const devIp = hostUri.split(':')[0];
-      if (devIp && devIp !== 'localhost' && devIp !== '127.0.0.1') {
-        if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
-          return `http://${devIp}:3001`;
-        }
-      }
-    }
-    if (Platform.OS === 'android' && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      return 'http://10.0.2.2:3001';
-    }
-  }
-
-  if (envUrl) {
-    return envUrl;
-  }
-
+  // 1. Web environment
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-      return `http://${window.location.hostname}:3001`;
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return `http://${window.location.hostname}:3001`;
+      }
+    }
+    if (envUrl) {
+      return envUrl;
     }
     return 'http://localhost:3001';
   }
 
-  return 'http://localhost:3001';
+  // 2. Native devices (Physical phone or Emulator)
+  let devIp: string | null = null;
+  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+  if (hostUri) {
+    const rawIp = hostUri.split(':')[0];
+    if (rawIp && rawIp !== 'localhost' && rawIp !== '127.0.0.1') {
+      devIp = rawIp;
+    }
+  }
+
+  if (!devIp && Constants.linkingUri) {
+    const match = Constants.linkingUri.match(/:\/\/([^:/]+)/);
+    if (match && match[1] && match[1] !== 'localhost' && match[1] !== '127.0.0.1') {
+      devIp = match[1];
+    }
+  }
+
+  if (devIp) {
+    return `http://${devIp}:3001`;
+  }
+
+  // 3. Environment URL if specified and not localhost
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl;
+  }
+
+  // 4. Default LAN IP fallback for physical devices on local Wi-Fi
+  return 'http://192.168.1.44:3001';
 }
 
 export function getWsBaseUrl(): string {
@@ -74,9 +86,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     return json;
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      return { success: false, error: 'Network request timed out. Operating in local mode.' };
+      return { success: false, error: 'Network request timed out. Please check your network connection.' };
     }
-    return { success: false, error: err.message || 'Server connection failed.' };
+    const rawMsg = err.message || '';
+    if (rawMsg.includes('Failed to fetch') || rawMsg.includes('Network request failed') || rawMsg.includes('NetworkError')) {
+      return {
+        success: false,
+        error: 'Unable to connect to backend server. Make sure the server is running on port 3001.',
+      };
+    }
+    return { success: false, error: rawMsg || 'Server connection failed.' };
   }
 }
 
