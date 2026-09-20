@@ -142,10 +142,9 @@ export default function MemoryScreen() {
           onSaveLocationPress={() => setAddModalVisible(true)}
         />
 
-        {/* 5. Vault Actions Bar: Add from Files, Scan, Save Details, Star Docs */}
+        {/* 5. Vault Actions Bar: Add from Files, Save Details, Star Docs */}
         <VaultActionsBar
           onAddDetails={() => setAddModalVisible(true)}
-          onScanPress={() => router.push('/modal/scan-document')}
           onAddFiles={(fileItem) => {
             addMemory(fileItem);
           }}

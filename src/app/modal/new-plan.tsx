@@ -17,7 +17,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { LightBackdrop, DarkBackdrop, GlassCard } from '@/components/ui';
+import { LightBackdrop, DarkBackdrop, GlassCard, CalendarDatePicker, TimeDialerPicker } from '@/components/ui';
 import { PriorityLevel } from '@/types';
 
 export default function NewPlanModal() {
@@ -264,99 +264,116 @@ export default function NewPlanModal() {
           </ScrollView>
         </View>
 
-        {/* Timing options */}
-        <View style={styles.timingRow}>
-          <View style={{ flex: 1, gap: 8 }}>
-            <Text
+        {/* Date Choosing from Calendar */}
+        <View style={styles.formGroup}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="calendar-outline" size={15} color={isDark ? '#A594FD' : '#7C5CE0'} />
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+                ]}>
+                DATE FROM CALENDAR
+              </Text>
+            </View>
+            <View
               style={[
-                styles.fieldLabel,
-                { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+                styles.activeBadge,
+                {
+                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.10)',
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.32)' : 'rgba(124, 92, 224, 0.20)',
+                },
               ]}>
-              DATE
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {['Today', 'Tomorrow'].map((d) => {
-                const isSelected = dueDate === d;
-                return (
-                  <Pressable
-                    key={d}
-                    onPress={() => {
-                      if (Platform.OS !== 'web') {
-                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                      }
-                      setDueDate(d);
-                    }}
-                    style={[
-                      styles.timingPill,
-                      {
-                        backgroundColor: isSelected
-                          ? (isDark ? '#8A6BF2' : '#7C5CE0')
-                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
-                        borderColor: isSelected
-                          ? 'transparent'
-                          : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
-                      },
-                    ]}>
-                    <Text
-                      style={{
-                        color: isSelected ? '#FFFFFF' : colors.text,
-                        fontWeight: isSelected ? '700' : '600',
-                        fontSize: 13,
-                      }}>
-                      {d}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              <Text style={[styles.activeBadgeText, { color: isDark ? '#A594FD' : '#7C5CE0' }]}>
+                {dueDate}
+              </Text>
             </View>
           </View>
+          <CalendarDatePicker
+            selectedDate={dueDate}
+            onSelectDate={(newDate) => setDueDate(newDate)}
+          />
+        </View>
 
-          <View style={{ flex: 1, gap: 8 }}>
-            <Text
-              style={[
-                styles.fieldLabel,
-                { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
-              ]}>
-              PRIORITY
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {[
-                { id: 'urgent', label: 'Urgent', color: '#EF4444' },
-                { id: 'important', label: 'Normal', color: '#4F8EF7' },
-              ].map((p) => {
-                const isSelected = priority === p.id;
-                return (
-                  <Pressable
-                    key={p.id}
-                    onPress={() => {
-                      if (Platform.OS !== 'web') {
-                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                      }
-                      setPriority(p.id as any);
-                    }}
-                    style={[
-                      styles.timingPill,
-                      {
-                        backgroundColor: isSelected
-                          ? p.id === 'urgent' ? '#EF4444' : (isDark ? '#4F8EF7' : '#3B82F6')
-                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
-                        borderColor: isSelected
-                          ? 'transparent'
-                          : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
-                      },
-                    ]}>
-                    <Text
-                      style={{
-                        color: isSelected ? '#FFFFFF' : colors.text,
-                        fontWeight: isSelected ? '700' : '600',
-                        fontSize: 13,
-                      }}>
-                      {p.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+        {/* Time Choosing from Dialer */}
+        <View style={styles.formGroup}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="time-outline" size={15} color={isDark ? '#A594FD' : '#7C5CE0'} />
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+                ]}>
+                TIME FROM DIALER
+              </Text>
             </View>
+            <View
+              style={[
+                styles.activeBadge,
+                {
+                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.10)',
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.32)' : 'rgba(124, 92, 224, 0.20)',
+                },
+              ]}>
+              <Text style={[styles.activeBadgeText, { color: isDark ? '#A594FD' : '#7C5CE0' }]}>
+                {time}
+              </Text>
+            </View>
+          </View>
+          <TimeDialerPicker
+            selectedTime={time}
+            onSelectTime={(newTime) => setTime(newTime)}
+          />
+        </View>
+
+        {/* Priority Selector */}
+        <View style={styles.formGroup}>
+          <Text
+            style={[
+              styles.fieldLabel,
+              { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+            ]}>
+            PRIORITY LEVEL
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[
+              { id: 'urgent', label: 'Urgent', color: '#EF4444' },
+              { id: 'important', label: 'Normal', color: isDark ? '#4F8EF7' : '#3B82F6' },
+            ].map((p) => {
+              const isSelected = priority === p.id;
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') {
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }
+                    setPriority(p.id as any);
+                  }}
+                  style={[
+                    styles.timingPill,
+                    {
+                      backgroundColor: isSelected
+                        ? p.color
+                        : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
+                      borderColor: isSelected
+                        ? 'transparent'
+                        : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
+                    },
+                  ]}>
+                  <Text
+                    style={{
+                      color: isSelected ? '#FFFFFF' : colors.text,
+                      fontWeight: isSelected ? '700' : '600',
+                      fontSize: 13,
+                    }}>
+                    {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
@@ -464,6 +481,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  activeBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  activeBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 

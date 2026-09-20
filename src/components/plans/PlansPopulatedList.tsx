@@ -82,7 +82,27 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
 
       {/* Plan Cards */}
       <View style={styles.cardList}>
-        {plans.map((plan) => {
+        {plans.length === 0 ? (
+          <GlassCard
+            borderRadius={20}
+            style={styles.planCard}
+            contentStyle={[styles.planCardContent, { alignItems: 'center', paddingVertical: 28, gap: 8 }]}>
+            <Ionicons name="search-outline" size={26} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>
+              No Matching Plans
+            </Text>
+            <Text
+              style={{
+                color: isDark ? colors.textMuted : colors.textSecondary,
+                fontSize: 13,
+                textAlign: 'center',
+                lineHeight: 18,
+              }}>
+              No tasks, events, or reminders match your current search or category filter.
+            </Text>
+          </GlassCard>
+        ) : (
+          plans.map((plan) => {
           const isDone = !!plan.isCompleted;
 
           return (
@@ -222,7 +242,7 @@ export const PlansPopulatedList: React.FC<PlansPopulatedListProps> = ({
               </View>
             </GlassCard>
           );
-        })}
+        }))}
       </View>
 
       {/* Floating or bottom Add Plan Entry Point */}

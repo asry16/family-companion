@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LiveLocation {
   latitude: number;
@@ -8,6 +8,59 @@ export interface LiveLocation {
   accuracy?: number;
   source: 'gps' | 'ip' | 'cached';
   timestamp: number;
+}
+
+const PERMISSION_STORAGE_KEY = '@kinly_location_permission_status';
+
+export async function getLocationPermissionStatus(): Promise<'granted' | 'denied' | 'prompt'> {
+  try {
+    const stored = await AsyncStorage.getItem(PERMISSION_STORAGE_KEY);
+    if (stored === 'granted' || stored === 'denied') return stored;
+
+    if (typeof navigator !== 'undefined' && (navigator as any).permissions) {
+      const p = await (navigator as any).permissions.query({ name: 'geolocation' });
+      if (p.state === 'granted') {
+        await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'granted');
+        return 'granted';
+      }
+      if (p.state === 'denied') {
+        await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'denied');
+        return 'denied';
+      }
+    }
+  } catch (e) {}
+  return 'prompt';
+}
+
+export async function requestLocationPermission(): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'denied');
+    return false;
+  }
+
+  return new Promise<boolean>((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'granted');
+        } catch (e) {}
+        resolve(true);
+      },
+      async (_err) => {
+        try {
+          await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'denied');
+        } catch (e) {}
+        resolve(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  });
+}
+
+export async function setLocationPermissionDismissed(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(PERMISSION_STORAGE_KEY, 'denied');
+  } catch (e) {}
 }
 
 let cachedLocation: LiveLocation | null = null;

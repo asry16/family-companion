@@ -8,35 +8,24 @@ import { MemoryItem } from '@/types';
 
 interface VaultActionsBarProps {
   onAddDetails: () => void;
-  onScanPress: () => void;
+  onScanPress?: () => void;
   onAddFiles: (item: Omit<MemoryItem, 'id'>) => void;
 }
 
-// Reference-matched action definitions
+// Reference-matched action definitions (Scan removed per user request)
 const ACTIONS = [
   {
     id: 'files',
     icon: 'folder-open-outline' as const,
     label: 'Add from Files',
-    subtitle: 'PDF, images & docs',
+    subtitle: 'PDF, images & documents',
     lightIconColor: '#7C5CE0',
     darkIconColor:  '#8B7CF6',
     lightBg:   'rgba(124,92,224,0.12)',
     darkBg:    'rgba(139,124,246,0.18)',
     lightBorder: 'rgba(124,92,224,0.22)',
     darkBorder:  'rgba(139,124,246,0.35)',
-  },
-  {
-    id: 'scan',
-    icon: 'scan-outline' as const,
-    label: 'Scan Document',
-    subtitle: 'Camera or gallery',
-    lightIconColor: '#3B82F6',
-    darkIconColor:  '#60A5FA',
-    lightBg:   'rgba(59,130,246,0.12)',
-    darkBg:    'rgba(59,130,246,0.22)',
-    lightBorder: 'rgba(59,130,246,0.20)',
-    darkBorder:  'rgba(59,130,246,0.35)',
+    fullWidth: true,
   },
   {
     id: 'details',
@@ -49,6 +38,7 @@ const ACTIONS = [
     darkBg:    'rgba(74,222,128,0.18)',
     lightBorder: 'rgba(22,163,74,0.20)',
     darkBorder:  'rgba(74,222,128,0.32)',
+    fullWidth: false,
   },
   {
     id: 'star',
@@ -61,6 +51,7 @@ const ACTIONS = [
     darkBg:    'rgba(251,191,36,0.18)',
     lightBorder: 'rgba(217,119,6,0.22)',
     darkBorder:  'rgba(251,191,36,0.32)',
+    fullWidth: false,
   },
 ] as const;
 
@@ -112,7 +103,7 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
   const handlePress = (id: string) => {
     switch (id) {
       case 'files':   handleFiles(); break;
-      case 'scan':    tap(onScanPress); break;
+      case 'scan':    if (onScanPress) tap(onScanPress); break;
       case 'details': tap(onAddDetails); break;
       case 'star':    handleStar(); break;
     }
@@ -136,6 +127,7 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
               onPress={() => handlePress(a.id)}
               style={({ pressed }) => [
                 styles.card,
+                a.fullWidth ? { width: '100%' } : { width: '48.2%' },
                 {
                   backgroundColor: cardBg,
                   borderColor: cardBorder,
@@ -173,7 +165,6 @@ const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 16, marginTop: 4, marginBottom: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   card: {
-    width: '48.2%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

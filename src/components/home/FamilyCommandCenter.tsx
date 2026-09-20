@@ -103,6 +103,9 @@ import {
   LiveLocation,
   MapTileMode,
   getOsmAttribution,
+  getLocationPermissionStatus,
+  requestLocationPermission,
+  setLocationPermissionDismissed,
 } from '@/services/locationService';
 
 export interface FamilyCommandCenterProps {
@@ -189,29 +192,46 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
     }
   }, [sheetVisible, sheetTranslateY]);
 
+  // Check location permission status on mount
+  useEffect(() => {
+    getLocationPermissionStatus().then((status) => {
+      if (status === 'prompt') {
+        setLocationPermissionNeeded(true);
+      }
+    });
+  }, []);
+
   // Request real device location
-  // Request real device location
-  const handleRequestLocation = () => {
+  const handleRequestLocation = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocationPermissionNeeded(false);
-          setIsGpsLive(true);
+    const granted = await requestLocationPermission();
+    if (granted) {
+      setLocationPermissionNeeded(false);
+      setIsGpsLive(true);
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
           setGpsAccuracy(Math.round(position.coords.accuracy || 10));
           setRealUserCoords({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
-        },
-        () => {
-          setLocationPermissionNeeded(false);
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
+          if (activeUser?.id && updateFamilyMember) {
+            updateFamilyMember(activeUser.id, {
+              coords: { x: 50, y: 50, latitude: position.coords.latitude, longitude: position.coords.longitude },
+              lastUpdated: 'Just now',
+            });
+          }
+        });
+      }
     } else {
       setLocationPermissionNeeded(false);
     }
+  };
+
+  const handleDismissLocation = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+    await setLocationPermissionDismissed();
+    setLocationPermissionNeeded(false);
   };
 
   // Live Location continuous watch via unified locationService
@@ -224,7 +244,9 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
         latitude: loc.latitude,
         longitude: loc.longitude,
       });
-      setLocationPermissionNeeded(false);
+      if (loc.source === 'gps') {
+        setLocationPermissionNeeded(false);
+      }
       if (activeUser?.id && updateFamilyMember) {
         updateFamilyMember(activeUser.id, {
           coords: { x: 50, y: 50, latitude: loc.latitude, longitude: loc.longitude },
@@ -779,28 +801,45 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
         {locationPermissionNeeded ? (
           <View style={styles.permissionNeededWrap}>
             <View style={[styles.permissionIconCircle, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : '#EFF6FF' }]}>
-              <Ionicons name="location-outline" size={28} color={colors.brandAccent} />
+              <Ionicons name="location" size={28} color={colors.brandAccent} />
             </View>
             <Text style={[styles.permissionTitle, { color: colors.text }]}>
-              Location access needed
+              Share Live Location with Family
             </Text>
             <Text style={[styles.permissionSub, { color: colors.textSecondary }]}>
-              Allow location to see your live position
+              Allow GPS location access so your circle knows you are safe and can coordinate smoothly.
             </Text>
-            <Pressable
-              onPress={handleRequestLocation}
-              style={({ pressed }) => [
-                styles.enableLocationBtn,
-                {
-                  backgroundColor: colors.brandAccent,
-                  opacity: pressed ? 0.88 : 1,
-                },
-              ]}>
-              <Ionicons name="navigate" size={14} color="#FFFFFF" />
-              <Text style={[styles.enableLocationBtnText, { color: '#FFFFFF' }]}>
-                Enable Location
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <Pressable
+                onPress={handleRequestLocation}
+                style={({ pressed }) => [
+                  styles.enableLocationBtn,
+                  {
+                    backgroundColor: colors.brandAccent,
+                    opacity: pressed ? 0.88 : 1,
+                  },
+                ]}>
+                <Ionicons name="navigate" size={14} color="#FFFFFF" />
+                <Text style={[styles.enableLocationBtnText, { color: '#FFFFFF' }]}>
+                  Share Live Location
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleDismissLocation}
+                style={({ pressed }) => [
+                  styles.enableLocationBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
+                    borderWidth: 1,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}>
+                <Text style={[styles.enableLocationBtnText, { color: colors.textSecondary }]}>
+                  Not Now
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           <Animated.View

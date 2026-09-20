@@ -1,4 +1,17 @@
-export type MemberRelation = 'Father' | 'Mother' | 'Brother' | 'Sister' | 'Grandmother' | 'Grandfather' | 'Daughter' | 'Son' | 'Spouse' | 'Partner' | 'Self' | 'Other';
+export type MemberRelation =
+  | 'Father'
+  | 'Mother'
+  | 'Brother'
+  | 'Sister'
+  | 'Grandmother'
+  | 'Grandfather'
+  | 'Daughter'
+  | 'Son'
+  | 'Spouse'
+  | 'Partner'
+  | 'Self'
+  | 'Other'
+  | (string & {});
 
 export type LocationPlaceType = 'home' | 'office' | 'college' | 'school' | 'hospital' | 'grandparents' | 'grocery' | 'pharmacy' | 'other';
 

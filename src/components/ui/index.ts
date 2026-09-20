@@ -25,4 +25,6 @@ export { PasswordStrengthMeter } from './PasswordStrengthMeter';
 export { VoiceButton } from './VoiceButton';
 export { LightBackdrop } from './LightBackdrop';
 export { DarkBackdrop } from './DarkBackdrop';
+export { CalendarDatePicker } from './CalendarDatePicker';
+export { TimeDialerPicker } from './TimeDialerPicker';
 

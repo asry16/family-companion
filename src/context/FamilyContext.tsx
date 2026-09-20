@@ -414,7 +414,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         case 'TASK_CREATED':
           if (msg.task) {
-            setTasks((prev) => (prev.some((t) => t.id === msg.task.id) ? prev : [msg.task, ...prev]));
+            setTasks((prev) =>
+              prev.some(
+                (t) =>
+                  t.id === msg.task.id ||
+                  (t.title?.trim().toLowerCase() === msg.task.title?.trim().toLowerCase() &&
+                    t.dueDate === msg.task.dueDate)
+              )
+                ? prev
+                : [msg.task, ...prev]
+            );
           }
           break;
 
@@ -430,7 +439,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         case 'EVENT_CREATED':
           if (msg.event) {
-            setEvents((prev) => (prev.some((e) => e.id === msg.event.id) ? prev : [...prev, msg.event]));
+            setEvents((prev) =>
+              prev.some(
+                (e) =>
+                  e.id === msg.event.id ||
+                  (e.title?.trim().toLowerCase() === msg.event.title?.trim().toLowerCase() &&
+                    e.date === msg.event.date)
+              )
+                ? prev
+                : [...prev, msg.event]
+            );
           }
           break;
 
@@ -440,7 +458,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         case 'REMINDER_CREATED':
           if (msg.reminder) {
-            setReminders((prev) => (prev.some((r) => r.id === msg.reminder.id) ? prev : [...prev, msg.reminder]));
+            setReminders((prev) =>
+              prev.some(
+                (r) =>
+                  r.id === msg.reminder.id ||
+                  (r.title?.trim().toLowerCase() === msg.reminder.title?.trim().toLowerCase() &&
+                    r.time === msg.reminder.time)
+              )
+                ? prev
+                : [...prev, msg.reminder]
+            );
           }
           break;
 

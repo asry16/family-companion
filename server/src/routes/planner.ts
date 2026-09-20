@@ -12,13 +12,13 @@ router.use(authMiddleware);
 router.post('/tasks', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { title, category, assignedToMemberId, dueDate, dueTime, priority, note } = req.body || {};
+    const { id, title, category, assignedToMemberId, dueDate, dueTime, priority, note } = req.body || {};
 
     if (!title) {
       return res.status(400).json({ success: false, error: 'Task title is required.' });
     }
 
-    const taskId = `task_${Date.now()}`;
+    const taskId = id || `task_${Date.now()}`;
     tasksRepo.create({
       id: taskId,
       family_id: familyId,
@@ -104,13 +104,13 @@ router.delete('/tasks/:id', async (req: AuthenticatedRequest, res: Response) => 
 router.post('/events', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { title, date, time, durationMinutes, location, category, notes, attendeeMemberIds } = req.body || {};
+    const { id, title, date, time, durationMinutes, location, category, notes, attendeeMemberIds } = req.body || {};
 
     if (!title || !date || !time) {
       return res.status(400).json({ success: false, error: 'Title, date, and time are required.' });
     }
 
-    const eventId = `event_${Date.now()}`;
+    const eventId = id || `event_${Date.now()}`;
     eventsRepo.create({
       id: eventId,
       family_id: familyId,
@@ -158,13 +158,13 @@ router.delete('/events/:id', async (req: AuthenticatedRequest, res: Response) =>
 router.post('/reminders', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const familyId = req.familyId!;
-    const { title, targetMemberId, time, dueDate, category, urgency, repeat } = req.body || {};
+    const { id, title, targetMemberId, time, dueDate, category, urgency, repeat } = req.body || {};
 
     if (!title || !time) {
       return res.status(400).json({ success: false, error: 'Title and time are required.' });
     }
 
-    const reminderId = `rem_${Date.now()}`;
+    const reminderId = id || `rem_${Date.now()}`;
     remindersRepo.create({
       id: reminderId,
       family_id: familyId,

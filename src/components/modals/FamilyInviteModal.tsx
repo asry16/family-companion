@@ -52,6 +52,7 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
   // Join form state
   const [inviteCode, setInviteCode] = useState('');
   const [selectedRole, setSelectedRole] = useState<MemberRelation>('Daughter');
+  const [customRole, setCustomRole] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
@@ -135,8 +136,13 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
     setErrorMessage(null);
     setIsJoining(true);
 
+    const effectiveRole =
+      selectedRole === 'Other' && customRole.trim()
+        ? customRole.trim()
+        : selectedRole;
+
     try {
-      const res = await joinFamilyByCode(cleanCode, selectedRole);
+      const res = await joinFamilyByCode(cleanCode, effectiveRole);
       if (res.success) {
         triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
         onSuccess?.(res.familyName || 'Family Space');
@@ -523,6 +529,29 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                     );
                   })}
                 </View>
+
+                {selectedRole === 'Other' && (
+                  <View style={{ marginTop: 10, gap: 6 }}>
+                    <Text style={[styles.inputLabel, { color: isDark ? '#A594FD' : '#7C5CE0' }]}>
+                      CUSTOM CATEGORY / RELATIONSHIP
+                    </Text>
+                    <TextInput
+                      value={customRole}
+                      onChangeText={setCustomRole}
+                      placeholder="e.g. Uncle, Aunt, Roommate, Nanny, Pet..."
+                      placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
+                      style={[
+                        styles.inputField,
+                        {
+                          color: colors.text,
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)',
+                          borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
+                          marginBottom: 4,
+                        },
+                      ]}
+                    />
+                  </View>
+                )}
               </View>
 
               {/* Join Submit Action */}

@@ -24,6 +24,8 @@ import {
   LiveLocation,
   MapTileMode,
   getOsmAttribution,
+  getLocationPermissionStatus,
+  requestLocationPermission,
 } from '@/services/locationService';
 import { CircleTokens } from '@/constants/theme';
 
@@ -154,14 +156,39 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
     };
   }, [ringAnim1, ringAnim2, ringAnim3, reducedMotion]);
 
+  // Check location permission
+  const [needsPermissionPrompt, setNeedsPermissionPrompt] = useState(false);
+
+  useEffect(() => {
+    getLocationPermissionStatus().then((status) => {
+      if (status === 'prompt') {
+        setNeedsPermissionPrompt(true);
+      }
+    });
+  }, []);
+
   // Watch GPS location
   useEffect(() => {
     const unsub = watchLocation((loc) => {
       setLiveLoc(loc);
       setIsGpsLive(loc.source === 'gps');
+      if (loc.source === 'gps') {
+        setNeedsPermissionPrompt(false);
+      }
     });
     return () => unsub();
   }, []);
+
+  const handleRequestLiveLocation = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    const granted = await requestLocationPermission();
+    if (granted) {
+      setNeedsPermissionPrompt(false);
+      setIsGpsLive(true);
+    } else {
+      setNeedsPermissionPrompt(false);
+    }
+  };
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -483,25 +510,43 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
         </Animated.View>
 
         {/* OVERLAYS */}
-        {/* 1. Top-Left: Glass Pill "Live Location" with pulsing green dot */}
-        <View
-          style={[
-            styles.topLeftPill,
-            {
-              backgroundColor: 'rgba(20, 27, 74, 0.6)',
-              borderColor: 'rgba(130, 140, 255, 0.3)',
-            },
-          ]}>
-          <Animated.View
+        {/* 1. Top-Left: Glass Pill "Live Location" or "Enable Live GPS" */}
+        {needsPermissionPrompt ? (
+          <Pressable
+            onPress={handleRequestLiveLocation}
+            style={({ pressed }) => [
+              styles.topLeftPill,
+              {
+                backgroundColor: isDark ? 'rgba(139, 124, 246, 0.28)' : 'rgba(124, 92, 224, 0.15)',
+                borderColor: isDark ? '#8B7CF6' : '#7C5CE0',
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}>
+            <Ionicons name="navigate" size={12} color={isDark ? '#A594FD' : '#7C5CE0'} />
+            <Text style={[styles.topLeftPillText, { color: isDark ? '#A594FD' : '#7C5CE0', fontWeight: '700' }]}>
+              Enable Live GPS
+            </Text>
+          </Pressable>
+        ) : (
+          <View
             style={[
-              styles.overlayGreenDot,
-              { backgroundColor: colors.green, opacity: greenPulseAnim },
-            ]}
-          />
-          <Text style={[styles.topLeftPillText, { color: colors.text }]}>
-            Live Location
-          </Text>
-        </View>
+              styles.topLeftPill,
+              {
+                backgroundColor: 'rgba(20, 27, 74, 0.6)',
+                borderColor: 'rgba(130, 140, 255, 0.3)',
+              },
+            ]}>
+            <Animated.View
+              style={[
+                styles.overlayGreenDot,
+                { backgroundColor: colors.green, opacity: greenPulseAnim },
+              ]}
+            />
+            <Text style={[styles.topLeftPillText, { color: colors.text }]}>
+              Live Location
+            </Text>
+          </View>
+        )}
 
         {/* 2. Top-Right: Full Screen Option Pill & View List Pill */}
         <View style={styles.topRightActionsRow}>

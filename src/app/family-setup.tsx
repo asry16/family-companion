@@ -89,6 +89,7 @@ export default function FamilySetupScreen() {
   // Form State - Join
   const [joinInput, setJoinInput] = useState('');
   const [selectedRelation, setSelectedRelation] = useState<MemberRelation>('Other');
+  const [customRelation, setCustomRelation] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
@@ -295,8 +296,13 @@ export default function FamilySetupScreen() {
     setJoinLoading(true);
     setJoinError(null);
 
+    const effectiveRelation =
+      selectedRelation === 'Other' && customRelation.trim()
+        ? customRelation.trim()
+        : selectedRelation;
+
     try {
-      const res = await joinFamilyByCode(cleanInput, selectedRelation);
+      const res = await joinFamilyByCode(cleanInput, effectiveRelation);
       if (res.success) {
         if (Platform.OS !== 'web') {
           try {
@@ -312,7 +318,7 @@ export default function FamilySetupScreen() {
             familyId: res.familyId || foundFamily?.id || '',
             familyName: res.familyName || foundFamily?.name || 'Your Family Circle',
             familyUsername: (res.familyUsername || foundFamily?.username) || undefined,
-            relation: selectedRelation,
+            relation: effectiveRelation,
           });
         }
 
@@ -913,6 +919,28 @@ export default function FamilySetupScreen() {
                             );
                           })}
                         </ScrollView>
+
+                        {selectedRelation === 'Other' && (
+                          <View style={{ marginTop: 10, gap: 6 }}>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                              Custom Category / Relationship
+                            </Text>
+                            <TextInput
+                              value={customRelation}
+                              onChangeText={setCustomRelation}
+                              placeholder="e.g. Uncle, Aunt, Roommate, Nanny, Pet..."
+                              placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
+                              style={[
+                                styles.textInput,
+                                {
+                                  color: colors.text,
+                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
+                                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
+                                },
+                              ]}
+                            />
+                          </View>
+                        )}
                       </View>
 
                       {joinError && (

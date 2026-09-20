@@ -51,18 +51,27 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
 
   const [name, setName] = useState('');
   const [relation, setRelation] = useState<MemberRelation>('Other');
+  const [customRelation, setCustomRelation] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('At Home');
 
   useEffect(() => {
     if (member) {
       setName(member.name || '');
-      setRelation(member.relation || 'Other');
+      const isStandard = RELATION_OPTIONS.includes(member.relation as any);
+      if (isStandard) {
+        setRelation(member.relation || 'Other');
+        setCustomRelation('');
+      } else {
+        setRelation('Other');
+        setCustomRelation(member.relation || '');
+      }
       setPhone(member.phone || '');
       setLocation(member.humanLocation || 'At Home');
     } else {
       setName('');
       setRelation('Other');
+      setCustomRelation('');
       setPhone('');
       setLocation('At Home');
     }
@@ -79,10 +88,15 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
   const handleSave = () => {
     if (!name.trim()) return;
     triggerHaptic();
+    const effectiveRelation =
+      relation === 'Other' && customRelation.trim()
+        ? customRelation.trim()
+        : relation;
+
     onSave({
       id: member?.id,
       name: name.trim(),
-      relation,
+      relation: effectiveRelation,
       phone: phone.trim() || '+1 555-0100',
       location: location.trim() || 'At Home',
     });
@@ -197,6 +211,28 @@ export const SettingsMemberEditModal: React.FC<SettingsMemberEditModalProps> = (
                   );
                 })}
               </ScrollView>
+
+              {relation === 'Other' && (
+                <View style={{ marginTop: 10, gap: 6 }}>
+                  <Text style={[styles.fieldLabel, { color: isDark ? colors.textTertiary : colors.textSecondary }]}>
+                    Custom Relationship / Category
+                  </Text>
+                  <TextInput
+                    value={customRelation}
+                    onChangeText={setCustomRelation}
+                    placeholder="e.g. Uncle, Aunt, Nanny, Roommate, Pet..."
+                    placeholderTextColor={colors.textMuted}
+                    style={[
+                      styles.textInput,
+                      {
+                        color: colors.text,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
+                        borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(20, 32, 58, 0.10)',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
             </View>
 
             {/* Phone Number Input */}

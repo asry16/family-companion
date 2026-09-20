@@ -85,13 +85,23 @@ export default function PlansScreen({
 
     const taskPlans: PlanItem[] = (tasks || []).map((t) => {
       const assigned = members?.find((m) => m.id === t.assignedToMemberId);
+      const catLabel = t.category ? t.category.charAt(0).toUpperCase() + t.category.slice(1) : 'Task';
       return {
         id: t.id,
         title: t.title,
         time: t.dueDate ? `${t.dueDate}${t.dueTime ? `, ${t.dueTime}` : ''}` : 'Today',
-        category: t.category ? t.category.charAt(0).toUpperCase() + t.category.slice(1) : 'Task',
+        category: catLabel,
         categoryVariant: t.isCompleted ? 'Safe' : 'View',
-        categoryColorScheme: t.priority === 'urgent' ? 'yellow' : 'green',
+        categoryColorScheme:
+          t.category === 'health'
+            ? 'purple'
+            : t.category === 'bills'
+            ? 'yellow'
+            : t.category === 'groceries'
+            ? 'green'
+            : t.priority === 'urgent'
+            ? 'yellow'
+            : 'green',
         assigneeName: assigned?.name || user?.name || 'You',
         assigneeInitial: (assigned?.name || user?.name || 'Y').charAt(0).toUpperCase(),
         notes: t.priority ? `Priority: ${t.priority}` : undefined,
@@ -121,9 +131,23 @@ export default function PlansScreen({
   }, [events, tasks, reminders, members, user]);
 
   const displayedPlans = useMemo(() => {
-    if (categoryFilter === 'all') return allPlans;
-    return allPlans.filter((p) => p.type === categoryFilter);
-  }, [allPlans, categoryFilter]);
+    let list = allPlans;
+    if (categoryFilter !== 'all') {
+      list = list.filter((p) => p.type === categoryFilter);
+    }
+    const query = quickAddText.trim().toLowerCase();
+    if (query) {
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(query) ||
+          (p.category && p.category.toLowerCase().includes(query)) ||
+          (p.assigneeName && p.assigneeName.toLowerCase().includes(query)) ||
+          (p.notes && p.notes.toLowerCase().includes(query)) ||
+          (p.time && p.time.toLowerCase().includes(query))
+      );
+    }
+    return list;
+  }, [allPlans, categoryFilter, quickAddText]);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
