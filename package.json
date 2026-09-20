@@ -55,8 +55,8 @@
     "lint": "expo lint",
     "postinstall": "node ./scripts/patch-warn-once.js",
     "server": "npm --prefix server start",
-    "build:apk": "eas build --platform android --profile preview",
-    "build:dev": "eas build --platform android --profile development"
+    "build:apk": "npx -y eas-cli build --platform android --profile preview",
+    "build:dev": "npx -y eas-cli build --platform android --profile development"
   },
   "private": true
 }
