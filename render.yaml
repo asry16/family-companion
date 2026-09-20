@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: kinly-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_SERVICE
+        value: gmail
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_BUCKET
+        value: kinly-family-vault-663505294298-us-east-1-an
+      - key: AWS_DYNAMODB_TELEMETRY_TABLE
+        value: KinlyTelemetryStream
+      - key: AWS_DYNAMODB_SOS_TABLE
+        value: KinlyEmergencyEvents
+      - key: AWS_SNS_TOPIC_ARN
+        value: arn:aws:sns:us-east-1:663505294298:KinlyEmergencyAlerts
+      - key: AWS_CLOUDWATCH_LOG_GROUP
+        value: /aws/kinly/backend
+      - key: AWS_EVENTBRIDGE_BUS
+        value: default

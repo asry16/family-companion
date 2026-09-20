@@ -3,22 +3,30 @@ import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
 
-const DB_DIR = path.join(__dirname, '../../data');
+const DB_DIR = process.env.DATA_DIR || path.join(__dirname, '../../data');
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const DB_PATH = path.join(DB_DIR, 'kinly.db');
+const DB_PATH = process.env.DB_PATH || path.join(DB_DIR, 'kinly.db');
 export const db = new Database(DB_PATH);
 
 // Enable WAL mode for high concurrency performance
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// Initialize schema
-const schemaPath = path.join(__dirname, 'schema.sql');
-const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-db.exec(schemaSql);
+// Initialize schema (look for schema.sql in multiple valid build/run locations)
+const candidateSchemaPaths = [
+  path.join(__dirname, 'schema.sql'),
+  path.join(__dirname, '../src/db/schema.sql'),
+  path.join(process.cwd(), 'src/db/schema.sql'),
+  path.join(process.cwd(), 'server/src/db/schema.sql'),
+];
+const schemaPath = candidateSchemaPaths.find(p => fs.existsSync(p));
+if (schemaPath) {
+  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+  db.exec(schemaSql);
+}
 
 // Dynamic migration: Ensure families has username column
 try {
