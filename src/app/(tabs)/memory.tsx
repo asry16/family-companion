@@ -20,7 +20,7 @@ import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { MemoryItem } from '@/types';
-import { LightBackdrop, DarkBackdrop } from '@/components/ui';
+import { LightBackdrop, DarkBackdrop, PrimaryButton, ConfirmationModal } from '@/components/ui';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { VaultActionsBar } from '@/components/vault/VaultActionsBar';
 
@@ -30,7 +30,6 @@ import { VaultSearchBar } from '@/components/vault/VaultSearchBar';
 import { VaultCategoryFilters } from '@/components/vault/VaultCategoryFilters';
 import { VaultEmptyStateCard } from '@/components/vault/VaultEmptyStateCard';
 import { VaultItemCard } from '@/components/vault/VaultItemCard';
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 
 export default function MemoryScreen() {
   const router = useRouter();
@@ -233,22 +232,26 @@ export default function MemoryScreen() {
             style={[
               styles.modalCard,
               {
-                backgroundColor: isDark ? 'rgba(20, 27, 74, 0.95)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(20, 32, 58, 0.12)',
+                backgroundColor: isDark ? 'rgba(16, 22, 60, 0.95)' : 'rgba(255, 255, 255, 0.94)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.20)',
+                shadowColor: isDark ? '#000' : '#6E5ADC',
               },
             ]}
             onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalTitleGroup}>
-                <Ionicons name="folder" size={20} color={isDark ? colors.brandAccent : colors.blue} />
+                <View style={[styles.modalIconBox, { backgroundColor: isDark ? 'rgba(130, 140, 255, 0.16)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                  <Ionicons name="folder" size={18} color={isDark ? '#A594FD' : '#7C5CE0'} />
+                </View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Save New Location
                 </Text>
               </View>
               <Pressable
                 onPress={() => setAddModalVisible(false)}
-                hitSlop={8}>
-                <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+                hitSlop={8}
+                style={[styles.modalCloseBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}>
+                <Ionicons name="close" size={18} color={isDark ? colors.textMuted : colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -263,13 +266,13 @@ export default function MemoryScreen() {
                 value={newTitle}
                 onChangeText={setNewTitle}
                 placeholder="e.g. Dad's Passport, Extra Car Keys, Wi-Fi"
-                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+                placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
                 style={[
                   styles.formInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)',
+                    borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
                   },
                 ]}
               />
@@ -282,13 +285,13 @@ export default function MemoryScreen() {
                 value={newLocation}
                 onChangeText={setNewLocation}
                 placeholder="e.g. Master Bedroom > Top left drawer"
-                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+                placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
                 style={[
                   styles.formInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)',
+                    borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
                   },
                 ]}
               />
@@ -308,23 +311,19 @@ export default function MemoryScreen() {
                         styles.catSelectBtn,
                         {
                           backgroundColor: isSel
-                            ? colors.brandAccent
-                            : isDark
-                            ? 'rgba(255, 255, 255, 0.03)'
-                            : '#F1F5F9',
+                            ? (isDark ? '#8A6BF2' : '#7C5CE0')
+                            : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(124, 92, 224, 0.06)'),
                           borderColor: isSel
-                            ? colors.brandAccent
-                            : isDark
-                            ? 'rgba(130, 140, 255, 0.22)'
-                            : '#E2E8F0',
+                            ? 'transparent'
+                            : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
                         },
                       ]}>
                       <Text
                         style={[
                           styles.catSelectText,
                           {
-                            color: isSel ? '#FFFFFF' : colors.text,
-                            fontWeight: isSel ? '800' : '600',
+                            color: isSel ? '#FFFFFF' : (isDark ? '#C7CEEA' : '#4E5375'),
+                            fontWeight: isSel ? '700' : '600',
                           },
                         ]}>
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -336,21 +335,13 @@ export default function MemoryScreen() {
             </View>
 
             {/* Save Button */}
-            <Pressable
+            <PrimaryButton
+              label="Save to Family Vault"
               onPress={handleSaveMemory}
+              icon="checkmark-circle"
               disabled={!newTitle.trim() || !newLocation.trim()}
-              style={({ pressed }) => [
-                styles.saveSubmitBtn,
-                {
-                  backgroundColor: colors.brandAccent,
-                  opacity: !newTitle.trim() || !newLocation.trim() ? 0.45 : pressed ? 0.88 : 1,
-                },
-              ]}>
-              <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-              <Text style={[styles.saveSubmitBtnText, { color: '#FFFFFF' }]}>
-                Save to Family Vault
-              </Text>
-            </Pressable>
+              style={{ marginTop: 4 }}
+            />
           </Pressable>
         </Pressable>
       </Modal>
@@ -369,24 +360,37 @@ export default function MemoryScreen() {
               style={[
                 styles.modalCard,
                 {
-                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.96)' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
+                  backgroundColor: isDark ? 'rgba(16, 22, 60, 0.95)' : 'rgba(255, 255, 255, 0.94)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.20)',
+                  shadowColor: isDark ? '#000' : '#6E5ADC',
                 },
               ]}
               onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalHeaderRow}>
                 <View style={styles.modalTitleGroup}>
-                  <Text style={{ fontSize: 20 }}>{selectedDetailItem.emoji || '📌'}</Text>
+                  <View style={[styles.modalIconBox, { backgroundColor: isDark ? 'rgba(130, 140, 255, 0.16)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                    <Text style={{ fontSize: 18 }}>{selectedDetailItem.emoji || '📌'}</Text>
+                  </View>
                   <Text style={[styles.modalTitle, { color: colors.text }]}>
                     {selectedDetailItem.title}
                   </Text>
                 </View>
-                <Pressable onPress={() => setSelectedDetailItem(null)} hitSlop={8}>
-                  <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+                <Pressable
+                  onPress={() => setSelectedDetailItem(null)}
+                  hitSlop={8}
+                  style={[styles.modalCloseBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}>
+                  <Ionicons name="close" size={18} color={isDark ? colors.textMuted : colors.textSecondary} />
                 </Pressable>
               </View>
 
-              <View style={styles.detailInfoBox}>
+              <View
+                style={[
+                  styles.detailInfoBox,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(124, 92, 224, 0.05)',
+                    borderColor: isDark ? 'rgba(130, 140, 255, 0.18)' : 'rgba(124, 92, 224, 0.12)',
+                  },
+                ]}>
                 <View style={styles.detailRow}>
                   <Ionicons name="location" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
                   <Text style={[styles.detailRowText, { color: colors.text }]}>
@@ -396,7 +400,7 @@ export default function MemoryScreen() {
 
                 {selectedDetailItem.notes ? (
                   <View style={styles.detailRow}>
-                    <Ionicons name="document-text-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="document-text-outline" size={16} color={isDark ? '#A0A7D4' : '#6A6E94'} />
                     <Text style={[styles.detailRowText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                       {selectedDetailItem.notes}
                     </Text>
@@ -404,7 +408,7 @@ export default function MemoryScreen() {
                 ) : null}
 
                 <View style={styles.detailRow}>
-                  <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                  <Ionicons name="time-outline" size={16} color={isDark ? '#A0A7D4' : '#6A6E94'} />
                   <Text style={[styles.detailRowText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                     Last verified: {selectedDetailItem.lastVerified}
                   </Text>
@@ -419,22 +423,25 @@ export default function MemoryScreen() {
                     setSelectedDetailItem(null);
                     setDeleteTargetItem(toDelete);
                   }}
-                  style={[
+                  style={({ pressed }) => [
                     styles.detailDeleteBtn,
                     {
-                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
-                      borderColor: isDark ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.20)',
+                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+                      borderColor: isDark ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.22)',
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ scale: pressed ? 0.98 : 1 }],
                     },
                   ]}>
                   <Ionicons name="trash-outline" size={15} color="#EF4444" />
                   <Text style={styles.detailDeleteBtnText}>Delete</Text>
                 </Pressable>
 
-                <Pressable
-                  onPress={() => setSelectedDetailItem(null)}
-                  style={[styles.detailDoneBtn, { backgroundColor: colors.brandAccent }]}>
-                  <Text style={styles.detailDoneBtnText}>Done</Text>
-                </Pressable>
+                <View style={{ flex: 1.4 }}>
+                  <PrimaryButton
+                    label="Done"
+                    onPress={() => setSelectedDetailItem(null)}
+                  />
+                </View>
               </View>
             </Pressable>
           </Pressable>
@@ -487,7 +494,7 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(5, 8, 26, 0.68)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -499,10 +506,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 22,
     gap: 16,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
     elevation: 10,
   },
   modalHeaderRow: {
@@ -513,7 +519,22 @@ const styles = StyleSheet.create({
   modalTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    flex: 1,
+  },
+  modalIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalTitle: {
     fontSize: 18,
@@ -531,10 +552,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   formInput: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 13.5,
   },
   categorySelectRow: {
@@ -543,8 +564,9 @@ const styles = StyleSheet.create({
   },
   catSelectBtn: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
+    borderRadius: 999,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -552,22 +574,11 @@ const styles = StyleSheet.create({
   catSelectText: {
     fontSize: 12,
   },
-  saveSubmitBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 13,
-    borderRadius: 16,
-    marginTop: 6,
-  },
-  saveSubmitBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
   detailInfoBox: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
     gap: 10,
-    paddingVertical: 4,
   },
   detailRow: {
     flexDirection: 'row',
@@ -581,6 +592,7 @@ const styles = StyleSheet.create({
   },
   detailActionsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     marginTop: 6,
   },
@@ -591,24 +603,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
   },
   detailDeleteBtnText: {
     color: '#EF4444',
     fontSize: 13.5,
-    fontWeight: '700',
-  },
-  detailDoneBtn: {
-    flex: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 14,
-  },
-  detailDoneBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '700',
   },
 });

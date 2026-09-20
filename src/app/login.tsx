@@ -75,9 +75,8 @@ export default function LoginScreen() {
   // Animation Values
   const brandTranslateY = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? FrontPageTokens.timings.phase2LogoFinalScale : 1)).current;
+  const keyboardOpacity = useRef(new Animated.Value(1)).current;
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const isKeyboardActive = isKeyboardVisible || isInputFocused;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -342,21 +341,6 @@ export default function LoginScreen() {
     };
   }, []);
 
-  // Synchronous focus listener: fires the millisecond user taps any text bar
-  const handleFocusChange = useCallback((focused: boolean) => {
-    try {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    } catch (e) {}
-    setIsInputFocused(focused);
-    if (focused) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ y: 70, animated: true });
-      }, 60);
-    } else {
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, []);
-
   // Handle tap anywhere during Phase 1 to skip straight to Phase 2
   const handlePhase1Tap = () => {
     if (phase === 'phase1') {
@@ -521,8 +505,8 @@ export default function LoginScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + (isKeyboardActive ? 10 : finalTopY),
-            paddingBottom: isKeyboardActive ? Math.max(keyboardHeight, 280) + 120 : insets.bottom + 120,
+            paddingTop: insets.top + (isKeyboardVisible ? 10 : finalTopY),
+            paddingBottom: isKeyboardVisible ? keyboardHeight + 120 : insets.bottom + 120,
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -531,7 +515,7 @@ export default function LoginScreen() {
         {/* ========================================================================= */}
         {/* BRAND GROUP: LOGO + APP NAME + TAGLINE                                     */}
         {/* ========================================================================= */}
-        {isKeyboardActive ? (
+        {isKeyboardVisible ? (
           <View style={styles.brandGroupCompact}>
             <View style={styles.compactLogo}>
               <Image
@@ -552,6 +536,7 @@ export default function LoginScreen() {
             style={[
               styles.brandGroup,
               {
+                opacity: keyboardOpacity,
                 transform: [
                   { translateY: brandTranslateY },
                   { scale: brandScale },
@@ -643,20 +628,14 @@ export default function LoginScreen() {
           style={[
             styles.cardAnimatedWrapper,
             {
-              marginTop: isKeyboardActive ? 10 : FrontPageTokens.brandCardGap,
+              marginTop: isKeyboardVisible ? 10 : FrontPageTokens.brandCardGap,
               opacity: cardOpacity,
               transform: [{ translateY: cardTranslateY }],
             },
           ]}>
           <AuthCard
             interactive={true}
-            onFocusChange={handleFocusChange}
-            onStateChange={(nextState) => {
-              setAuthState(nextState);
-              if (nextState === 'choose') {
-                handleFocusChange(false);
-              }
-            }}
+            onStateChange={(nextState) => setAuthState(nextState)}
             onSuccess={(params) => {
               if (Platform.OS !== 'web') {
                 try {

@@ -118,9 +118,9 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
     }
   };
 
-  // Card bg colors matching reference
-  const cardBg   = isDark ? 'rgba(22,24,58,0.90)' : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  // Glass card bg and border tokens
+  const cardBg = isDark ? 'rgba(20, 27, 74, 0.76)' : 'rgba(255, 255, 255, 0.78)';
+  const cardBorder = isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.15)';
 
   return (
     <View style={styles.wrapper}>
@@ -139,14 +139,14 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
                 {
                   backgroundColor: cardBg,
                   borderColor: cardBorder,
-                  opacity: pressed ? 0.82 : 1,
+                  opacity: pressed ? 0.84 : 1,
                   transform: [{ scale: pressed ? 0.975 : 1 }],
-                  shadowColor: isDark ? '#000' : '#6366F1',
+                  shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
                 },
               ]}>
               {/* Colored rounded-square icon box */}
               <View style={[styles.iconBox, { backgroundColor: boxBg, borderColor: boxBorder }]}>
-                <Ionicons name={a.icon} size={22} color={iconColor} />
+                <Ionicons name={a.icon} size={20} color={iconColor} />
               </View>
 
               {/* Text */}
@@ -160,7 +160,7 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
               </View>
 
               {/* Chevron */}
-              <Ionicons name="chevron-forward" size={16} color={isDark ? colors.textMuted : '#94A3B8'} />
+              <Ionicons name="chevron-forward" size={15} color={isDark ? colors.textTertiary : '#7A7DB0'} />
             </Pressable>
           );
         })}
@@ -179,16 +179,16 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 13,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 3,
   },
   iconBox: {
-    width: 44, height: 44,
-    borderRadius: 12,
+    width: 42, height: 42,
+    borderRadius: 13,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, Platform } from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, Platform, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { Radius } from '@/constants/theme';
 
 interface SecondaryButtonProps {
   label: string;
@@ -10,6 +11,7 @@ interface SecondaryButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  size?: 'normal' | 'large' | 'elderly';
 }
 
 export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
@@ -19,8 +21,9 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   disabled = false,
   style,
   textStyle,
+  size = 'normal',
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
 
   const handlePress = () => {
     if (disabled) return;
@@ -32,6 +35,18 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
     onPress();
   };
 
+  const isLarge = size === 'large' || isElderly;
+
+  const resolvedBg = isDark
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(255, 255, 255, 0.75)';
+
+  const resolvedBorder = isDark
+    ? 'rgba(139, 124, 246, 0.45)'
+    : 'rgba(124, 92, 224, 0.28)';
+
+  const resolvedText = isDark ? '#8B7CF6' : '#6D5BD0';
+
   return (
     <Pressable
       onPress={handlePress}
@@ -39,22 +54,28 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: isElderly ? colors.cardBackground : colors.separator,
-          borderColor: colors.border,
-          minHeight: isElderly ? 54 : 44,
-          borderRadius: isElderly ? 16 : 12,
-          opacity: pressed ? 0.75 : 1,
+          backgroundColor: resolvedBg,
+          borderColor: resolvedBorder,
+          minHeight: isLarge ? 54 : 44,
+          borderRadius: Radius.full,
+          opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
+          transform: [{ scale: pressed && !disabled ? 0.975 : 1 }],
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.20 : 0.08,
+          shadowRadius: 6,
+          elevation: 2,
         },
         style,
       ]}>
-      {icon && <>{icon}</>}
+      {icon && <View style={styles.iconWrap}>{icon}</View>}
       <Text
         style={[
           styles.text,
           {
-            color: colors.text,
-            fontSize: isElderly ? 17 : 14,
-            fontWeight: isElderly ? '700' : '600',
+            color: resolvedText,
+            fontSize: isLarge ? 17 : 14.5,
+            fontWeight: '700',
           },
           textStyle,
         ]}>
@@ -69,11 +90,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderWidth: 1,
-    gap: 6,
+    gap: 8,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     textAlign: 'center',
+    letterSpacing: 0.1,
   },
 });

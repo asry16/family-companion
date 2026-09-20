@@ -37,7 +37,6 @@ export interface AuthCardProps {
   style?: StyleProp<ViewStyle>;
   interactive?: boolean;
   onStateChange?: (state: AuthCardState) => void;
-  onFocusChange?: (isFocused: boolean) => void;
 }
 
 export const AuthCard: React.FC<AuthCardProps> = ({
@@ -51,7 +50,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   style,
   interactive = true,
   onStateChange,
-  onFocusChange,
 }) => {
   const { colors, isDark } = useAppTheme();
   const { setSimpleMode } = useFamily();
@@ -102,16 +100,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // Field Focus States
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const handleFieldFocus = (field: string) => {
-    setFocusedField(field);
-    onFocusChange?.(true);
-  };
-
-  const handleFieldBlur = () => {
-    setFocusedField(null);
-    onFocusChange?.(false);
-  };
-
   // Field Input Refs for direct touch response and keyboard navigation
   const signInEmailRef = useRef<TextInput>(null);
   const signInPasswordRef = useRef<TextInput>(null);
@@ -130,8 +118,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // Sliding transition between card states
   const switchState = (nextState: AuthCardState) => {
     Keyboard.dismiss();
-    setFocusedField(null);
-    onFocusChange?.(false);
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -654,8 +640,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       setSignInEmail(t);
                       if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
                     }}
-                    onFocus={() => handleFieldFocus('email')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Email address"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="email-address"
@@ -692,8 +678,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       setSignInPassword(t);
                       if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
                     }}
-                    onFocus={() => handleFieldFocus('password')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Password"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignInPassword}
@@ -842,8 +828,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       setSignUpName(t);
                       if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
                     }}
-                    onFocus={() => handleFieldFocus('name')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('name')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Full name"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     autoCapitalize="words"
@@ -887,8 +873,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         setErrors((prev) => ({ ...prev, contact: '', general: '' }));
                       }
                     }}
-                    onFocus={() => handleFieldFocus('contact')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('contact')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Email address or phone number *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="email-address"
@@ -922,8 +908,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     ref={dobInputRef}
                     value={signUpDob}
                     onChangeText={handleDobChange}
-                    onFocus={() => handleFieldFocus('dob')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('dob')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Date of birth (YYYY/MM/DD)"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="number-pad"
@@ -1030,8 +1016,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       setSignUpPassword(t);
                       if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
                     }}
-                    onFocus={() => handleFieldFocus('password')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Password (minimum 8 characters)"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignUpPassword}
@@ -1084,8 +1070,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       setSignUpConfirmPassword(t);
                       if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: '' }));
                     }}
-                    onFocus={() => handleFieldFocus('confirmPassword')}
-                    onBlur={handleFieldBlur}
+                    onFocus={() => setFocusedField('confirmPassword')}
+                    onBlur={() => setFocusedField(null)}
                     placeholder="Confirm password *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignUpConfirmPassword}
@@ -1156,8 +1142,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         ref={inviteCodeRef}
                         value={signUpInviteCode}
                         onChangeText={setSignUpInviteCode}
-                        onFocus={() => handleFieldFocus('inviteCode')}
-                        onBlur={handleFieldBlur}
+                        onFocus={() => setFocusedField('inviteCode')}
+                        onBlur={() => setFocusedField(null)}
                         placeholder="e.g. KIN-9428"
                         placeholderTextColor={themeTokens.inputPlaceholder}
                         autoCapitalize="characters"
@@ -1332,8 +1318,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     handleVerifySignUpOtp(clean);
                   }
                 }}
-                onFocus={() => handleFieldFocus('otp')}
-                onBlur={handleFieldBlur}
+                onFocus={() => setFocusedField('otp')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="• • • • • •"
                 placeholderTextColor={themeTokens.inputPlaceholder}
                 keyboardType="number-pad"

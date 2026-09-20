@@ -27,21 +27,30 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onSecondaryAction,
   style,
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.borderSubtle,
+          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.72)' : 'rgba(255, 255, 255, 0.75)',
+          borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
+          shadowOpacity: isDark ? 0.35 : 0.10,
         },
         style,
       ]}>
       {badge ? (
-        <View style={[styles.badgePill, { backgroundColor: colors.brandWarm + '18' }]}>
-          <Text style={[styles.badgeText, { color: colors.brandWarm }]}>{badge}</Text>
+        <View
+          style={[
+            styles.badgePill,
+            {
+              backgroundColor: isDark ? 'rgba(251, 146, 60, 0.18)' : 'rgba(249, 115, 22, 0.10)',
+              borderColor: isDark ? 'rgba(251, 146, 60, 0.35)' : 'rgba(249, 115, 22, 0.22)',
+            },
+          ]}>
+          <Text style={[styles.badgeText, { color: isDark ? '#FB923C' : '#EA580C' }]}>{badge}</Text>
         </View>
       ) : null}
 
@@ -49,11 +58,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         style={[
           styles.iconCircle,
           {
-            backgroundColor: colors.brandAccent + '15',
-            borderColor: colors.brandAccent + '30',
+            backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.10)',
+            borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.22)',
+            shadowColor: isDark ? '#8B7CF6' : '#7C5CE0',
           },
         ]}>
-        <Ionicons name={icon} size={34} color={colors.brandAccent} />
+        <Ionicons name={icon} size={32} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
       </View>
 
       <Text
@@ -71,7 +81,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         style={[
           styles.description,
           {
-            color: colors.textSecondary,
+            color: isDark ? colors.textMuted : colors.textSecondary,
             fontSize: isElderly ? 16 : 14,
           },
         ]}>
@@ -89,7 +99,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {secondaryActionLabel && onSecondaryAction ? (
         <Text
           onPress={onSecondaryAction}
-          style={[styles.secondaryButtonText, { color: colors.brandAccent }]}>
+          style={[styles.secondaryButtonText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
           {secondaryActionLabel}
         </Text>
       ) : null}
@@ -101,26 +111,25 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 36,
     paddingHorizontal: 28,
-    borderRadius: 24,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     marginVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 3,
   },
   badgePill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 4.5,
     borderRadius: 12,
-    marginBottom: 14,
+    borderWidth: 1,
+    marginBottom: 16,
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
@@ -132,6 +141,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   title: {
     fontWeight: '700',
@@ -151,7 +164,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     marginTop: 14,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
   },
 });

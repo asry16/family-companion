@@ -7,9 +7,12 @@ import {
   TextStyle,
   ActivityIndicator,
   Platform,
+  View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { Radius } from '@/constants/theme';
 
 interface PrimaryButtonProps {
   label: string;
@@ -34,40 +37,76 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   textStyle,
   size = 'normal',
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
 
   const handlePress = () => {
     if (disabled || loading) return;
     if (Platform.OS !== 'web') {
       try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(
+          variant === 'red'
+            ? Haptics.ImpactFeedbackStyle.Medium
+            : Haptics.ImpactFeedbackStyle.Light
+        );
       } catch (e) {}
     }
     onPress();
   };
 
-  const getBgColor = () => {
-    if (disabled) return colors.separator;
+  const isLarge = size === 'large' || isElderly;
+
+  const getGradientColors = (): readonly [string, string, ...string[]] => {
+    if (disabled) {
+      return isDark
+        ? ['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.05)']
+        : ['rgba(124, 92, 224, 0.12)', 'rgba(124, 92, 224, 0.08)'];
+    }
+    if (isElderly && variant === 'brand') {
+      return ['#FDE047', '#FACC15'];
+    }
     switch (variant) {
       case 'green':
-        return colors.green;
+        return ['#2DD4BF', '#22C58B'];
       case 'red':
-        return colors.red;
+        return ['#FF4D7A', '#E11D48'];
       case 'blue':
-        return colors.blue;
       case 'brand':
       default:
-        return isElderly ? '#FDE047' : colors.brand;
+        return ['#4F8EF7', '#8A6BF2'];
+    }
+  };
+
+  const getGlowColor = (): string | undefined => {
+    if (disabled) return undefined;
+    if (isElderly && variant === 'brand') return '#FDE047';
+    switch (variant) {
+      case 'green':
+        return isDark ? 'rgba(45, 212, 191, 0.40)' : 'rgba(46, 191, 142, 0.35)';
+      case 'red':
+        return isDark ? 'rgba(255, 77, 122, 0.45)' : 'rgba(225, 29, 72, 0.30)';
+      case 'blue':
+      case 'brand':
+      default:
+        return isDark ? 'rgba(79, 142, 247, 0.40)' : '#8A6BF2';
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return colors.textMuted;
+    if (disabled) return isDark ? 'rgba(255, 255, 255, 0.35)' : colors.textMuted;
     if (isElderly && variant === 'brand') return '#000000';
     return '#FFFFFF';
   };
 
-  const isLarge = size === 'large' || isElderly;
+  const glow = getGlowColor();
+  const glowStyle: ViewStyle = glow
+    ? {
+        shadowColor: glow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.40 : 0.28,
+        shadowRadius: 10,
+        elevation: 4,
+      }
+    : {};
 
   return (
     <Pressable
@@ -76,31 +115,38 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: getBgColor(),
-          minHeight: isLarge ? 58 : 48,
-          borderRadius: isLarge ? 18 : 14,
-          opacity: pressed ? 0.88 : 1,
+          minHeight: isLarge ? 56 : 46,
+          borderRadius: Radius.full,
+          opacity: disabled ? 0.6 : pressed ? 0.90 : 1,
+          transform: [{ scale: pressed && !disabled ? 0.975 : 1 }],
+          ...glowStyle,
         },
         style,
       ]}>
+      <LinearGradient
+        colors={getGradientColors()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[StyleSheet.absoluteFill, { borderRadius: Radius.full }]}
+      />
       {loading ? (
         <ActivityIndicator color={getTextColor()} />
       ) : (
-        <>
-          {icon && <>{icon}</>}
+        <View style={styles.contentRow}>
+          {icon && <View style={styles.iconWrap}>{icon}</View>}
           <Text
             style={[
               styles.text,
               {
                 color: getTextColor(),
-                fontSize: isLarge ? 18 : 15,
-                fontWeight: isLarge ? '700' : '600',
+                fontSize: isLarge ? 17 : 15,
+                fontWeight: '700',
               },
               textStyle,
             ]}>
             {label}
           </Text>
-        </>
+        </View>
       )}
     </Pressable>
   );
@@ -108,14 +154,24 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+    position: 'relative',
+  },
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
     gap: 8,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     textAlign: 'center',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
 });
