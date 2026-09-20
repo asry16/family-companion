@@ -157,29 +157,6 @@
       gap: 16px;
     }
 
-    .time-tracker {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 5px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      color: #E2E8F0;
-    }
-
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
-      animation: blink 1.6s infinite;
-    }
-
     .slide-step-counter {
       font-size: 13px;
       font-weight: 600;
@@ -602,10 +579,6 @@
       </div>
 
       <div class="deck-meta-right">
-        <div class="time-tracker" id="timerBadge" title="Click to start/pause timer (T)">
-          <div class="live-dot" id="liveDot"></div>
-          <span id="timeText">00:00 / 03:00</span>
-        </div>
         <div class="slide-step-counter" id="stepCounter">01 / 05</div>
       </div>
     </header>
@@ -932,13 +905,7 @@
     let activeSlideIndex = 1;
     const totalSlideCount = 5;
 
-    // Timer logic (< 3 min target)
-    let elapsedSeconds = 0;
-    let timerRef = null;
-    let isTimerActive = false;
-
     function renderSlide() {
-      // Toggle active slide
       document.querySelectorAll('.slide-card').forEach((el, index) => {
         if (index + 1 === activeSlideIndex) {
           el.classList.add('active');
@@ -947,7 +914,6 @@
         }
       });
 
-      // Toggle active dot
       document.querySelectorAll('.step-dot').forEach((el, index) => {
         if (index + 1 === activeSlideIndex) {
           el.classList.add('active');
@@ -956,17 +922,10 @@
         }
       });
 
-      // Update counter
       document.getElementById('stepCounter').innerText = `0${activeSlideIndex} / 0${totalSlideCount}`;
 
-      // Update progress fill
       const percent = (activeSlideIndex / totalSlideCount) * 100;
       document.getElementById('progressFill').style.width = `${percent}%`;
-
-      // Auto start timer on first advance if not already running
-      if (!isTimerActive && elapsedSeconds === 0) {
-        startTimer();
-      }
     }
 
     function nextSlide() {
@@ -990,42 +949,6 @@
       }
     }
 
-    function startTimer() {
-      if (isTimerActive) return;
-      isTimerActive = true;
-      document.getElementById('liveDot').style.display = 'block';
-      timerRef = setInterval(() => {
-        elapsedSeconds++;
-        updateTimerDisplay();
-      }, 1000);
-    }
-
-    function pauseTimer() {
-      isTimerActive = false;
-      clearInterval(timerRef);
-      document.getElementById('liveDot').style.display = 'none';
-    }
-
-    function toggleTimer() {
-      if (isTimerActive) pauseTimer();
-      else startTimer();
-    }
-
-    function updateTimerDisplay() {
-      const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
-      const secs = (elapsedSeconds % 60).toString().padStart(2, '0');
-      const target = document.getElementById('timeText');
-      target.innerText = `${mins}:${secs} / 03:00`;
-
-      if (elapsedSeconds > 180) {
-        target.style.color = '#F43F5E'; // Red when over 3 mins
-      } else if (elapsedSeconds > 150) {
-        target.style.color = '#FBBF24'; // Warning amber at 2:30
-      } else {
-        target.style.color = '#E2E8F0';
-      }
-    }
-
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -1044,12 +967,8 @@
         prevSlide();
       } else if (e.key.toLowerCase() === 'f') {
         toggleFullscreen();
-      } else if (e.key.toLowerCase() === 't') {
-        toggleTimer();
       }
     });
-
-    document.getElementById('timerBadge').addEventListener('click', toggleTimer);
   </script>
 </body>
 </html>
