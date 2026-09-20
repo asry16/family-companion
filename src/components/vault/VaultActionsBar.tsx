@@ -1,16 +1,8 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  Alert,
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { useAppTheme } from '@/context/ThemeContext';
 import { MemoryItem } from '@/types';
 
@@ -20,190 +12,155 @@ interface VaultActionsBarProps {
   onAddFiles: (item: Omit<MemoryItem, 'id'>) => void;
 }
 
+// Reference-matched action definitions
 const ACTIONS = [
   {
     id: 'files',
     icon: 'folder-open-outline' as const,
     label: 'Add from Files',
     subtitle: 'PDF, images & docs',
-    color: '#3B82F6',
-    darkColor: '#60A5FA',
-    bg: 'rgba(59,130,246,0.14)',
-    darkBg: 'rgba(96,165,250,0.16)',
-    border: 'rgba(59,130,246,0.25)',
-    darkBorder: 'rgba(96,165,250,0.30)',
+    lightIconColor: '#6366F1',
+    darkIconColor:  '#818CF8',
+    lightBg:   'rgba(99,102,241,0.13)',
+    darkBg:    'rgba(99,102,241,0.22)',
+    lightBorder: 'rgba(99,102,241,0.22)',
+    darkBorder:  'rgba(99,102,241,0.38)',
   },
   {
     id: 'scan',
     icon: 'scan-outline' as const,
     label: 'Scan Document',
     subtitle: 'Camera or gallery',
-    color: '#7C5CE0',
-    darkColor: '#A78BFA',
-    bg: 'rgba(124,92,224,0.14)',
-    darkBg: 'rgba(167,139,250,0.16)',
-    border: 'rgba(124,92,224,0.25)',
-    darkBorder: 'rgba(167,139,250,0.30)',
+    lightIconColor: '#3B82F6',
+    darkIconColor:  '#60A5FA',
+    lightBg:   'rgba(59,130,246,0.12)',
+    darkBg:    'rgba(59,130,246,0.22)',
+    lightBorder: 'rgba(59,130,246,0.20)',
+    darkBorder:  'rgba(59,130,246,0.35)',
   },
   {
     id: 'details',
     icon: 'create-outline' as const,
     label: 'Save Details',
     subtitle: 'Location & notes',
-    color: '#059669',
-    darkColor: '#34D399',
-    bg: 'rgba(16,185,129,0.14)',
-    darkBg: 'rgba(52,211,153,0.16)',
-    border: 'rgba(16,185,129,0.25)',
-    darkBorder: 'rgba(52,211,153,0.30)',
+    lightIconColor: '#16A34A',
+    darkIconColor:  '#4ADE80',
+    lightBg:   'rgba(22,163,74,0.12)',
+    darkBg:    'rgba(74,222,128,0.18)',
+    lightBorder: 'rgba(22,163,74,0.20)',
+    darkBorder:  'rgba(74,222,128,0.32)',
   },
   {
     id: 'star',
     icon: 'star-outline' as const,
     label: 'Star Important',
     subtitle: 'Shared with family',
-    color: '#D97706',
-    darkColor: '#FBBF24',
-    bg: 'rgba(217,119,6,0.14)',
-    darkBg: 'rgba(251,191,36,0.16)',
-    border: 'rgba(217,119,6,0.25)',
-    darkBorder: 'rgba(251,191,36,0.30)',
+    lightIconColor: '#D97706',
+    darkIconColor:  '#FBBF24',
+    lightBg:   'rgba(217,119,6,0.12)',
+    darkBg:    'rgba(251,191,36,0.18)',
+    lightBorder: 'rgba(217,119,6,0.22)',
+    darkBorder:  'rgba(251,191,36,0.32)',
   },
 ] as const;
 
 export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
-  onAddDetails,
-  onScanPress,
-  onAddFiles,
+  onAddDetails, onScanPress, onAddFiles,
 }) => {
-  const { colors, isDark, isElderly } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
 
-  const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Medium) => {
-    if (Platform.OS !== 'web') {
-      try { Haptics.impactAsync(style); } catch (e) {}
-    }
+  const tap = (fn: () => void, s = Haptics.ImpactFeedbackStyle.Medium) => {
+    if (Platform.OS !== 'web') { try { Haptics.impactAsync(s); } catch (_) {} }
+    fn();
   };
 
-  const handleFilePicker = async () => {
-    triggerHaptic();
+  const handleFiles = async () => {
+    tap(() => {});
     if (Platform.OS === 'web') {
-      Alert.alert('File Picker', 'File picking is not available on web. Please use the mobile app.');
+      Alert.alert('Not available', 'Use the mobile app to pick files.');
       return;
     }
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*', 'application/msword', '*/*'],
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const ext = asset.name?.split('.').pop()?.toLowerCase() || '';
+      const res = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+      if (!res.canceled && res.assets?.length) {
+        const a = res.assets[0];
+        const ext = (a.name?.split('.').pop() || '').toLowerCase();
         const fileType: MemoryItem['fileType'] =
-          ext === 'pdf' ? 'pdf' :
-          ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? 'image' : 'other';
-
+          ext === 'pdf' ? 'pdf' : ['jpg','jpeg','png','gif','webp'].includes(ext) ? 'image' : 'other';
         onAddFiles({
-          title: asset.name || 'Uploaded File',
+          title: a.name || 'Uploaded File',
           category: 'documents',
           savedLocation: 'Family Vault — Files',
           lastVerified: 'Just now',
-          notes: `File uploaded from device`,
-          tags: ['file', fileType, 'upload'],
+          notes: 'File uploaded from device',
+          tags: ['file', fileType],
           relatedMemberIds: [],
           emoji: fileType === 'pdf' ? '📄' : fileType === 'image' ? '🖼️' : '📁',
-          fileUri: asset.uri,
-          fileType,
-          fileName: asset.name,
+          fileUri: a.uri, fileType, fileName: a.name,
         });
-
-        if (Platform.OS !== 'web') {
-          try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-        }
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (_) {}
       }
-    } catch (err) {
-      // Cancelled or permission denied — silent fail
-    }
+    } catch (_) {}
   };
 
   const handleStar = () => {
-    triggerHaptic();
-    Alert.alert(
-      '⭐ Star Important Items',
-      'Tap the star (☆) icon on any saved item below to mark it as important. Starred items appear at the top and are highlighted for all family members.',
-      [{ text: 'Got it', style: 'default' }]
-    );
+    Alert.alert('⭐ Star Important Items',
+      'Tap the ☆ star icon on any saved item to mark it important. Starred items appear at the top for everyone in your family.',
+      [{ text: 'Got it' }]);
   };
 
   const handlePress = (id: string) => {
     switch (id) {
-      case 'files':
-        handleFilePicker();
-        break;
-      case 'scan':
-        triggerHaptic();
-        onScanPress();
-        break;
-      case 'details':
-        triggerHaptic();
-        onAddDetails();
-        break;
-      case 'star':
-        handleStar();
-        break;
+      case 'files':   handleFiles(); break;
+      case 'scan':    tap(onScanPress); break;
+      case 'details': tap(onAddDetails); break;
+      case 'star':    handleStar(); break;
     }
   };
 
+  // Card bg colors matching reference
+  const cardBg   = isDark ? 'rgba(22,24,58,0.90)' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
       <View style={styles.grid}>
-        {ACTIONS.map((action) => {
-          const color = isDark ? action.darkColor : action.color;
-          const bg = isDark ? action.darkBg : action.bg;
-          const border = isDark ? action.darkBorder : action.border;
+        {ACTIONS.map((a) => {
+          const iconColor = isDark ? a.darkIconColor : a.lightIconColor;
+          const boxBg     = isDark ? a.darkBg : a.lightBg;
+          const boxBorder = isDark ? a.darkBorder : a.lightBorder;
 
           return (
             <Pressable
-              key={action.id}
-              onPress={() => handlePress(action.id)}
+              key={a.id}
+              onPress={() => handlePress(a.id)}
               style={({ pressed }) => [
-                styles.actionCard,
+                styles.card,
                 {
-                  backgroundColor: isDark ? colors.cardBackground : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(130,140,255,0.20)' : 'rgba(124,92,224,0.12)',
-                  opacity: pressed ? 0.85 : 1,
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                  backgroundColor: cardBg,
+                  borderColor: cardBorder,
+                  opacity: pressed ? 0.82 : 1,
+                  transform: [{ scale: pressed ? 0.975 : 1 }],
+                  shadowColor: isDark ? '#000' : '#6366F1',
                 },
               ]}>
-              {/* Icon Circle */}
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: bg, borderColor: border },
-                ]}>
-                <Ionicons name={action.icon} size={20} color={color} />
+              {/* Colored rounded-square icon box */}
+              <View style={[styles.iconBox, { backgroundColor: boxBg, borderColor: boxBorder }]}>
+                <Ionicons name={a.icon} size={22} color={iconColor} />
               </View>
 
-              {/* Labels */}
-              <View style={styles.labelStack}>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.actionLabel,
-                    { color: colors.text, fontSize: isElderly ? 14 : 12.5 },
-                  ]}>
-                  {action.label}
+              {/* Text */}
+              <View style={styles.textCol}>
+                <Text numberOfLines={1} style={[styles.label, { color: colors.text }]}>
+                  {a.label}
                 </Text>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.actionSub,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
-                  ]}>
-                  {action.subtitle}
+                <Text numberOfLines={1} style={[styles.sublabel, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                  {a.subtitle}
                 </Text>
               </View>
+
+              {/* Chevron */}
+              <Ionicons name="chevron-forward" size={16} color={isDark ? colors.textMuted : '#94A3B8'} />
             </Pressable>
           );
         })}
@@ -213,47 +170,30 @@ export const VaultActionsBar: React.FC<VaultActionsBarProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    marginVertical: 4,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  actionCard: {
-    width: '48%',
-    borderRadius: 20,
-    borderWidth: 1.2,
-    padding: 14,
-    gap: 10,
+  wrapper: { paddingHorizontal: 16, marginTop: 4, marginBottom: 2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  card: {
+    width: '48.2%',
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
     shadowRadius: 8,
     elevation: 2,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  iconBox: {
+    width: 44, height: 44,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  labelStack: {
-    flex: 1,
-    gap: 2,
-  },
-  actionLabel: {
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  actionSub: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
+  textCol: { flex: 1, gap: 2 },
+  label:    { fontSize: 13, fontWeight: '700', letterSpacing: -0.2 },
+  sublabel: { fontSize: 11, fontWeight: '500' },
 });

@@ -1,19 +1,12 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
-import { useAuth } from '@/context/AuthContext';
-import { IconCircleButton } from '@/components/ui/IconCircleButton';
 
 interface VaultHeaderProps {
   onOpenSettings?: () => void;
@@ -23,107 +16,67 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme } = useAppTheme();
-  const { profile, unreadCount } = useFamily();
-  const { user } = useAuth();
+  const { unreadCount } = useFamily();
 
-  const initial = (user?.name?.trim().charAt(0) || profile?.name?.trim().charAt(0) || 'K').toUpperCase();
+  const tap = (fn: () => void, style = Haptics.ImpactFeedbackStyle.Light) => {
+    if (Platform.OS !== 'web') { try { Haptics.impactAsync(style); } catch (_) {} }
+    fn();
+  };
 
-  const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
-    }
+  const iconBtnStyle = {
+    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(109,91,208,0.10)',
+    borderColor: isDark ? 'rgba(140,150,255,0.22)' : 'rgba(109,91,208,0.18)',
   };
 
   return (
-    <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) }]}>
-      <View style={styles.topRow}>
-        {/* Left: Avatar "A" with Green Check Badge + Title "Family Hub" & Subtitle */}
-        <View style={styles.leftIdentityCluster}>
-          {/* Circular Avatar with Green Check Badge */}
-          <View style={styles.avatarContainer}>
-            <View
-              style={[
-                styles.avatarCircle,
-                {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F0FC',
-                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
-                },
-              ]}>
-              <Text
-                style={[
-                  styles.avatarText,
-                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
-                ]}>
-                {initial}
-              </Text>
-            </View>
-            {/* Green Check Badge */}
-            <View style={[styles.checkBadgeWrap, { backgroundColor: colors.green }]}>
-              <Ionicons name="checkmark" size={9} color="#FFFFFF" />
-            </View>
-          </View>
+    <View style={[styles.container, { paddingTop: Math.max(insets.top + 2, Platform.OS === 'ios' ? 12 : 8) }]}>
+      <View style={styles.row}>
 
-          {/* Title & Subtitle */}
-          <View style={styles.titleColumn}>
-            <Text
-              style={[
-                styles.screenTitle,
-                { color: colors.text, fontSize: 19.5 },
-              ]}>
-              Family Hub
-            </Text>
-            <Text
-              style={[
-                styles.screenSubtitle,
-                { color: isDark ? colors.textMuted : colors.textSecondary },
-              ]}>
+        {/* Shield + Title */}
+        <View style={styles.left}>
+          <LinearGradient
+            colors={isDark ? ['#5B5FD6', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={styles.shieldGradient}>
+            <Ionicons name="shield-checkmark" size={21} color="#FFFFFF" />
+          </LinearGradient>
+
+          <View style={styles.titleBlock}>
+            <Text style={[styles.title, { color: colors.text }]}>Vault</Text>
+            <Text style={[styles.subtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
               Your family's shared space
             </Text>
           </View>
         </View>
 
-        {/* Right: Actions (Theme Toggle, Bell, Settings) */}
-        <View style={styles.rightActionCluster}>
-          {/* Theme Toggle Button (sun in light mode, moon in dark mode) */}
-          <IconCircleButton
-            name={isDark ? 'sunny' : 'moon'}
-            size={40}
-            iconSize={18}
-            color={isDark ? '#FBBF24' : '#7C5CE0'}
-            glowColor={isDark ? '#FBBF24' : undefined}
-            onPress={toggleTheme}
-            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-          />
+        {/* Right icon buttons */}
+        <View style={styles.right}>
+          {/* Theme toggle */}
+          <Pressable
+            hitSlop={6}
+            onPress={() => tap(toggleTheme)}
+            style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
+            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#FBBF24' : '#6D5BD0'} />
+          </Pressable>
 
-          {/* Bell with Red Badge "1" */}
-          <IconCircleButton
-            name="notifications-outline"
-            size={40}
-            iconSize={18}
-            color={isDark ? '#C9CEFF' : '#6D5BD0'}
-            badgeCount={unreadCount > 0 ? unreadCount : 1}
-            badgeColor={colors.red}
-            onPress={() => router.push('/modal/notifications')}
-            accessibilityLabel="Notifications"
-          />
+          {/* Bell */}
+          <Pressable
+            hitSlop={6}
+            onPress={() => tap(() => router.push('/modal/notifications'))}
+            style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
+            <Ionicons name="notifications-outline" size={16} color={isDark ? '#C9CEFF' : '#6D5BD0'} />
+            <View style={styles.badge}>
+              <Text style={styles.badgeTxt}>{unreadCount > 0 ? Math.min(unreadCount, 9) : 1}</Text>
+            </View>
+          </Pressable>
 
-          {/* Settings Gear */}
-          <IconCircleButton
-            name="settings-outline"
-            size={40}
-            iconSize={18}
-            color={isDark ? '#C9CEFF' : '#6D5BD0'}
-            onPress={() => {
-              if (onOpenSettings) {
-                onOpenSettings();
-              } else {
-                router.push('/modal/family-settings');
-              }
-            }}
-            accessibilityLabel="Settings"
-          />
+          {/* Settings */}
+          <Pressable
+            hitSlop={6}
+            onPress={() => tap(() => onOpenSettings ? onOpenSettings() : router.push('/modal/family-settings'))}
+            style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
+            <Ionicons name="settings-outline" size={16} color={isDark ? '#C9CEFF' : '#6D5BD0'} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -131,64 +84,29 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    paddingHorizontal: 18,
-    paddingBottom: 6,
+  container: { paddingHorizontal: 18, paddingBottom: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  shieldGradient: {
+    width: 48, height: 48, borderRadius: 24,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 5,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  leftIdentityCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  avatarContainer: {
+  titleBlock: { flex: 1, gap: 1 },
+  title: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+  subtitle: { fontSize: 12, fontWeight: '500' },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
     position: 'relative',
   },
-  avatarCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  badge: {
+    position: 'absolute', top: -3, right: -3,
+    minWidth: 15, height: 15, borderRadius: 8,
+    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 3, borderWidth: 1.5, borderColor: '#FFFFFF',
   },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  checkBadgeWrap: {
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  titleColumn: {
-    flex: 1,
-    gap: 1,
-  },
-  screenTitle: {
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  screenSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  rightActionCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
+  badgeTxt: { color: '#FFF', fontSize: 8, fontWeight: '800' },
 });

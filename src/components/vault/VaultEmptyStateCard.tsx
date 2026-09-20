@@ -1,17 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Animated,
-  Platform,
+  View, Text, StyleSheet, Pressable, Animated, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
-import { GlassCard } from '@/components/ui/GlassCard';
 
 interface VaultEmptyStateCardProps {
   onSaveFirstLocation: () => void;
@@ -21,6 +15,91 @@ interface VaultEmptyStateCardProps {
   buttonLabel?: string;
   isSearchEmpty?: boolean;
 }
+
+// Illustrated stacked folder component
+const FolderIllustration: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, { toValue: 1, duration: 2400, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2400, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [floatAnim]);
+
+  const translateY = floatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -7] });
+
+  // Folder colors for light and dark modes - matching reference
+  const back  = isDark ? { bg: '#1E2063', tab: '#252870', border: 'rgba(99,102,241,0.30)' }
+                       : { bg: '#C7CAF5', tab: '#D2D5F8', border: 'rgba(99,102,241,0.25)' };
+  const mid   = isDark ? { bg: '#2A2D7A', tab: '#323594', border: 'rgba(99,102,241,0.35)' }
+                       : { bg: '#A5A9ED', tab: '#B4B8F2', border: 'rgba(99,102,241,0.30)' };
+  const front = isDark
+    ? ['#4F46E5', '#6366F1'] as const
+    : ['#6366F1', '#8B5CF6'] as const;
+
+  const sparkleColor = isDark ? '#818CF8' : '#6366F1';
+
+  return (
+    <View style={folderStyles.outerContainer}>
+      {/* Decorative leaf — left */}
+      <View style={[folderStyles.leaf, folderStyles.leafLeft]}>
+        <Ionicons name="leaf" size={52} color={isDark ? '#1A1D54' : '#C7CAF5'} style={{ transform: [{ rotate: '-30deg' }] }} />
+        <Ionicons name="leaf" size={36} color={isDark ? '#1C1F5C' : '#D2D5F8'} style={{ transform: [{ rotate: '-60deg' }, { translateX: 8 }] }} />
+      </View>
+
+      {/* Decorative leaf — right */}
+      <View style={[folderStyles.leaf, folderStyles.leafRight]}>
+        <Ionicons name="leaf" size={52} color={isDark ? '#1A1D54' : '#C7CAF5'} style={{ transform: [{ rotate: '30deg' }] }} />
+        <Ionicons name="leaf" size={36} color={isDark ? '#1C1F5C' : '#D2D5F8'} style={{ transform: [{ rotate: '60deg' }, { translateX: -8 }] }} />
+      </View>
+
+      {/* Floating illustrated folder cluster */}
+      <Animated.View style={[folderStyles.cluster, { transform: [{ translateY }] }]}>
+        {/* Sparkle decorations */}
+        <Text style={[folderStyles.spark, folderStyles.sparkTL, { color: sparkleColor }]}>✦</Text>
+        <Text style={[folderStyles.spark, folderStyles.sparkTR, { color: sparkleColor, opacity: 0.6 }]}>✧</Text>
+        <Text style={[folderStyles.spark, folderStyles.sparkBL, { color: sparkleColor, opacity: 0.5 }]}>✦</Text>
+        <Text style={[folderStyles.spark, folderStyles.sparkBR, { color: sparkleColor, opacity: 0.7 }]}>✧</Text>
+
+        {/* Back folder */}
+        <View style={[folderStyles.folderWrap, { left: 0, bottom: 0, zIndex: 1 }]}>
+          <View style={[folderStyles.folderTab, { backgroundColor: back.tab, borderColor: back.border }]} />
+          <View style={[folderStyles.folderBody, { backgroundColor: back.bg, borderColor: back.border }]} />
+        </View>
+
+        {/* Middle folder */}
+        <View style={[folderStyles.folderWrap, { left: 12, bottom: 8, zIndex: 2 }]}>
+          <View style={[folderStyles.folderTab, { backgroundColor: mid.tab, borderColor: mid.border }]} />
+          <View style={[folderStyles.folderBody, { backgroundColor: mid.bg, borderColor: mid.border }]} />
+        </View>
+
+        {/* Front folder with shield */}
+        <View style={[folderStyles.folderWrap, { left: 24, bottom: 16, zIndex: 3 }]}>
+          {/* Tab */}
+          <LinearGradient
+            colors={front}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={[folderStyles.folderTab, folderStyles.frontTab]} />
+          {/* Body */}
+          <LinearGradient
+            colors={front}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={[folderStyles.folderBody, folderStyles.frontBody]}>
+            {/* Shield icon */}
+            <View style={folderStyles.shieldWrap}>
+              <Ionicons name="shield-checkmark" size={26} color="rgba(255,255,255,0.92)" />
+            </View>
+          </LinearGradient>
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
 
 export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
   onSaveFirstLocation,
@@ -32,328 +111,108 @@ export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
 }) => {
   const { colors, isDark, isElderly } = useAppTheme();
 
-  // Floating ambient pulse animation
-  const floatAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 2200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 2200,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [floatAnim]);
-
-  const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Medium) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(style);
-      } catch (e) {}
-    }
+  const tap = () => {
+    if (Platform.OS !== 'web') { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (_) {} }
+    onSaveFirstLocation();
   };
 
   return (
-    <GlassCard
-      borderRadius={28}
-      glowColor={isDark ? (isSearchEmpty ? colors.blue : colors.purple) : undefined}
-      style={styles.cardWrapper}
-      contentStyle={styles.cardContent}>
-      
-      {/* Soft Ambient Background Blobs */}
-      <View style={[styles.ambientBlobWrap, { pointerEvents: 'none' }]}>
-        <View
-          style={[
-            styles.blobTopLeft,
-            {
-              backgroundColor: isDark
-                ? 'rgba(59, 111, 240, 0.18)'
-                : 'rgba(251, 146, 60, 0.18)',
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.blobBottomRight,
-            {
-              backgroundColor: isDark
-                ? 'rgba(124, 92, 224, 0.20)'
-                : 'rgba(59, 111, 240, 0.12)',
-            },
-          ]}
-        />
-      </View>
+    <View style={styles.outerWrap}>
+      {/* Folder Illustration */}
+      <FolderIllustration isDark={isDark} />
 
-      {/* Center: Folder Icon in Glowing Circle with Sparkles */}
-      <View style={styles.centerCluster}>
-        <View style={styles.iconCircleContainer}>
-          {/* Sparkle 1 */}
-          <Ionicons
-            name="sparkles"
-            size={14}
-            color={isDark ? '#8B7CF6' : colors.blue}
-            style={styles.sparkleTopRight}
-          />
-          {/* Sparkle 2 */}
-          <Ionicons
-            name="sparkles"
-            size={11}
-            color={isDark ? '#8B7CF6' : '#F97316'}
-            style={styles.sparkleBottomLeft}
-          />
+      {/* Title */}
+      <Text style={[styles.title, { color: colors.text, fontSize: isElderly ? 22 : 19 }]}>
+        {title}
+      </Text>
 
-          {/* Animated Glowing Halo */}
-          <Animated.View
-            style={[
-              styles.iconHalo,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(124, 92, 224, 0.25)'
-                  : 'rgba(251, 146, 60, 0.20)',
-                transform: [
-                  {
-                    scale: floatAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.95, 1.15],
-                    }),
-                  },
-                ],
-                opacity: floatAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.6, 0.2],
-                }),
-              },
-            ]}
-          />
+      {/* Body */}
+      <Text style={[styles.body, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+        {body}
+      </Text>
 
-          {/* Core Folder Circle */}
-          <LinearGradient
-            colors={
-              isDark
-                ? ['rgba(124, 92, 224, 0.45)', 'rgba(59, 111, 240, 0.35)']
-                : ['#FFF7ED', '#FFEDD5']
-            }
-            style={[
-              styles.coreFolderCircle,
-              {
-                borderColor: isDark ? 'rgba(124, 92, 224, 0.50)' : '#FDBA74',
-                shadowColor: isDark ? colors.purple : '#EA580C',
-              },
-            ]}>
-            <Ionicons
-              name={isSearchEmpty ? 'search' : 'folder'}
-              size={32}
-              color={isDark ? '#C084FC' : '#EA580C'}
-            />
-          </LinearGradient>
-        </View>
-
-        {/* "VAULT READY" Pill (coral in light, purple in dark) */}
-        <View
-          style={[
-            styles.vaultReadyPill,
-            {
-              backgroundColor: isDark
-                ? 'rgba(124, 92, 224, 0.20)'
-                : '#FFEDD5',
-              borderColor: isDark
-                ? 'rgba(124, 92, 224, 0.40)'
-                : '#FED7AA',
-            },
-          ]}>
-          <Text
-            style={[
-              styles.vaultReadyText,
-              { color: isDark ? '#C084FC' : '#EA580C' },
-            ]}>
-            {badgeLabel}
-          </Text>
-        </View>
-
-        {/* Title */}
-        <Text
-          style={[
-            styles.emptyTitle,
-            { color: colors.text, fontSize: isElderly ? 23 : 20 },
-          ]}>
-          {title}
-        </Text>
-
-        {/* Body Text */}
-        <Text
-          style={[
-            styles.emptyBody,
-            { color: isDark ? colors.textMuted : colors.textSecondary },
-          ]}>
-          {body}
-        </Text>
-
-        {/* Primary Gradient Button: "Save First Location" with Folder Icon */}
-        <Pressable
-          onPress={() => {
-            triggerHaptic();
-            onSaveFirstLocation();
-          }}
-          style={({ pressed }) => [
-            styles.gradientButtonWrap,
-            {
-              opacity: pressed ? 0.88 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            },
-          ]}>
-          <LinearGradient
-            colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.gradientButtonInner,
-              {
-                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
-              },
-            ]}>
-            <Ionicons
-              name={isSearchEmpty ? 'refresh' : 'folder'}
-              size={17}
-              color="#FFFFFF"
-            />
-            <Text
-              style={[
-                styles.gradientButtonText,
-                { color: '#FFFFFF' },
-              ]}>
-              {buttonLabel}
-            </Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
-    </GlassCard>
+      {/* Full-width gradient button */}
+      <Pressable
+        onPress={tap}
+        style={({ pressed }) => [styles.btnWrap, { opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
+        <LinearGradient
+          colors={isDark ? ['#4F46E5', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          style={styles.btnInner}>
+          <Ionicons name={isSearchEmpty ? 'refresh' : 'folder'} size={17} color="#FFF" />
+          <Text style={styles.btnText}>{buttonLabel}</Text>
+        </LinearGradient>
+      </Pressable>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  cardWrapper: {
-    padding: 0,
-    marginHorizontal: 18,
-    marginVertical: 8,
+// Folder illustration styles
+const folderStyles = StyleSheet.create({
+  outerContainer: {
+    width: '100%', height: 180,
+    alignItems: 'center', justifyContent: 'center',
+    position: 'relative', marginBottom: 4,
   },
-  cardContent: {
-    paddingVertical: 36,
-    paddingHorizontal: 20,
+  leaf: { position: 'absolute', bottom: 0 },
+  leafLeft: { left: 0, alignItems: 'flex-start' },
+  leafRight: { right: 0, alignItems: 'flex-end' },
+  cluster: {
+    width: 200, height: 150,
     position: 'relative',
-    overflow: 'hidden',
   },
-  ambientBlobWrap: {
-    ...StyleSheet.absoluteFill,
+  // Sparkles
+  spark: { position: 'absolute', fontSize: 14, fontWeight: '900' },
+  sparkTL: { top: 10, left: 18 },
+  sparkTR: { top: 8, right: 30, fontSize: 11 },
+  sparkBL: { bottom: 25, left: 30, fontSize: 11 },
+  sparkBR: { bottom: 35, right: 20, fontSize: 16 },
+  // Folder pieces
+  folderWrap: { position: 'absolute' },
+  folderTab: {
+    width: 50, height: 14,
+    borderTopLeftRadius: 8, borderTopRightRadius: 8,
+    marginBottom: -1,
+    borderWidth: 1,
+    borderBottomWidth: 0,
   },
-  blobTopLeft: {
-    position: 'absolute',
-    top: -40,
-    left: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  blobBottomRight: {
-    position: 'absolute',
-    bottom: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  centerCluster: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    zIndex: 2,
-  },
-  iconCircleContainer: {
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    marginBottom: 4,
-  },
-  sparkleTopRight: {
-    position: 'absolute',
-    top: 2,
-    right: 4,
-  },
-  sparkleBottomLeft: {
-    position: 'absolute',
-    bottom: 4,
-    left: 2,
-  },
-  iconHalo: {
-    position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-  },
-  coreFolderCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  vaultReadyPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 4.5,
+  folderBody: {
+    width: 130, height: 92,
     borderRadius: 12,
     borderWidth: 1,
-  },
-  vaultReadyText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  emptyTitle: {
-    fontWeight: '800',
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  emptyBody: {
-    fontSize: 13.5,
-    fontWeight: '500',
-    lineHeight: 19,
-    textAlign: 'center',
-    maxWidth: 290,
-  },
-  gradientButtonWrap: {
-    borderRadius: 24,
-    marginTop: 6,
-  },
-  gradientButtonInner: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    borderRadius: 24,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
+    justifyContent: 'center',
   },
-  gradientButtonText: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    letterSpacing: -0.1,
+  frontTab: { borderWidth: 0, width: 52, height: 15 },
+  frontBody: {
+    width: 134, height: 96, borderRadius: 13, borderWidth: 0,
+    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.40, shadowRadius: 16, elevation: 8,
   },
+  shieldWrap: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+});
+
+const styles = StyleSheet.create({
+  outerWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 12,
+    gap: 10,
+    marginHorizontal: 16,
+  },
+  title: { fontWeight: '800', letterSpacing: -0.3, textAlign: 'center' },
+  body: { fontSize: 13.5, fontWeight: '500', lineHeight: 20, textAlign: 'center', maxWidth: 300 },
+  btnWrap: { width: '100%', borderRadius: 28, marginTop: 6 },
+  btnInner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 28,
+    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.38, shadowRadius: 12, elevation: 6,
+  },
+  btnText: { color: '#FFF', fontSize: 15, fontWeight: '800', letterSpacing: -0.1 },
 });

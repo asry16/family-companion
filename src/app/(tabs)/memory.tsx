@@ -22,13 +22,11 @@ import { useAuth } from '@/context/AuthContext';
 import { MemoryItem } from '@/types';
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
 import { VaultActionsBar } from '@/components/vault/VaultActionsBar';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
 import { VaultSearchBar } from '@/components/vault/VaultSearchBar';
-import { VaultSuggestionChips } from '@/components/vault/VaultSuggestionChips';
 import { VaultCategoryFilters } from '@/components/vault/VaultCategoryFilters';
 import { VaultEmptyStateCard } from '@/components/vault/VaultEmptyStateCard';
 import { VaultItemCard } from '@/components/vault/VaultItemCard';
@@ -138,13 +136,7 @@ export default function MemoryScreen() {
           onVoicePress={handleVoiceSearch}
         />
 
-        {/* 3. Suggestion Chips: Single Horizontally Scrollable Row */}
-        <VaultSuggestionChips
-          activeQuery={searchQuery}
-          onSelectSuggestion={(term) => setSearchQuery(term)}
-        />
-
-        {/* 4. Category Filter Chips: "All Saved", "Documents", "Household", "+ Save Location" */}
+        {/* 3. Category Filter Chips: "All Saved", "Documents", "Household", "+ Save Location" */}
         <VaultCategoryFilters
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
@@ -478,9 +470,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 4,
+    paddingTop: 6,
     paddingBottom: 110,
-    gap: 8,
+    gap: 6,
     maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
