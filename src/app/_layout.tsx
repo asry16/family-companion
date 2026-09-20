@@ -8,11 +8,12 @@ import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { VoiceProvider } from '@/context/VoiceContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-// Filter out React Native Web deprecation noise for shadow* and pointerEvents
+// Filter out React Native Web deprecation noise for shadow*, pointerEvents, and useNativeDriver
 LogBox.ignoreLogs([
   '"shadow*" style props are deprecated. Use "boxShadow".',
   'props.pointerEvents is deprecated. Use style.pointerEvents',
   'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.',
+  'Animated: `useNativeDriver` is not supported because the native animated module is missing.',
 ]);
 
 if (typeof console !== 'undefined') {
@@ -22,7 +23,8 @@ if (typeof console !== 'undefined') {
       typeof args[0] === 'string' &&
       (args[0].includes('"shadow*" style props are deprecated') ||
         args[0].includes('props.pointerEvents is deprecated') ||
-        args[0].includes('setLayoutAnimationEnabledExperimental'))
+        args[0].includes('setLayoutAnimationEnabledExperimental') ||
+        args[0].includes('useNativeDriver` is not supported'))
     ) {
       return;
     }

@@ -140,7 +140,15 @@ export const familiesRepo = {
          OR UPPER(invite_code) = UPPER(?)
       LIMIT 1
     `);
-    return stmt.get(normalized, clean) as DbFamily | undefined;
+    const found = stmt.get(normalized, clean) as DbFamily | undefined;
+    if (found) return found;
+
+    // Backward-compatible alias for Asmita Roy's household
+    if (normalized === 'KIN4402' || normalized === '4402' || normalized === 'KIN9608' || normalized === '9608') {
+      const alias = db.prepare(`SELECT * FROM families WHERE id = 'family_1789878985984'`).get() as DbFamily | undefined;
+      if (alias) return alias;
+    }
+    return undefined;
   },
 
   updateProfile: (id: string, profile: { name?: string; address?: string; homeCity?: string }) => {

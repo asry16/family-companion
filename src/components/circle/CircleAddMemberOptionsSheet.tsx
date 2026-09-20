@@ -134,7 +134,9 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
         }, 1200);
       } else {
         setErrorMessage(
-          res.error || `Could not find a family matching code "${cleanCode}". Please verify with the organizer.`
+          res.error === 'Invalid invite code. No family found.'
+            ? `No family circle found matching "${cleanCode}". Please check with your household organizer, or share your own code (${activeFamilyCode}) to invite them.`
+            : res.error || `Could not find a family matching code "${cleanCode}". Please verify with the organizer.`
         );
       }
     } catch (err: any) {
