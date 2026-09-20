@@ -181,7 +181,7 @@ export default function FamilySettingsScreen() {
     }, 60);
   };
 
-  // Toggle individual section expansion
+  // Toggle individual section expansion in place without jumping scroll
   const toggleSection = (id: string) => {
     triggerHaptic();
     const willOpen = !openSections[id];
@@ -189,18 +189,6 @@ export default function FamilySettingsScreen() {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     } catch (e) {}
     setOpenSections((prev) => ({ ...prev, [id]: willOpen }));
-
-    if (willOpen) {
-      setTimeout(() => {
-        const targetY = sectionPositions.current[id];
-        if (targetY !== undefined) {
-          scrollViewRef.current?.scrollTo({
-            y: Math.max(0, targetY - 70),
-            animated: true,
-          });
-        }
-      }, 60);
-    }
   };
 
   const handleShareInvite = async () => {

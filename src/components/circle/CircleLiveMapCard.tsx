@@ -523,41 +523,74 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
           </Text>
         </View>
 
-        {/* 2. Top-Right: Outlined Pill "View List" */}
-        {onPressViewList && (
-          <Pressable
-            onPress={() => {
-              triggerHaptic();
-              onPressViewList();
-            }}
-            hitSlop={6}
-            style={({ pressed }) => [
-              styles.topRightPill,
-              {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
-                borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(124, 92, 224, 0.40)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons
-              name="people-outline"
-              size={13}
-              color={isDark ? '#8B7CF6' : '#7C5CE0'}
-            />
-            <Text
-              style={[
-                styles.topRightPillText,
-                { color: isDark ? '#8B7CF6' : '#7C5CE0' },
+        {/* 2. Top-Right: Full Screen Option Pill & View List Pill */}
+        <View style={styles.topRightActionsRow}>
+          {onFullScreen && (
+            <Pressable
+              onPress={() => {
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                onFullScreen();
+              }}
+              hitSlop={6}
+              accessibilityLabel={isFullScreen ? 'Exit Full Screen' : 'View Full Screen Map'}
+              style={({ pressed }) => [
+                styles.topRightPill,
+                {
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.35)' : 'rgba(124, 92, 224, 0.28)',
+                  opacity: pressed ? 0.75 : 1,
+                },
               ]}>
-              View List
-            </Text>
-            <Ionicons
-              name="chevron-down"
-              size={12}
-              color={isDark ? '#8B7CF6' : '#7C5CE0'}
-            />
-          </Pressable>
-        )}
+              <Ionicons
+                name={isFullScreen ? 'contract-outline' : 'expand-outline'}
+                size={13}
+                color={isDark ? '#C9CEFF' : '#5B628F'}
+              />
+              <Text
+                style={[
+                  styles.topRightPillText,
+                  { color: isDark ? '#C9CEFF' : '#5B628F' },
+                ]}>
+                {isFullScreen ? 'Exit' : 'Full Screen'}
+              </Text>
+            </Pressable>
+          )}
+
+          {onPressViewList && (
+            <Pressable
+              onPress={() => {
+                triggerHaptic();
+                onPressViewList();
+              }}
+              hitSlop={6}
+              style={({ pressed }) => [
+                styles.topRightPill,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'rgba(124, 92, 224, 0.40)',
+                  opacity: pressed ? 0.75 : 1,
+                },
+              ]}>
+              <Ionicons
+                name="people-outline"
+                size={13}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
+              />
+              <Text
+                style={[
+                  styles.topRightPillText,
+                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
+                ]}>
+                View List
+              </Text>
+              <Ionicons
+                name="chevron-down"
+                size={12}
+                color={isDark ? '#8B7CF6' : '#7C5CE0'}
+              />
+            </Pressable>
+          )}
+        </View>
 
         {/* 3. Bottom-Left: Green Glass Pill "Live • GPS" */}
         <View
@@ -598,7 +631,7 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
                 },
               ]}>
               <Ionicons
-                name={isFullScreen ? 'contract-outline' : 'scan-outline'}
+                name={isFullScreen ? 'contract-outline' : 'expand-outline'}
                 size={18}
                 color={isDark ? '#C9CEFF' : '#5B628F'}
               />
@@ -871,10 +904,16 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
     includeFontPadding: false,
   },
-  topRightPill: {
+  topRightActionsRow: {
     position: 'absolute',
     top: 12,
     right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    zIndex: 10,
+  },
+  topRightPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
