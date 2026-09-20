@@ -22,6 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 import { MemoryItem } from '@/types';
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
@@ -149,7 +150,10 @@ export default function MemoryScreen() {
           onSaveLocationPress={() => setAddModalVisible(true)}
         />
 
-        {/* 5. Section Header for Saved Details */}
+        {/* 5. Quick Actions Grid */}
+        <QuickActionsGrid onSeeAll={() => router.push('/(tabs)/plans')} />
+
+        {/* 6. Section Header for Saved Details */}
         <SectionHeader
           title="Saved Family Details"
           categoryTag="VAULT"

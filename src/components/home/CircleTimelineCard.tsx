@@ -78,7 +78,7 @@ export const CircleTimelineCard: React.FC = () => {
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <Ionicons
-            name="time-outline"
+            name="people-outline"
             size={18}
             color={isDark ? colors.brandAccent : '#6D5BD0'}
           />

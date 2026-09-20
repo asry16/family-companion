@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -17,19 +17,32 @@ import { useAuth } from '@/context/AuthContext';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatusChip, StatusChipVariant } from '@/components/ui/StatusChip';
-import { MemoryItem } from '@/types';
+
+interface DailyTaskItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: 'calendar-outline' | 'checkmark-circle-outline' | 'alarm-outline';
+  color: string;
+  bg: string;
+  border: string;
+  chipLabel: string;
+  chipVariant: StatusChipVariant;
+  colorScheme: 'green' | 'blue' | 'purple' | 'yellow';
+  isCompleted: boolean;
+  time: string;
+  type: 'event' | 'task' | 'reminder';
+}
 
 export const VaultUpdatesCard: React.FC = () => {
   const router = useRouter();
   const { colors, isDark, isElderly } = useAppTheme();
-  const { memories, addMemory, activeUser } = useFamily();
+  const { tasks, events, reminders, addTask, members } = useFamily();
   const { user } = useAuth();
 
-  // Quick log modal state
   const [modalVisible, setModalVisible] = useState(false);
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [category, setCategory] = useState<'documents' | 'household' | 'health'>('household');
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskType, setTaskType] = useState<'task' | 'reminder'>('task');
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -39,105 +52,128 @@ export const VaultUpdatesCard: React.FC = () => {
     }
   };
 
-  const handleSaveUpdate = () => {
-    if (!title.trim() || !location.trim()) return;
-
+  const handleSaveTask = () => {
+    if (!taskTitle.trim()) return;
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-
-    addMemory({
-      title: title.trim(),
-      category,
-      savedLocation: location.trim(),
-      lastVerified: 'Just now',
-      notes: `Updated by ${activeUser?.name || user?.name || 'You'} from Home`,
-      tags: ['update', category],
-      relatedMemberIds: [activeUser?.id || 'self'],
-      emoji: category === 'documents' ? '📄' : category === 'health' ? '🩺' : '📦',
+    const memberId = user?.familyMemberId || members?.[0]?.id || '1';
+    addTask({
+      title: taskTitle.trim(),
+      category: 'general',
+      assignedToMemberId: memberId,
+      createdByMemberId: memberId,
+      dueDate: 'Today',
+      dueTime: '12:00 PM',
+      isCompleted: false,
+      priority: 'normal',
     });
-
-    setTitle('');
-    setLocation('');
+    setTaskTitle('');
     setModalVisible(false);
   };
 
-  // Resolve category configuration for items
-  const getCategoryConfig = (itemCategory: string) => {
-    switch (itemCategory) {
-      case 'documents':
-        return {
-          icon: 'document-text' as const,
-          color: isDark ? '#60A5FA' : '#3B82F6',
-          bg: isDark ? 'rgba(59, 111, 240, 0.18)' : 'rgba(59, 111, 240, 0.10)',
-          border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.20)',
-          chipLabel: 'Documents',
-          chipVariant: 'Vault' as StatusChipVariant,
-          colorScheme: 'purple' as const,
-        };
-      case 'health':
-        return {
-          icon: 'medkit' as const,
-          color: isDark ? '#C084FC' : '#9333EA',
-          bg: isDark ? 'rgba(147, 51, 234, 0.18)' : 'rgba(147, 51, 234, 0.10)',
-          border: isDark ? 'rgba(147, 51, 234, 0.35)' : 'rgba(147, 51, 234, 0.20)',
-          chipLabel: 'Health',
-          chipVariant: 'Vault' as StatusChipVariant,
-          colorScheme: 'purple' as const,
-        };
-      case 'household':
-      default:
-        return {
-          icon: 'home' as const,
-          color: isDark ? '#34D399' : '#059669',
-          bg: isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(16, 185, 129, 0.10)',
-          border: isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(16, 185, 129, 0.20)',
-          chipLabel: 'Household',
-          chipVariant: 'Safe' as StatusChipVariant,
-          colorScheme: 'green' as const,
-        };
-    }
-  };
+  const dailyItems: DailyTaskItem[] = useMemo(() => {
+    const result: DailyTaskItem[] = [];
 
-  const recentUpdates = (memories || []).slice(0, 3);
+    (events || []).slice(0, 2).forEach((e) => {
+      result.push({
+        id: e.id,
+        title: e.title,
+        subtitle: e.date ? `${e.date}${e.time ? ` at ${e.time}` : ''}` : 'Today',
+        icon: 'calendar-outline',
+        color: isDark ? '#60A5FA' : '#3B82F6',
+        bg: isDark ? 'rgba(59, 111, 240, 0.18)' : 'rgba(59, 111, 240, 0.10)',
+        border: isDark ? 'rgba(59, 111, 240, 0.35)' : 'rgba(59, 111, 240, 0.20)',
+        chipLabel: 'Event',
+        chipVariant: 'Safe' as StatusChipVariant,
+        colorScheme: 'blue',
+        isCompleted: false,
+        time: e.time || e.date || 'Today',
+        type: 'event',
+      });
+    });
+
+    (tasks || []).slice(0, 2).forEach((t) => {
+      result.push({
+        id: t.id,
+        title: t.title,
+        subtitle: t.dueDate ? `Due ${t.dueDate}${t.dueTime ? ` at ${t.dueTime}` : ''}` : 'Due Today',
+        icon: 'checkmark-circle-outline',
+        color: t.isCompleted ? (isDark ? '#34D399' : '#059669') : (isDark ? '#FBBF24' : '#D97706'),
+        bg: t.isCompleted
+          ? (isDark ? 'rgba(34, 197, 139, 0.18)' : 'rgba(16, 185, 129, 0.10)')
+          : (isDark ? 'rgba(251, 191, 36, 0.18)' : 'rgba(217, 119, 6, 0.10)'),
+        border: t.isCompleted
+          ? (isDark ? 'rgba(34, 197, 139, 0.35)' : 'rgba(16, 185, 129, 0.20)')
+          : (isDark ? 'rgba(251, 191, 36, 0.35)' : 'rgba(217, 119, 6, 0.20)'),
+        chipLabel: t.isCompleted ? 'Done' : 'Pending',
+        chipVariant: t.isCompleted ? 'Safe' : 'View' as StatusChipVariant,
+        colorScheme: t.isCompleted ? 'green' : 'yellow',
+        isCompleted: t.isCompleted,
+        time: t.dueTime || t.dueDate || 'Today',
+        type: 'task',
+      });
+    });
+
+    (reminders || []).slice(0, 1).forEach((r) => {
+      result.push({
+        id: r.id,
+        title: r.title,
+        subtitle: r.time ? `Reminder at ${r.time}` : 'Active Reminder',
+        icon: 'alarm-outline',
+        color: isDark ? '#C084FC' : '#9333EA',
+        bg: isDark ? 'rgba(147, 51, 234, 0.18)' : 'rgba(147, 51, 234, 0.10)',
+        border: isDark ? 'rgba(147, 51, 234, 0.35)' : 'rgba(147, 51, 234, 0.20)',
+        chipLabel: 'Reminder',
+        chipVariant: 'Vault' as StatusChipVariant,
+        colorScheme: 'purple',
+        isCompleted: r.isDone,
+        time: r.time || 'Today',
+        type: 'reminder',
+      });
+    });
+
+    return result.slice(0, 3);
+  }, [tasks, events, reminders, isDark]);
+
+  const totalCount = (tasks?.length || 0) + (events?.length || 0) + (reminders?.length || 0);
 
   return (
     <View style={styles.container}>
-      {/* Section Header */}
       <SectionHeader
-        title="Day-to-Day Vault Updates"
-        categoryTag="VAULT"
-        actionText="View Vault →"
+        title="Daily Tasks"
+        categoryTag="PLANS"
+        actionText="View Plans →"
         onActionPress={() => {
           triggerHaptic();
-          router.push('/(tabs)/memory');
+          router.push('/(tabs)/plans');
         }}
       />
 
-      {/* Main Container */}
       <GlassCard
         borderRadius={24}
         glowColor={isDark ? 'rgba(139, 124, 246, 0.20)' : undefined}
         style={styles.cardContainer}
         contentStyle={styles.cardContent}>
-        
-        {/* Top Header Row with "+ Update" button */}
+
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
             <View
               style={[
-                styles.vaultIconCircle,
+                styles.timerIconCircle,
                 {
                   backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)',
                   borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.25)',
                 },
               ]}>
-              <Ionicons name="cube-outline" size={18} color={isDark ? '#A78BFA' : '#7C5CE0'} />
+              <Ionicons name="timer-outline" size={18} color={isDark ? '#A78BFA' : '#7C5CE0'} />
             </View>
             <View>
               <Text style={[styles.cardTitle, { color: colors.text, fontSize: isElderly ? 17 : 15 }]}>
-                Recent Item & Storage Logs
+                Today's Schedule
               </Text>
               <Text style={[styles.cardSubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-                {memories.length} item{memories.length === 1 ? '' : 's'} cataloged in Family Hub
+                {totalCount > 0
+                  ? `${totalCount} item${totalCount === 1 ? '' : 's'} across tasks, events & reminders`
+                  : 'No tasks scheduled for today'}
               </Text>
             </View>
           </View>
@@ -149,7 +185,7 @@ export const VaultUpdatesCard: React.FC = () => {
             }}
             hitSlop={6}
             style={({ pressed }) => [
-              styles.addUpdateButton,
+              styles.addTaskButton,
               {
                 backgroundColor: isDark ? 'rgba(139, 124, 246, 0.20)' : 'rgba(124, 92, 224, 0.12)',
                 borderColor: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.30)',
@@ -157,26 +193,25 @@ export const VaultUpdatesCard: React.FC = () => {
               },
             ]}>
             <Ionicons name="add" size={15} color={isDark ? '#C4B5FD' : '#7C5CE0'} />
-            <Text style={[styles.addUpdateButtonText, { color: isDark ? '#C4B5FD' : '#7C5CE0' }]}>
-              + Update
+            <Text style={[styles.addTaskButtonText, { color: isDark ? '#C4B5FD' : '#7C5CE0' }]}>
+              + Task
             </Text>
           </Pressable>
         </View>
 
-        {/* Content Rows */}
-        {recentUpdates.length === 0 ? (
+        {dailyItems.length === 0 ? (
           <View style={styles.emptyStateContainer}>
             <Ionicons
-              name="sparkles-outline"
+              name="timer-outline"
               size={24}
               color={isDark ? '#8B7CF6' : '#7C5CE0'}
               style={{ opacity: 0.85 }}
             />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No Day-to-Day Updates Logged Yet
+              No Tasks Scheduled Today
             </Text>
             <Text style={[styles.emptySubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-              Catalog physical drawers, documents, or household items so your family knows where to find them.
+              Add tasks, events, or reminders from the Plans page to keep your family on track.
             </Text>
             <Pressable
               onPress={() => setModalVisible(true)}
@@ -188,21 +223,19 @@ export const VaultUpdatesCard: React.FC = () => {
                 },
               ]}>
               <Ionicons name="add-circle" size={16} color="#FFFFFF" />
-              <Text style={styles.emptyActionBtnText}>Log First Update</Text>
+              <Text style={styles.emptyActionBtnText}>Add First Task</Text>
             </Pressable>
           </View>
         ) : (
           <View style={styles.itemsStack}>
-            {recentUpdates.map((item, idx) => {
-              const cfg = getCategoryConfig(item.category);
-              const isLast = idx === recentUpdates.length - 1;
-
+            {dailyItems.map((item, idx) => {
+              const isLast = idx === dailyItems.length - 1;
               return (
                 <Pressable
                   key={item.id}
                   onPress={() => {
                     triggerHaptic();
-                    router.push('/(tabs)/memory');
+                    router.push('/(tabs)/plans');
                   }}
                   style={({ pressed }) => [
                     styles.itemRow,
@@ -212,51 +245,59 @@ export const VaultUpdatesCard: React.FC = () => {
                       opacity: pressed ? 0.75 : 1,
                     },
                   ]}>
-                  {/* Category icon */}
                   <View
                     style={[
                       styles.itemIconBox,
                       {
-                        backgroundColor: cfg.bg,
-                        borderColor: cfg.border,
+                        backgroundColor: item.bg,
+                        borderColor: item.border,
                       },
                     ]}>
-                    <Ionicons name={cfg.icon} size={15} color={cfg.color} />
+                    <Ionicons name={item.icon} size={15} color={item.color} />
                   </View>
 
-                  {/* Title and location */}
                   <View style={styles.itemTextCol}>
                     <Text
                       numberOfLines={1}
-                      style={[styles.itemTitle, { color: colors.text, fontSize: isElderly ? 15.5 : 14 }]}>
+                      style={[
+                        styles.itemTitle,
+                        {
+                          color: item.isCompleted
+                            ? isDark ? colors.textMuted : colors.textSecondary
+                            : colors.text,
+                          fontSize: isElderly ? 15.5 : 14,
+                          textDecorationLine: item.isCompleted ? 'line-through' : 'none',
+                        },
+                      ]}>
                       {item.title}
                     </Text>
-                    <View style={styles.itemLocRow}>
+                    <View style={styles.itemSubRow}>
                       <Ionicons
-                        name="location-outline"
-                        size={12}
+                        name="time-outline"
+                        size={11}
                         color={isDark ? colors.textMuted : colors.textSecondary}
                       />
                       <Text
                         numberOfLines={1}
-                        style={[styles.itemLocText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-                        {item.savedLocation}
+                        style={[styles.itemSubText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                        {item.subtitle}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Status chip & time */}
                   <View style={styles.itemRightWrap}>
                     <StatusChip
-                      label={cfg.chipLabel}
-                      variant={cfg.chipVariant}
-                      colorScheme={cfg.colorScheme}
+                      label={item.chipLabel}
+                      variant={item.chipVariant}
+                      colorScheme={item.colorScheme}
                       size="sm"
                       showDot={false}
                     />
-                    <Text style={[styles.itemTimeText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-                      {item.lastVerified || 'Active'}
-                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={13}
+                      color={isDark ? colors.textMuted : colors.textSecondary}
+                    />
                   </View>
                 </Pressable>
               );
@@ -265,7 +306,6 @@ export const VaultUpdatesCard: React.FC = () => {
         )}
       </GlassCard>
 
-      {/* Quick Add Update Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -285,29 +325,26 @@ export const VaultUpdatesCard: React.FC = () => {
             onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalTitleGroup}>
-                <Ionicons name="cube" size={20} color={isDark ? '#A78BFA' : colors.brandAccent} />
+                <Ionicons name="timer-outline" size={20} color={isDark ? '#A78BFA' : colors.brandAccent} />
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  Log Vault Update
+                  Quick Add Task
                 </Text>
               </View>
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                hitSlop={8}>
+              <Pressable onPress={() => setModalVisible(false)} hitSlop={8}>
                 <Ionicons name="close-circle" size={22} color={colors.textMuted} />
               </Pressable>
             </View>
 
             <Text style={[styles.modalSubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-              Keep your circle updated on where household supplies, documents, or personal items are kept.
+              Add a task to your family's daily plan. It will appear in the Plans page.
             </Text>
 
-            {/* Input: Item Title */}
             <View style={styles.inputStack}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Item or Supply</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Task or Reminder</Text>
               <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g. Wi-Fi router password, Spare Keys, Passports"
+                value={taskTitle}
+                onChangeText={setTaskTitle}
+                placeholder="e.g. Doctor appointment, Pick up groceries"
                 placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
                 style={[
                   styles.formInput,
@@ -320,37 +357,17 @@ export const VaultUpdatesCard: React.FC = () => {
               />
             </View>
 
-            {/* Input: Physical Location */}
             <View style={styles.inputStack}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Storage Location</Text>
-              <TextInput
-                value={location}
-                onChangeText={setLocation}
-                placeholder="e.g. Kitchen island drawer, Filing cabinet #2"
-                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
-                style={[
-                  styles.formInput,
-                  {
-                    color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
-                  },
-                ]}
-              />
-            </View>
-
-            {/* Category Selector */}
-            <View style={styles.inputStack}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Category</Text>
-              <View style={styles.categorySelectRow}>
-                {(['household', 'documents', 'health'] as const).map((cat) => {
-                  const isSel = category === cat;
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Type</Text>
+              <View style={styles.typeSelectRow}>
+                {(['task', 'reminder'] as const).map((t) => {
+                  const isSel = taskType === t;
                   return (
                     <Pressable
-                      key={cat}
-                      onPress={() => setCategory(cat)}
+                      key={t}
+                      onPress={() => setTaskType(t)}
                       style={[
-                        styles.catSelectBtn,
+                        styles.typeSelectBtn,
                         {
                           backgroundColor: isSel
                             ? colors.brandAccent
@@ -366,13 +383,13 @@ export const VaultUpdatesCard: React.FC = () => {
                       ]}>
                       <Text
                         style={[
-                          styles.catSelectText,
+                          styles.typeSelectText,
                           {
                             color: isSel ? '#FFFFFF' : colors.text,
                             fontWeight: isSel ? '700' : '600',
                           },
                         ]}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        {t.charAt(0).toUpperCase() + t.slice(1)}
                       </Text>
                     </Pressable>
                   );
@@ -380,19 +397,18 @@ export const VaultUpdatesCard: React.FC = () => {
               </View>
             </View>
 
-            {/* Submit Button */}
             <Pressable
-              onPress={handleSaveUpdate}
-              disabled={!title.trim() || !location.trim()}
+              onPress={handleSaveTask}
+              disabled={!taskTitle.trim()}
               style={({ pressed }) => [
                 styles.saveSubmitBtn,
                 {
                   backgroundColor: colors.brandAccent,
-                  opacity: !title.trim() || !location.trim() ? 0.45 : pressed ? 0.88 : 1,
+                  opacity: !taskTitle.trim() ? 0.45 : pressed ? 0.88 : 1,
                 },
               ]}>
               <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-              <Text style={styles.saveSubmitBtnText}>Save Update to Vault</Text>
+              <Text style={styles.saveSubmitBtnText}>Add to Daily Tasks</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -423,7 +439,7 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
   },
-  vaultIconCircle: {
+  timerIconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -440,7 +456,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 1,
   },
-  addUpdateButton: {
+  addTaskButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -449,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
-  addUpdateButtonText: {
+  addTaskButtonText: {
     fontSize: 12.5,
     fontWeight: '700',
     letterSpacing: -0.1,
@@ -512,22 +528,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.1,
   },
-  itemLocRow: {
+  itemSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
   },
-  itemLocText: {
+  itemSubText: {
     fontSize: 11.5,
     fontWeight: '500',
   },
   itemRightWrap: {
-    alignItems: 'flex-end',
-    gap: 3,
-  },
-  itemTimeText: {
-    fontSize: 10.5,
-    fontWeight: '500',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   modalBackdrop: {
     flex: 1,
@@ -577,11 +590,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
   },
-  categorySelectRow: {
+  typeSelectRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  catSelectBtn: {
+  typeSelectBtn: {
     flex: 1,
     paddingVertical: 8,
     borderRadius: 12,
@@ -589,7 +602,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  catSelectText: {
+  typeSelectText: {
     fontSize: 12,
   },
   saveSubmitBtn: {
