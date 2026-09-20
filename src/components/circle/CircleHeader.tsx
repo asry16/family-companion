@@ -1,39 +1,68 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
   Platform,
-  ScrollView,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useAuth } from '@/context/AuthContext';
 import { IconCircleButton } from '@/components/ui/IconCircleButton';
+import { CircleTokens } from '@/constants/theme';
 
 interface CircleHeaderProps {
-  onOpenFamilySwitcher?: () => void;
+  onBack?: () => void;
   onOpenSettings?: () => void;
+  onOpenNotifications?: () => void;
 }
 
 export const CircleHeader: React.FC<CircleHeaderProps> = ({
-  onOpenFamilySwitcher,
+  onBack,
   onOpenSettings,
+  onOpenNotifications,
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, toggleTheme, isElderly } = useAppTheme();
+  const { colors, isDark, toggleTheme } = useAppTheme();
   const { profile, members, unreadCount } = useFamily();
   const { user } = useAuth();
 
-  const familyName = profile?.name || user?.familyName || 'My Family';
+  const familyName = profile?.name || user?.familyName || 'Family';
   const memberCount = members?.length || 1;
-  const initial = (user?.name?.trim().charAt(0) || profile?.name?.trim().charAt(0) || 'K').toUpperCase();
+  const memberText = memberCount === 1 ? '1 member' : `${memberCount} members`;
+
+  // Green dot pulse animation
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.35,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+    };
+  }, [pulseAnim]);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (Platform.OS !== 'web') {
@@ -43,119 +72,137 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
     }
   };
 
-  return (
-    <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) }]}>
-      {/* Top Row: Avatar & Title + Right Icon Actions */}
-      <View style={styles.topRow}>
-        {/* Left: Avatar with green online dot + Title and Family Switcher Pill */}
-        <View style={styles.leftIdentityCluster}>
-          {/* Circular Avatar "A" with Green Online Dot */}
-          <View style={styles.avatarWrap}>
-            <View
-              style={[
-                styles.avatarCircle,
-                {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F0FC',
-                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.2)',
-                },
-              ]}>
-              <Text
-                style={[
-                  styles.avatarInitialText,
-                  { color: isDark ? '#8B7CF6' : '#7C5CE0' },
-                ]}>
-                {initial}
-              </Text>
-            </View>
-            <View style={[styles.onlineBeaconDot, { backgroundColor: colors.green }]} />
-          </View>
+  const handleBack = () => {
+    triggerHaptic();
+    if (onBack) {
+      onBack();
+    } else {
+      router.navigate('/(tabs)');
+    }
+  };
 
-          {/* Title & Switcher Pill */}
-          <View style={styles.titleColumn}>
+  const handleSettings = () => {
+    triggerHaptic();
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      router.push('/modal/family-settings');
+    }
+  };
+
+  const handleNotifications = () => {
+    triggerHaptic();
+    if (onOpenNotifications) {
+      onOpenNotifications();
+    } else {
+      router.push('/modal/notifications');
+    }
+  };
+
+  return (
+    <View
+      style={[
+        styles.headerContainer,
+        { paddingTop: Math.max(insets.top + 4, Platform.OS === 'ios' ? 12 : 8) },
+      ]}>
+      <View style={styles.contentRow}>
+        {/* Left: 40px Circular Back Button */}
+        <Pressable
+          onPress={handleBack}
+          hitSlop={8}
+          accessibilityLabel="Back to Home"
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.backButton,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(20, 32, 58, 0.04)',
+              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
+              opacity: pressed ? 0.75 : 1,
+            },
+          ]}>
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={isDark ? '#C9CEFF' : '#475569'}
+          />
+        </Pressable>
+
+        {/* Center-Left Cluster: 44px Circular Group Icon + Titles */}
+        <View style={styles.titleCluster}>
+          <LinearGradient
+            colors={['#4F8EF7', '#8B6CF0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.groupIconCircle,
+              {
+                borderColor: isDark ? 'rgba(140, 150, 255, 0.35)' : 'rgba(124, 92, 224, 0.25)',
+              },
+            ]}>
+            <Ionicons name="people" size={22} color="#FFFFFF" />
+          </LinearGradient>
+
+          <View style={styles.textColumn}>
             <Text
-              style={[
-                styles.screenTitle,
-                { color: colors.text, fontSize: isElderly ? 22 : 19 },
-              ]}>
+              numberOfLines={1}
+              style={[styles.headerTitle, { color: colors.text }]}>
               Family Circle
             </Text>
-
-            {/* Tappable Pill: green dot, family name & member count, chevron */}
-            <Pressable
-              onPress={() => {
-                triggerHaptic();
-                if (onOpenFamilySwitcher) {
-                  onOpenFamilySwitcher();
-                } else {
-                  router.push('/modal/family-settings');
-                }
-              }}
-              hitSlop={6}
-              style={({ pressed }) => [
-                styles.switcherPill,
-                {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(124, 92, 224, 0.08)',
-                  borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.14)',
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <View style={[styles.pillGreenDot, { backgroundColor: colors.green }]} />
+            <View style={styles.subtitleRow}>
+              <Animated.View
+                style={[
+                  styles.pulsingGreenDot,
+                  {
+                    backgroundColor: colors.green,
+                    opacity: pulseAnim,
+                  },
+                ]}
+              />
               <Text
                 numberOfLines={1}
+                ellipsizeMode="tail"
                 style={[
-                  styles.switcherPillText,
+                  styles.subtitleText,
                   { color: isDark ? colors.textMuted : colors.textSecondary },
                 ]}>
-                {familyName} • {memberCount} {memberCount === 1 ? 'member' : 'members'} connected
+                {familyName} • {memberText}
               </Text>
-              <Ionicons
-                name="chevron-down"
-                size={12}
-                color={isDark ? colors.textMuted : colors.textSecondary}
-              />
-            </Pressable>
+            </View>
           </View>
         </View>
 
-        {/* Right: Quick Action Controls Cluster */}
-        <View style={styles.rightActionCluster}>
-          {/* Sun/Moon = Theme Toggle */}
-          <IconCircleButton
-            name={isDark ? 'sunny' : 'moon'}
-            size={40}
-            iconSize={18}
-            color={isDark ? '#FBBF24' : '#6D5BD0'}
-            glowColor={isDark ? '#FBBF24' : undefined}
-            onPress={toggleTheme}
-            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
-          />
-
-          {/* Bell with Red Badge "1" */}
+        {/* Right: Three 40px Circular Buttons */}
+        <View style={styles.actionCluster}>
+          {/* Bell with red badge */}
           <IconCircleButton
             name="notifications-outline"
-            size={40}
+            size={CircleTokens.headerButtonSize}
             iconSize={18}
-            color={isDark ? '#C9CEFF' : '#6D5BD0'}
+            color={isDark ? '#C9CEFF' : '#5B628F'}
             badgeCount={unreadCount > 0 ? unreadCount : 1}
-            badgeColor={colors.red}
-            onPress={() => router.push('/modal/notifications')}
+            badgeColor="#FF4D6A"
+            onPress={handleNotifications}
             accessibilityLabel="Notifications"
+          />
+
+          {/* Theme Toggle: Moon in dark, Sun in light */}
+          <IconCircleButton
+            name={isDark ? 'moon' : 'sunny'}
+            size={CircleTokens.headerButtonSize}
+            iconSize={18}
+            color={isDark ? '#C9CEFF' : '#F59E0B'}
+            onPress={toggleTheme}
+            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
           />
 
           {/* Settings Gear */}
           <IconCircleButton
             name="settings-outline"
-            size={40}
+            size={CircleTokens.headerButtonSize}
             iconSize={18}
-            color={isDark ? '#C9CEFF' : '#6D5BD0'}
-            onPress={() => {
-              if (onOpenSettings) {
-                onOpenSettings();
-              } else {
-                router.push('/modal/family-settings');
-              }
-            }}
-            accessibilityLabel="Settings"
+            color={isDark ? '#C9CEFF' : '#5B628F'}
+            onPress={handleSettings}
+            accessibilityLabel="Family Settings"
           />
         </View>
       </View>
@@ -165,77 +212,77 @@ export const CircleHeader: React.FC<CircleHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingHorizontal: 18,
-    paddingBottom: 4,
-    gap: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
-  topRow: {
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 10,
   },
-  leftIdentityCluster: {
+  backButton: {
+    width: CircleTokens.headerButtonSize,
+    height: CircleTokens.headerButtonSize,
+    borderRadius: CircleTokens.headerButtonSize / 2,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  titleCluster: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    minWidth: 0,
   },
-  avatarWrap: {
-    position: 'relative',
-  },
-  avatarCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  groupIconCircle: {
+    width: CircleTokens.headerGroupIconSize,
+    height: CircleTokens.headerGroupIconSize,
+    borderRadius: CircleTokens.headerGroupIconSize / 2,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+    shadowColor: '#8B6CF0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  avatarInitialText: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  onlineBeaconDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  titleColumn: {
+  textColumn: {
     flex: 1,
-    gap: 2,
+    minWidth: 0,
+    justifyContent: 'center',
   },
-  screenTitle: {
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  switcherPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignSelf: 'flex-start',
-  },
-  pillGreenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  switcherPillText: {
-    fontSize: 11,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: '600',
+    letterSpacing: -0.3,
+    includeFontPadding: false,
   },
-  rightActionCluster: {
+  subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
+    marginTop: 2,
+  },
+  pulsingGreenDot: {
+    width: 6.5,
+    height: 6.5,
+    borderRadius: 3.5,
+    flexShrink: 0,
+  },
+  subtitleText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flexShrink: 1,
+    includeFontPadding: false,
+  },
+  actionCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
   },
 });

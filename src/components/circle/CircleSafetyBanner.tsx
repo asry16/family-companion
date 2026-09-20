@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   Platform,
   Animated,
 } from 'react-native';
@@ -13,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { CircleTokens } from '@/constants/theme';
 
 interface CircleSafetyBannerProps {
   onPress?: () => void;
@@ -22,7 +22,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
   const { colors, isDark, isElderly } = useAppTheme();
   const { members, sosAlert } = useFamily();
 
-  // Continuous subtle pulse animation for glowing shield circle
+  // Subtle continuous pulse for shield halo
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
     }
   };
 
-  // Check safety state (data-driven)
+  // Safety state logic
   const isEmergency = Boolean(sosAlert?.active);
   const memberNeedingAttention = members.find(
     (m) => (m.batteryLevel && m.batteryLevel < 15 && !m.isCharging) || m.availability === 'busy'
@@ -78,19 +78,33 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
     ? colors.red
     : isAlertState
     ? colors.yellow
-    : colors.green;
+    : isDark
+    ? '#4ADE9A'
+    : '#059669';
+
+  const shieldGradient: [string, string] = isEmergency
+    ? ['#FF4D7A', '#E11D48']
+    : isAlertState
+    ? ['#F59E0B', '#D97706']
+    : ['#34D399', '#10B981'];
+
+  const haloBg = isEmergency
+    ? 'rgba(239, 68, 68, 0.28)'
+    : isAlertState
+    ? 'rgba(245, 158, 11, 0.28)'
+    : 'rgba(52, 211, 153, 0.25)';
 
   return (
     <GlassCard
       borderRadius={24}
-      glowColor={isDark ? bannerColor : undefined}
+      glowColor={isDark ? (isEmergency ? colors.red : isAlertState ? colors.yellow : 'rgba(52, 211, 153, 0.2)') : undefined}
       borderAccentColor={
         isDark
           ? isEmergency
             ? 'rgba(240, 82, 77, 0.45)'
             : isAlertState
             ? 'rgba(245, 158, 11, 0.45)'
-            : 'rgba(34, 197, 139, 0.40)'
+            : 'rgba(52, 211, 153, 0.35)'
           : undefined
       }
       onPress={() => {
@@ -100,7 +114,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
       style={styles.cardWrapper}
       contentStyle={styles.cardContent}>
       
-      {/* Light Mode: Pale mint/lavender gradient */}
+      {/* Light Mode tint gradient */}
       {!isDark && (
         <LinearGradient
           colors={
@@ -108,7 +122,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
               ? ['#FFF1F4', '#FFE6F0']
               : isAlertState
               ? ['#FEF3C7', '#FDE68A']
-              : ['rgba(242, 253, 249, 0.90)', 'rgba(235, 249, 244, 0.85)']
+              : ['rgba(240, 253, 244, 0.95)', 'rgba(236, 253, 245, 0.85)']
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -116,74 +130,51 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
         />
       )}
 
-      {/* Light Mode Faint Leaf Accent */}
-      {!isDark && !isEmergency && (
-        <View style={styles.leafAccentContainer} pointerEvents="none">
-          <View style={styles.leafShapeMain}>
-            <View style={styles.leafSpine} />
-          </View>
-          <View style={styles.leafShapeSub} />
-        </View>
-      )}
-
       <View style={styles.bannerRow}>
-        {/* Glowing Shield Icon */}
-        <View style={styles.shieldGlowWrap}>
+        {/* 48px Glowing Shield Icon */}
+        <View style={styles.shieldWrap}>
           <Animated.View
             style={[
               styles.shieldHalo,
               {
-                backgroundColor: isDark
-                  ? isEmergency
-                    ? 'rgba(240, 82, 77, 0.28)'
-                    : isAlertState
-                    ? 'rgba(245, 158, 11, 0.28)'
-                    : 'rgba(34, 197, 139, 0.28)'
-                  : isEmergency
-                  ? 'rgba(255, 77, 122, 0.20)'
-                  : isAlertState
-                  ? 'rgba(245, 158, 11, 0.16)'
-                  : 'rgba(46, 191, 142, 0.20)',
+                backgroundColor: haloBg,
                 transform: [
                   {
                     scale: pulseAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0.95, 1.22],
+                      outputRange: [0.95, 1.25],
                     }),
                   },
                 ],
                 opacity: pulseAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0.65, 0.2],
+                  outputRange: [0.7, 0.2],
                 }),
               },
             ]}
           />
           <LinearGradient
-            colors={
-              isEmergency
-                ? ['#FF4D7A', '#E11D48']
-                : isAlertState
-                ? ['#F59E0B', '#D97706']
-                : ['#2EBF8E', '#22C58B']
-            }
+            colors={shieldGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.shieldCircle}>
             <Ionicons
               name={isEmergency ? 'alert-circle' : isAlertState ? 'warning' : 'shield-checkmark'}
-              size={18}
+              size={24}
               color="#FFFFFF"
             />
           </LinearGradient>
         </View>
 
-        {/* Title & Subtitle */}
+        {/* Title & Subtitle Column */}
         <View style={styles.textColumn}>
           <Text
+            numberOfLines={1}
             style={[
               styles.titleText,
               {
-                color: isDark ? bannerColor : isAlertState ? '#B45309' : isEmergency ? '#E11D48' : '#2EBF8E',
-                fontSize: isElderly ? 16 : 13.5,
+                color: bannerColor,
+                fontSize: isElderly ? 16 : 14,
               },
             ]}>
             {bannerTitle}
@@ -193,7 +184,7 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
             style={[
               styles.subtitleText,
               {
-                color: isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#BE123C' : '#7A7DB0',
+                color: isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#BE123C' : '#475569',
                 fontSize: isElderly ? 13 : 11.5,
               },
             ]}>
@@ -205,7 +196,8 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={isDark ? colors.textMuted : isAlertState ? '#92400E' : isEmergency ? '#E11D48' : '#6D5BD0'}
+          color={isDark ? colors.textMuted : '#64748B'}
+          style={styles.chevronIcon}
         />
       </View>
     </GlassCard>
@@ -215,12 +207,13 @@ export const CircleSafetyBanner: React.FC<CircleSafetyBannerProps> = ({ onPress 
 const styles = StyleSheet.create({
   cardWrapper: {
     padding: 0,
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     marginVertical: 4,
   },
   cardContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingHorizontal: 14,
+    minHeight: CircleTokens.safetyBannerHeight,
+    justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -229,83 +222,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  shieldGlowWrap: {
-    width: 36,
-    height: 36,
+  shieldWrap: {
+    width: CircleTokens.safetyShieldSize,
+    height: CircleTokens.safetyShieldSize,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    flexShrink: 0,
   },
   shieldHalo: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: CircleTokens.safetyShieldSize + 8,
+    height: CircleTokens.safetyShieldSize + 8,
+    borderRadius: (CircleTokens.safetyShieldSize + 8) / 2,
   },
   shieldCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: CircleTokens.safetyShieldSize,
+    height: CircleTokens.safetyShieldSize,
+    borderRadius: CircleTokens.safetyShieldSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#22C58B',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   textColumn: {
     flex: 1,
-    gap: 2,
+    minWidth: 0,
+    gap: 3,
   },
   titleText: {
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
+    includeFontPadding: false,
   },
   subtitleText: {
     fontWeight: '500',
+    includeFontPadding: false,
   },
-
-  // Faint Leaf Decoration (Light mode only)
-  leafAccentContainer: {
-    position: 'absolute',
-    right: 24,
-    top: -4,
-    width: 60,
-    height: 50,
-  },
-  leafShapeMain: {
-    position: 'absolute',
-    width: 38,
-    height: 24,
-    borderRadius: 12,
-    borderTopRightRadius: 2,
-    borderBottomLeftRadius: 2,
-    backgroundColor: 'rgba(34, 197, 139, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 139, 0.22)',
-    transform: [{ rotate: '-35deg' }],
-  },
-  leafSpine: {
-    position: 'absolute',
-    top: '48%',
-    left: '15%',
-    right: '15%',
-    height: 1,
-    backgroundColor: 'rgba(34, 197, 139, 0.25)',
-  },
-  leafShapeSub: {
-    position: 'absolute',
-    top: 14,
-    right: 8,
-    width: 24,
-    height: 15,
-    borderRadius: 8,
-    borderTopRightRadius: 1,
-    borderBottomLeftRadius: 1,
-    backgroundColor: 'rgba(34, 197, 139, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 139, 0.18)',
-    transform: [{ rotate: '-55deg' }],
+  chevronIcon: {
+    flexShrink: 0,
   },
 });

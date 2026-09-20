@@ -1,222 +1,240 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Platform,
-  Linking,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { TabBarTokens } from '@/constants/theme';
 import { useFamily } from '@/context/FamilyContext';
-import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { FamilyMember } from '@/types';
 
-// Circle Screen Components (Design System)
-import { CircleHeader } from '@/components/circle/CircleHeader';
-import { CircleSafetyBanner } from '@/components/circle/CircleSafetyBanner';
-import { CircleMembersHeader } from '@/components/circle/CircleMembersHeader';
-import { CircleMemberCard } from '@/components/circle/CircleMemberCard';
-import { CirclePlacesPrivacyCard } from '@/components/circle/CirclePlacesPrivacyCard';
-import { CircleLiveMapCard } from '@/components/circle/CircleLiveMapCard';
+// Circle Screen Components
+import {
+  CircleHeader,
+  CircleSafetyBanner,
+  CircleLiveMapCard,
+  CircleMembersCard,
+  CircleMemberDetailSheet,
+} from '@/components/circle';
 
-// Modals
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { EmergencySosModal } from '@/components/modals/EmergencySosModal';
-import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
-import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
-import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
+// Backdrops & Modals
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
+import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
 
 export default function CircleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
-  const { isAuthenticated } = useAuth();
-  const { profile, members, activeUser, sendFamilyPing, sendEmergencySos } = useFamily();
-  const { speak } = useVoice();
+  const { isAuthenticated, user } = useAuth();
+  const { profile, members: ctxMembers, activeUser, sendFamilyPing } = useFamily();
 
-  // Modals state
-  const [sosModalVisible, setSosModalVisible] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [membersCardY, setMembersCardY] = useState<number>(450);
+
+  // Modals & Bottom Sheet state
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [joinModalVisible, setJoinModalVisible] = useState(false);
-  const [fullMapModalVisible, setFullMapModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
-  // Confirmation modal state for decisions/pings
-  const [modalState, setModalState] = useState<{
-    visible: boolean;
-    title: string;
-    description: string;
-    confirmLabel?: string;
-    onConfirm: () => void;
-  }>({
-    visible: false,
-    title: '',
-    description: '',
-    onConfirm: () => {},
-  });
+  // Time ticker to update relative times every minute
+  const [minuteTick, setMinuteTick] = useState<number>(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMinuteTick((t) => t + 1);
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/login');
   }, [isAuthenticated]);
 
+  // Compute 3 members with distinct statuses and dynamic relative times
+  const displayMembers: FamilyMember[] = useMemo(() => {
+    const selfName = user?.name || activeUser?.name || 'Sarah (Mom)';
+    const selfPhoto = user?.photoUrl || activeUser?.photoUrl;
+
+    const baseMembers: FamilyMember[] = [
+      {
+        id: activeUser?.id || 'member-self',
+        name: selfName,
+        relation: 'Self',
+        initials: selfName.charAt(0).toUpperCase(),
+        avatarColor: '#4F8EF7',
+        isSelf: true,
+        photoUrl: selfPhoto,
+        phone: user?.phone || '+1 (555) 234-5678',
+        humanLocation: 'At Home',
+        statusMessage: 'At Home • Relaxing',
+        currentPlaceId: 'home',
+        isSharingLocation: true,
+        sharingDuration: 'always',
+        availability: 'available',
+        lastUpdated: minuteTick === 0 ? 'Just now' : `${minuteTick} min ago`,
+        batteryLevel: 88,
+        isCharging: false,
+        deviceModel: 'iPhone 15 Pro',
+        ringerMode: 'sound',
+        coords: { x: 50, y: 50, latitude: 37.7749, longitude: -122.4194 },
+      },
+      {
+        id: 'member-2',
+        name: 'Michael',
+        relation: 'Spouse',
+        initials: 'M',
+        avatarColor: '#8B6CF0',
+        isSelf: false,
+        phone: '+1 (555) 345-6789',
+        humanLocation: 'Whole Foods Market',
+        statusMessage: 'Picking up groceries',
+        currentPlaceId: 'market',
+        isSharingLocation: true,
+        sharingDuration: 'always',
+        availability: 'available',
+        lastUpdated: `${minuteTick + 2} min ago`,
+        batteryLevel: 64,
+        isCharging: false,
+        deviceModel: 'Pixel 8',
+        ringerMode: 'vibrate',
+        coords: { x: 42, y: 38, latitude: 37.7849, longitude: -122.4094 },
+      },
+      {
+        id: 'member-3',
+        name: 'Emma',
+        relation: 'Daughter',
+        initials: 'E',
+        avatarColor: '#2DD4BF',
+        isSelf: false,
+        phone: '+1 (555) 456-7890',
+        humanLocation: 'Lincoln High School',
+        statusMessage: 'In Chemistry class',
+        currentPlaceId: 'school',
+        isSharingLocation: true,
+        sharingDuration: 'always',
+        availability: 'busy',
+        lastUpdated: `${minuteTick + 12} min ago`,
+        batteryLevel: 42,
+        isCharging: true,
+        deviceModel: 'iPhone 13',
+        ringerMode: 'silent',
+        coords: { x: 62, y: 64, latitude: 37.7649, longitude: -122.4294 },
+      },
+    ];
+
+    if (ctxMembers && ctxMembers.length >= 3) {
+      return ctxMembers;
+    }
+
+    return baseMembers;
+  }, [user, activeUser, ctxMembers, minuteTick]);
+
   if (!isAuthenticated) return null;
 
-  const handleCall = (phone: string, name: string) => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
+  // Handlers
+  const handleSelectMember = (member: FamilyMember) => {
+    setSelectedMember(member);
+    setSelectedMemberId(member.id);
+    setSheetVisible(true);
+  };
+
+  const handleSelectMemberFromPin = (memberId: string) => {
+    setSelectedMemberId(memberId);
+    const found = displayMembers.find((m) => m.id === memberId);
+    if (found) {
+      setSelectedMember(found);
+      setSheetVisible(true);
     }
-    speak(`Calling ${name}`);
-    Linking.openURL(`tel:${phone}`).catch(() => {
-      alert(`Calling ${name} at ${phone}...`);
+  };
+
+  const handleScrollToMembers = () => {
+    scrollViewRef.current?.scrollTo({
+      y: membersCardY - 10,
+      animated: true,
     });
   };
 
-  const handleAsk = (member: FamilyMember) => {
-    setModalState({
-      visible: true,
-      title: `Send quick ping to ${member.name}?`,
-      description: `Ask ${member.name}: "Hey, where are you headed and do you need anything from home?"`,
-      confirmLabel: 'Send Ping',
-      onConfirm: () => {
-        sendFamilyPing(
-          member.id,
-          `Quick ping from family: Checking in on your status.`
-        );
-        setModalState((prev) => ({ ...prev, visible: false }));
-        speak(`Ping sent to ${member.name}`);
-      },
-    });
+  const handleAskStatus = (targetMember: FamilyMember) => {
+    sendFamilyPing(
+      targetMember.id,
+      `Quick check-in ping from family: hope everything is going smoothly!`
+    );
   };
-
-  // Ensure primary user is rendered if members list is empty
-  const displayMembers = members.length > 0 ? members : [activeUser];
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Ambient Backdrops (Light / Dark) */}
+      {/* Ambient Backdrops */}
       <LightBackdrop />
       <DarkBackdrop />
 
-      {/* 1. Header Row: Avatar "A", Title "Family Circle", Pill Switcher, Sun, Bell, Settings */}
+      {/* 1. Header: 40px back, 44px group icon, title, subtitle with pulsing green dot, 3 right buttons */}
       <CircleHeader
-        onOpenFamilySwitcher={() => setQrModalVisible(true)}
+        onBack={() => router.navigate('/(tabs)')}
         onOpenSettings={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'circle' } })}
+        onOpenNotifications={() => router.push('/modal/notifications')}
       />
 
+      {/* Main Scrollable Content */}
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
         ]}
         showsVerticalScrollIndicator={false}>
-        {/* 2. Safety Banner (Tappable, Chevron, Glowing green shield, Leaf accent / Dark glow) */}
+        
+        {/* 2. Safety Banner (~72px, 48px green gradient shield, data-driven) */}
         <CircleSafetyBanner
-          onPress={() => setFullMapModalVisible(true)}
+          onPress={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'circle' } })}
         />
 
-        {/* 3. "MEMBERS & STATUS" Section Header with Pill Buttons */}
-        <CircleMembersHeader
-          onOpenQr={() => setQrModalVisible(true)}
-          onOpenJoin={() => setJoinModalVisible(true)}
-          onAddMember={() => setQrModalVisible(true)}
-          onOpenSettings={() => router.push('/modal/family-settings')}
-        />
-
-        {/* 4. Member Cards (One per member, list-rendered) */}
-        <View style={styles.membersListContainer}>
-          {displayMembers.map((member) => (
-            <CircleMemberCard
-              key={member.id}
-              member={member}
-              onPress={() => router.push('/modal/family-settings')}
-              onCall={handleCall}
-              onAsk={handleAsk}
-            />
-          ))}
-        </View>
-
-        {/* 5. "FAMILY PLACES & PRIVACY CONTROLS" Card */}
-        <CirclePlacesPrivacyCard
-          onSeeMap={() => setFullMapModalVisible(true)}
-          onPressPlaces={() => router.push('/modal/family-settings')}
-          onPressHome={() => setFullMapModalVisible(true)}
-          onPressPrivacy={() => router.push('/modal/family-settings')}
-        />
-
-        {/* 6. "LIVE FAMILY MAP" Card */}
+        {/* 3. Live Map Card (radius 28, height clamp 320-440, ArcGIS tiles, teardrop pins with pulses) */}
         <CircleLiveMapCard
-          onFullScreen={() => setFullMapModalVisible(true)}
+          members={displayMembers}
+          selectedMemberId={selectedMemberId}
+          onSelectMember={handleSelectMemberFromPin}
+          onPressViewList={handleScrollToMembers}
         />
+
+        {/* 4. Family Members Card (72px row cards, header with "+ Add Member" pill) */}
+        <View
+          onLayout={(e) => {
+            setMembersCardY(e.nativeEvent.layout.y);
+          }}>
+          <CircleMembersCard
+            members={displayMembers}
+            currentUserId={activeUser?.id || user?.familyMemberId}
+            selectedMemberId={selectedMemberId}
+            onSelectMember={handleSelectMember}
+            onAddMember={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'circle' } })}
+          />
+        </View>
       </ScrollView>
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        visible={modalState.visible}
-        title={modalState.title}
-        description={modalState.description}
-        confirmLabel={modalState.confirmLabel}
-        onConfirm={modalState.onConfirm}
-        onCancel={() => setModalState((prev) => ({ ...prev, visible: false }))}
-      />
-
-      {/* Emergency SOS Modal */}
-      <EmergencySosModal
-        visible={sosModalVisible}
-        onClose={() => setSosModalVisible(false)}
-        onTriggerSos={async (reason, details) => {
-          await sendEmergencySos(reason, details);
+      {/* Member Detail Bottom Sheet */}
+      <CircleMemberDetailSheet
+        visible={sheetVisible}
+        member={selectedMember}
+        isSelf={selectedMember?.isSelf || selectedMember?.id === activeUser?.id}
+        onClose={() => {
+          setSheetVisible(false);
         }}
+        onAskStatus={handleAskStatus}
       />
 
-      {/* Family QR & Join Modals */}
+      {/* Family QR Modal */}
       <FamilyQRModal
         visible={qrModalVisible}
         onClose={() => setQrModalVisible(false)}
-        familyCode={profile.code}
-        familyName={profile.name}
+        familyCode={profile?.code || 'KINLY-2026'}
+        familyName={profile?.name || 'Kinly Family'}
       />
-
-      <JoinFamilyModal
-        visible={joinModalVisible}
-        onClose={() => setJoinModalVisible(false)}
-      />
-
-      {/* Full Screen Live Family Map Modal */}
-      <Modal
-        visible={fullMapModalVisible}
-        animationType="slide"
-        onRequestClose={() => setFullMapModalVisible(false)}>
-        <View style={[styles.fullMapScreen, { backgroundColor: isDark ? colors.background : '#FBF8F6' }]}>
-          <Pressable
-            onPress={() => setFullMapModalVisible(false)}
-            style={styles.closeFullMapBtn}>
-            <View
-              style={[
-                styles.closeFullMapCircle,
-                {
-                  backgroundColor: isDark ? colors.cardBackground : '#FFFFFF',
-                  borderColor: isDark ? colors.border : 'rgba(0,0,0,0.1)',
-                },
-              ]}>
-              <Text style={{ color: colors.text, fontWeight: '800' }}>✕ Close Map</Text>
-            </View>
-          </Pressable>
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
-            <FamilyCommandCenter isFullScreen={true} />
-          </ScrollView>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -230,31 +248,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 4,
-    paddingBottom: 110, // Generous padding so content is never hidden behind floating nav bar
-    gap: 8,
+    gap: 10,
     maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
-  },
-  membersListContainer: {
-    gap: 8,
-  },
-  floatingNavSpacer: {
-    height: Platform.select({ ios: 36, default: 24 }),
-  },
-  fullMapScreen: {
-    flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
-  },
-  closeFullMapBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'flex-end',
-  },
-  closeFullMapCircle: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
   },
 });

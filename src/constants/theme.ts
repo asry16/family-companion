@@ -560,5 +560,18 @@ export const FrontPageTokens = {
   },
 } as const;
 
-
-
+export const CircleTokens = {
+  mapCardRadius: 28,
+  mapHeightMin: 320,
+  mapHeightMax: 440,
+  mapHeightRatio: 0.42,
+  memberRowHeight: 72,
+  memberRowRadius: 24,
+  memberRowGap: 10,
+  memberAvatarSize: 48,
+  mapPinAvatarSize: 36,
+  headerButtonSize: 40,
+  headerGroupIconSize: 44,
+  safetyBannerHeight: 72,
+  safetyShieldSize: 48,
+} as const;

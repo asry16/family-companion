@@ -23,6 +23,7 @@ import {
   SettingsSecuritySection,
   SettingsAccountSection,
   SettingsMemberEditModal,
+  SettingsPrivacySection,
 } from '@/components/settings';
 import { BottomTabBar, TabKey } from '@/components/navigation';
 import { TabBarTokens } from '@/constants/theme';
@@ -325,10 +326,13 @@ export default function FamilySettingsScreen({
           onEditMember={handleOpenEditMember}
         />
 
-        {/* 6. Section: SECURITY & SESSIONS (Where logged in, security checkup, saved login) */}
+        {/* 6. Section: FAMILY PLACES & PRIVACY CONTROLS */}
+        <SettingsPrivacySection />
+
+        {/* 7. Section: SECURITY & SESSIONS (Where logged in, security checkup, saved login) */}
         <SettingsSecuritySection />
 
-        {/* 7. Section: ACCOUNT & SESSION */}
+        {/* 8. Section: ACCOUNT & SESSION */}
         <SettingsAccountSection
           userName={accountInfo.name}
           userEmail={accountInfo.email}
