@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinly (FamilyOS) — Pitch Deck | Team Friday | AWS First Commit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-midnight: #060919;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #101642 0%, #070B1E 60%, #040612 100%);
+      --accent-violet: #8B7CF6;
+      --accent-cyan: #38BDF8;
+      --accent-blue: #4F8EF7;
+      --accent-green: #34D399;
+      --accent-amber: #FBBF24;
+      --accent-rose: #F43F5E;
+      --card-bg: rgba(18, 24, 66, 0.65);
+      --card-border: rgba(139, 124, 246, 0.22);
+      --card-highlight: rgba(255, 255, 255, 0.05);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-sub: #CBD5E1;
+      --font-heading: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-midnight);
+      background-image: var(--bg-gradient);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justifyContent: center;
+      overflow: hidden;
+    }
+
+    /* Ambient Background Blobs */
+    .ambient-glow-1 {
+      position: fixed;
+      top: -15%;
+      left: 20%;
+      width: 55vw;
+      height: 55vw;
+      background: radial-gradient(circle, rgba(139, 124, 246, 0.12) 0%, rgba(56, 189, 248, 0.04) 50%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient-glow-2 {
+      position: fixed;
+      bottom: -20%;
+      right: 15%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Deck Container - Fixed 16:9 Cinema Aspect Ratio */
+    .deck-frame {
+      position: relative;
+      width: 96vw;
+      max-width: 1320px;
+      height: 54vw;
+      max-height: 742px;
+      background: rgba(10, 15, 44, 0.78);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      box-shadow: 0 30px 80px -15px rgba(0, 0, 15, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+
+    /* Top Chrome Header */
+    .deck-topbar {
+      display: flex;
+      align-items: center;
+      justifyContent: space-between;
+      padding: 16px 32px;
+      background: rgba(7, 11, 32, 0.55);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .team-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .app-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4F8EF7, #8B7CF6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 14px rgba(139, 124, 246, 0.4);
+    }
+
+    .project-name {
+      font-family: var(--font-heading);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: #FFFFFF;
+    }
+
+    .team-pill {
+      background: linear-gradient(90deg, rgba(139, 124, 246, 0.2), rgba(56, 189, 248, 0.2));
+      border: 1px solid rgba(139, 124, 246, 0.45);
+      color: #C4B5FD;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 11px;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hackathon-pill {
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #FBBF24;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.3px;
+    }
+
+    .deck-meta-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .time-tracker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: blink 1.6s infinite;
+    }
+
+    .slide-step-counter {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+    }
+
+    /* Main Slide Stage */
+    .deck-stage {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .slide-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 34px 50px 24px 50px;
+      display: flex;
+      flex-direction: column;
+      justifyContent: space-between;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(45px) scale(0.985);
+      transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.38s;
+    }
+
+    .slide-card.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0) scale(1);
+    }
+
+    /* Typography & Headers */
+    .tag-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-violet);
+      margin-bottom: 6px;
+    }
+
+    .tag-category span {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+    }
+
+    .main-heading {
+      font-family: var(--font-heading);
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.7px;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+
+    .sub-heading {
+      font-size: 15.5px;
+      line-height: 1.45;
+      color: var(--text-sub);
+      max-width: 960px;
+    }
+
+    /* General Layout Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 18px;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 18px;
+      flex: 1;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+      flex: 1;
+    }
+
+    /* Feature & Architecture Cards */
+    .glass-tile {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0, 0, 15, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tile-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      align-self: flex-start;
+      padding: 4px 9px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px;
+    }
+
+    .tile-title {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tile-body {
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: var(--text-sub);
+    }
+
+    .tile-stat {
+      margin-top: auto;
+      padding-top: 12px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Slide 1 - Hero Title Slide */
+    .hero-wrapper {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justifyContent: center;
+      text-align: center;
+      padding: 20px 40px;
+    }
+
+    .team-badge-hero {
+      background: rgba(139, 124, 246, 0.18);
+      border: 1px solid rgba(139, 124, 246, 0.45);
+      color: #C4B5FD;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 24px rgba(139, 124, 246, 0.25);
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: 60px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #FFFFFF 20%, #E2E8F0 60%, #A5B4FC 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 14px;
+    }
+
+    .hero-subtitle {
+      font-size: 21px;
+      font-weight: 400;
+      color: #CBD5E1;
+      max-width: 800px;
+      line-height: 1.45;
+      margin-bottom: 30px;
+    }
+
+    .hero-pillars-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pillar-card {
+      background: rgba(20, 27, 74, 0.6);
+      border: 1px solid rgba(139, 124, 246, 0.28);
+      border-radius: 14px;
+      padding: 10px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Slide 3 - Architecture Diagram Interactive Layout */
+    .arch-flow-diagram {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 20px;
+      margin-top: 16px;
+      flex: 1;
+    }
+
+    .arch-client-col {
+      background: rgba(14, 20, 58, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .client-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .arch-services-matrix {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .service-tile {
+      background: rgba(18, 24, 68, 0.75);
+      border: 1px solid rgba(139, 124, 246, 0.25);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .service-head {
+      display: flex;
+      align-items: center;
+      justifyContent: space-between;
+      margin-bottom: 6px;
+    }
+
+    .service-name {
+      font-family: var(--font-heading);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .service-role {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .service-desc {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #94A3B8;
+    }
+
+    .service-benefit {
+      margin-top: auto;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--accent-green);
+      padding-top: 6px;
+    }
+
+    /* Bottom Control Bar */
+    .deck-bottombar {
+      display: flex;
+      align-items: center;
+      justifyContent: space-between;
+      padding: 14px 32px;
+      background: rgba(7, 11, 32, 0.65);
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: rgba(139, 124, 246, 0.25);
+      border-color: var(--accent-violet);
+    }
+
+    .control-btn-primary {
+      background: linear-gradient(135deg, #4F8EF7, #8B7CF6);
+      border: none;
+      box-shadow: 0 4px 14px rgba(139, 124, 246, 0.4);
+    }
+
+    .control-btn-primary:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .step-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .step-dot.active {
+      width: 26px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4F8EF7, #8B7CF6);
+      box-shadow: 0 0 10px rgba(139, 124, 246, 0.6);
+    }
+
+    /* Progress bar */
+    .slide-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .slide-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4F8EF7, #38BDF8, #8B7CF6);
+      width: 20%;
+      transition: width 0.35s ease;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <!-- Deck 16:9 Cinema Container -->
+  <div class="deck-frame" id="deckFrame">
+
+    <!-- Top Chrome -->
+    <header class="deck-topbar">
+      <div class="team-badge-group">
+        <div class="app-logo">🏡</div>
+        <span class="project-name">Kinly</span>
+        <div class="team-pill">
+          <span>⚡</span>
+          <span>Team Friday</span>
+        </div>
+        <span class="hackathon-pill">AWS First Commit</span>
+      </div>
+
+      <div class="deck-meta-right">
+        <div class="time-tracker" id="timerBadge" title="Click to start/pause timer (T)">
+          <div class="live-dot" id="liveDot"></div>
+          <span id="timeText">00:00 / 03:00</span>
+        </div>
+        <div class="slide-step-counter" id="stepCounter">01 / 05</div>
+      </div>
+    </header>
+
+    <!-- Stage -->
+    <main class="deck-stage">
+
+      <!-- ================= SLIDE 1: TITLE & EXECUTIVE OVERVIEW ================= -->
+      <section class="slide-card active" id="slide-1">
+        <div class="hero-wrapper">
+          <div class="team-badge-hero">
+            <span>🏆</span>
+            <span>Team Friday • AWS First Commit Hackathon</span>
+          </div>
+          <h1 class="hero-title">Kinly — FamilyOS</h1>
+          <p class="hero-subtitle">
+            The private, cloud-native household operating system bridging passive device telemetry, physical memory indexing, and emergency dispatch.
+          </p>
+
+          <div class="hero-pillars-row">
+            <div class="pillar-card" style="border-color: rgba(56, 189, 248, 0.4);">
+              <span>🛰️</span>
+              <span>Passive Ambient Telemetry</span>
+            </div>
+            <div class="pillar-card" style="border-color: rgba(139, 124, 246, 0.4);">
+              <span>🗄️</span>
+              <span>Physical Memory Engine</span>
+            </div>
+            <div class="pillar-card" style="border-color: rgba(244, 63, 94, 0.4);">
+              <span>🚨</span>
+              <span>2-Second Hold Emergency SOS</span>
+            </div>
+            <div class="pillar-card" style="border-color: rgba(52, 211, 153, 0.4);">
+              <span>👴</span>
+              <span>Age-Aware Accessibility (&gt;50)</span>
+            </div>
+            <div class="pillar-card" style="border-color: rgba(251, 191, 36, 0.4);">
+              <span>☁️</span>
+              <span>AWS Cloud-Native Backbone</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 2: THE PROBLEM & KINLY SOLUTION ================= -->
+      <section class="slide-card" id="slide-2">
+        <div>
+          <div class="tag-category"><span></span> Household Coordination Crisis</div>
+          <h2 class="main-heading">Why Kinly? The Real Family Void</h2>
+          <p class="sub-heading">Modern families juggle noisy chat channels, intrusive tracking apps, and misplaced physical memories.</p>
+        </div>
+
+        <div class="grid-2">
+          <!-- The Broken Reality -->
+          <div class="glass-tile" style="border-color: rgba(244, 63, 94, 0.38);">
+            <div class="tile-badge" style="background: rgba(244, 63, 94, 0.15); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.3);">
+              ⚠️ The Broken Reality
+            </div>
+            <h3 class="tile-title" style="color: #FDA4AF;">Chaotic Patchwork of Generic Tools</h3>
+            <div class="tile-body" style="display: flex; flex-direction: column; gap: 10px;">
+              <p>• <strong>Chat Fatigue:</strong> Urgent doctor visits, school events, and utility deadlines drown in WhatsApp/iMessage groups.</p>
+              <p>• <strong>Invasive Surveillance:</strong> 24/7 continuous GPS trackers drain phone batteries and destroy family trust.</p>
+              <p>• <strong>Physical Memory Void:</strong> Endless household stress searching: <em>"Where did we keep Dad's passport &amp; keys?"</em></p>
+              <p>• <strong>The Aging Barrier:</strong> Complex productivity suites (Notion, Asana) are completely unusable for elderly grandparents.</p>
+            </div>
+            <div class="tile-stat" style="color: #FDA4AF;">Status Quo: Fragmented, High-Anxiety &amp; Invasive</div>
+          </div>
+
+          <!-- The Kinly Paradigm -->
+          <div class="glass-tile" style="border-color: rgba(52, 211, 153, 0.38);">
+            <div class="tile-badge" style="background: rgba(52, 211, 153, 0.15); color: #6EE7B7; border: 1px solid rgba(52, 211, 153, 0.3);">
+              ✨ The Kinly Solution by Team Friday
+            </div>
+            <h3 class="tile-title" style="color: #6EE7B7;">The Intelligent Living Room Companion</h3>
+            <div class="tile-body" style="display: flex; flex-direction: column; gap: 10px;">
+              <p>• <strong>Passive Telemetry:</strong> At-a-glance awareness of phone battery, charging, and ringer mode—zero creepy stalking.</p>
+              <p>• <strong>Physical Vault:</strong> Searchable shelf/drawer indexing for physical belongings + encrypted digital health papers.</p>
+              <p>• <strong>2-Second Hold SOS:</strong> Multi-channel dispatch with instant SMS alerts and live WebSocket visual beacons.</p>
+              <p>• <strong>Age-Aware Mode:</strong> Automatically switches to 68px touch targets and voice synthesis for seniors aged 50+.</p>
+            </div>
+            <div class="tile-stat" style="color: #34D399;">Kinly: Ambient, Privacy-First &amp; Multi-Generational</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 3: SYSTEM ARCHITECTURE & TOPOLOGY ================= -->
+      <section class="slide-card" id="slide-3">
+        <div>
+          <div class="tag-category"><span></span> Engineering Blueprint</div>
+          <h2 class="main-heading">End-to-End System Architecture</h2>
+          <p class="sub-heading">Hybrid-cloud architecture: Local low-latency clients backed by resilient AWS managed cloud services.</p>
+        </div>
+
+        <div class="arch-flow-diagram">
+          <!-- Client Layer -->
+          <div class="arch-client-col">
+            <div style="font-family: var(--font-heading); font-size: 15px; font-weight: 700; color: #38BDF8; margin-bottom: 4px;">
+              📱 Client Tier (Expo SDK 57)
+            </div>
+            <p style="font-size: 12px; color: #94A3B8; line-height: 1.4;">
+              Cross-platform React Native 0.86 with strict TypeScript, tactile haptics, and dual light/dark themes.
+            </p>
+            <div class="client-chip"><span>📱</span> iOS &amp; Android Apps</div>
+            <div class="client-chip"><span>💻</span> Web Dashboard</div>
+            <div class="client-chip"><span>👴</span> Elderly Simple Mode (Age &gt; 50)</div>
+            <div class="client-chip"><span>⚡</span> WSS Real-Time Telemetry</div>
+            <div style="margin-top: auto; font-family: var(--font-mono); font-size: 11px; color: #38BDF8;">
+              HTTPS REST + WSS Duplex
+            </div>
+          </div>
+
+          <!-- AWS Services Matrix -->
+          <div class="arch-services-matrix">
+            <!-- App Runner -->
+            <div class="service-tile" style="border-color: rgba(79, 142, 247, 0.4);">
+              <div class="service-head">
+                <span class="service-name">🚀 App Runner</span>
+                <span class="service-role" style="background: rgba(79, 142, 247, 0.2); color: #60A5FA;">Compute</span>
+              </div>
+              <p class="service-desc">Containerized Node 20 backend with auto-scaling, health checks, and WebSocket pub/sub.</p>
+              <div class="service-benefit">Zero server maintenance</div>
+            </div>
+
+            <!-- DynamoDB -->
+            <div class="service-tile" style="border-color: rgba(56, 189, 248, 0.4);">
+              <div class="service-head">
+                <span class="service-name">⚡ DynamoDB</span>
+                <span class="service-role" style="background: rgba(56, 189, 248, 0.2); color: #38BDF8;">Database</span>
+              </div>
+              <p class="service-desc">Single-table telemetry stream with 30-day auto TTL + immutable emergency incident ledger.</p>
+              <div class="service-benefit">&lt; 10ms single-digit latency</div>
+            </div>
+
+            <!-- Amazon S3 -->
+            <div class="service-tile" style="border-color: rgba(52, 211, 153, 0.4);">
+              <div class="service-head">
+                <span class="service-name">🔒 Amazon S3</span>
+                <span class="service-role" style="background: rgba(52, 211, 153, 0.2); color: #34D399;">Storage</span>
+              </div>
+              <p class="service-desc">AES-256 encrypted digital vault for prescriptions &amp; bills with expiring Presigned URLs.</p>
+              <div class="service-benefit">99.999999999% Durability</div>
+            </div>
+
+            <!-- Amazon SNS -->
+            <div class="service-tile" style="border-color: rgba(244, 63, 94, 0.4);">
+              <div class="service-head">
+                <span class="service-name">📢 Amazon SNS</span>
+                <span class="service-role" style="background: rgba(244, 63, 94, 0.2); color: #F87171;">Messaging</span>
+              </div>
+              <p class="service-desc">Direct transactional emergency SMS dispatch to family contacts during SOS triggers.</p>
+              <div class="service-benefit">Sub-second SMS delivery</div>
+            </div>
+
+            <!-- EventBridge -->
+            <div class="service-tile" style="border-color: rgba(251, 191, 36, 0.4);">
+              <div class="service-head">
+                <span class="service-name">🔄 EventBridge</span>
+                <span class="service-role" style="background: rgba(251, 191, 36, 0.2); color: #FCD34D;">Event Bus</span>
+              </div>
+              <p class="service-desc">Asynchronous domain event bus decoupling emergency notifications &amp; audit streams.</p>
+              <div class="service-benefit">Fully decoupled pipeline</div>
+            </div>
+
+            <!-- Bedrock / SageMaker -->
+            <div class="service-tile" style="border-color: rgba(168, 85, 247, 0.4);">
+              <div class="service-head">
+                <span class="service-name">🧠 Bedrock &amp; AI</span>
+                <span class="service-role" style="background: rgba(168, 85, 247, 0.2); color: #C084FC;">AI Model</span>
+              </div>
+              <p class="service-desc">Claude 3 Haiku foundation model parsing bills, OCR medical cards, and family chat intelligence.</p>
+              <div class="service-benefit">Multimodal inference</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 4: AWS SERVICES DEEP-DIVE ================= -->
+      <section class="slide-card" id="slide-4">
+        <div>
+          <div class="tag-category"><span></span> AWS Cloud Engineering</div>
+          <h2 class="main-heading">How Team Friday Uses AWS at the Core</h2>
+          <p class="sub-heading">AWS services are the operational backbone of security, telemetry ingestion, and emergency notification.</p>
+        </div>
+
+        <div class="grid-4">
+          <!-- DynamoDB -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">
+              KinlyTelemetryStream
+            </div>
+            <h3 class="tile-title">Amazon DynamoDB</h3>
+            <p class="tile-body">
+              • Ingests continuous device heartbeats (battery, charging, ringer, broad zone).<br>
+              • <strong>30-Day TTL:</strong> Automatic zero-cost data expiration prevents table bloat.<br>
+              • <strong>Immutable Ledger:</strong> <code>KinlyEmergencyEvents</code> records all SOS triggers with tamper-proof timestamps.
+            </p>
+            <div class="tile-stat">Single-table Design • Auto-Scaling</div>
+          </div>
+
+          <!-- Amazon S3 -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(52, 211, 153, 0.15); color: #34D399;">
+              kinly-family-vault
+            </div>
+            <h3 class="tile-title">Amazon S3</h3>
+            <p class="tile-body">
+              • <strong>Zero-Trust Storage:</strong> Medical records, insurance papers, IDs encrypted with AES-256 Server-Side Encryption.<br>
+              • <strong>Presigned URLs:</strong> Generates expiring 24-hour GET URLs for secure direct-to-device streaming without proxy bottlenecks.
+            </p>
+            <div class="tile-stat">Zero Public Bucket Access • AES-256</div>
+          </div>
+
+          <!-- SNS & EventBridge -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(244, 63, 94, 0.15); color: #F87171;">
+              KinlyEmergencyAlerts
+            </div>
+            <h3 class="tile-title">SNS &amp; EventBridge</h3>
+            <p class="tile-body">
+              • <strong>Amazon SNS:</strong> Sends transactional emergency SMS alerts with GPS links directly to phones, bypassing data deadzones.<br>
+              • <strong>EventBridge:</strong> Emits domain events (<code>KinlyEmergencySOS</code>, <code>KinlyDocumentUploaded</code>) for asynchronous processing.
+            </p>
+            <div class="tile-stat">Carrier SMS • Async Event Routing</div>
+          </div>
+
+          <!-- Bedrock & Observability -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC;">
+              Kinly/FamilyOS
+            </div>
+            <h3 class="tile-title">Bedrock &amp; CloudWatch</h3>
+            <p class="tile-body">
+              • <strong>Bedrock / SageMaker:</strong> Extracts amounts, providers, and due dates from bills to auto-create calendar reminders.<br>
+              • <strong>CloudWatch:</strong> Tracks custom operational metrics (<code>EmergencySOSTriggered</code>, <code>ActivePings</code>) and audit logs.
+            </p>
+            <div class="tile-stat">Claude 3 Haiku • Custom Metrics</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 5: DEMO, IMPACT & TEAM FRIDAY ROADMAP ================= -->
+      <section class="slide-card" id="slide-5">
+        <div>
+          <div class="tag-category"><span></span> Hackathon Climax</div>
+          <h2 class="main-heading">Impact, Live Demo &amp; What's Next</h2>
+          <p class="sub-heading">Built for real families with dignity, privacy, and enterprise-grade reliability.</p>
+        </div>
+
+        <div class="grid-3">
+          <!-- Live Demo Highlights -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(79, 142, 247, 0.15); color: #60A5FA;">
+              🎯 Demo Capabilities
+            </div>
+            <h3 class="tile-title">Live Product Features</h3>
+            <div class="tile-body" style="display: flex; flex-direction: column; gap: 8px;">
+              <p>• <strong>Family Radar:</strong> Real-time member cards, safe zones, battery &amp; ringer status.</p>
+              <p>• <strong>Tactile Planner:</strong> In-house <code>CalendarDatePicker</code> &amp; tactile <code>TimeDialerPicker</code>.</p>
+              <p>• <strong>Physical Memory:</strong> Search items by shelf &amp; drawer with photo verification.</p>
+              <p>• <strong>Dual Theme Engine:</strong> Seamless dynamic toggle between light lavender &amp; midnight navy.</p>
+            </div>
+            <div class="tile-stat">Expo SDK 57 • Zero-lag Interactions</div>
+          </div>
+
+          <!-- Measurable Impact -->
+          <div class="glass-tile">
+            <div class="tile-badge" style="background: rgba(52, 211, 153, 0.15); color: #34D399;">
+              📈 Measurable Value
+            </div>
+            <h3 class="tile-title">Why Kinly Wins</h3>
+            <div class="tile-body" style="display: flex; flex-direction: column; gap: 8px;">
+              <p>• <strong>100% Privacy Guarantee:</strong> Zero ad tracking, zero data brokering, zero continuous surveillance.</p>
+              <p>• <strong>&lt; 850ms SOS Latency:</strong> Critical alerts reach mobile devices and SMS carriers in milliseconds.</p>
+              <p>• <strong>Universal Accessibility:</strong> Auto-activated senior mode empowers aging parents without patronizing them.</p>
+            </div>
+            <div class="tile-stat">Cloud-Resilient • Multi-Generational</div>
+          </div>
+
+          <!-- Team Friday Roadmap -->
+          <div class="glass-tile" style="border-color: rgba(139, 124, 246, 0.5); background: linear-gradient(135deg, rgba(20, 27, 74, 0.8), rgba(28, 36, 92, 0.7));">
+            <div class="tile-badge" style="background: rgba(139, 124, 246, 0.25); color: #C4B5FD;">
+              🚀 Team Friday Roadmap
+            </div>
+            <h3 class="tile-title">Future Horizons</h3>
+            <div class="tile-body" style="display: flex; flex-direction: column; gap: 8px;">
+              <p>• <strong>Offline Mesh Relay:</strong> Bluetooth P2P emergency signals when mobile networks fail.</p>
+              <p>• <strong>Wearable Health Telemetry:</strong> Automatic fall detection and vital monitoring alarms.</p>
+              <p>• <strong>Open Source:</strong> Production-ready architecture hosted on GitHub: <code>asry16/family-companion</code>.</p>
+            </div>
+            <div class="tile-stat" style="color: #C4B5FD;">Team Friday • Ready for Every Family</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Progress Line -->
+    <div class="slide-progress">
+      <div class="slide-progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <footer class="deck-bottombar">
+      <div class="nav-actions">
+        <button class="control-btn" id="prevSlideBtn" onclick="prevSlide()">← Prev</button>
+        <button class="control-btn control-btn-primary" id="nextSlideBtn" onclick="nextSlide()">Next →</button>
+      </div>
+
+      <div class="step-dots" id="dotsGroup">
+        <div class="step-dot active" onclick="goToSlide(1)"></div>
+        <div class="step-dot" onclick="goToSlide(2)"></div>
+        <div class="step-dot" onclick="goToSlide(3)"></div>
+        <div class="step-dot" onclick="goToSlide(4)"></div>
+        <div class="step-dot" onclick="goToSlide(5)"></div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="control-btn" id="fsToggleBtn" onclick="toggleFullscreen()">⛶ Fullscreen (F)</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    let activeSlideIndex = 1;
+    const totalSlideCount = 5;
+
+    // Timer logic (< 3 min target)
+    let elapsedSeconds = 0;
+    let timerRef = null;
+    let isTimerActive = false;
+
+    function renderSlide() {
+      // Toggle active slide
+      document.querySelectorAll('.slide-card').forEach((el, index) => {
+        if (index + 1 === activeSlideIndex) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+
+      // Toggle active dot
+      document.querySelectorAll('.step-dot').forEach((el, index) => {
+        if (index + 1 === activeSlideIndex) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+
+      // Update counter
+      document.getElementById('stepCounter').innerText = `0${activeSlideIndex} / 0${totalSlideCount}`;
+
+      // Update progress fill
+      const percent = (activeSlideIndex / totalSlideCount) * 100;
+      document.getElementById('progressFill').style.width = `${percent}%`;
+
+      // Auto start timer on first advance if not already running
+      if (!isTimerActive && elapsedSeconds === 0) {
+        startTimer();
+      }
+    }
+
+    function nextSlide() {
+      if (activeSlideIndex < totalSlideCount) {
+        activeSlideIndex++;
+        renderSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (activeSlideIndex > 1) {
+        activeSlideIndex--;
+        renderSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlideCount) {
+        activeSlideIndex = n;
+        renderSlide();
+      }
+    }
+
+    function startTimer() {
+      if (isTimerActive) return;
+      isTimerActive = true;
+      document.getElementById('liveDot').style.display = 'block';
+      timerRef = setInterval(() => {
+        elapsedSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      isTimerActive = false;
+      clearInterval(timerRef);
+      document.getElementById('liveDot').style.display = 'none';
+    }
+
+    function toggleTimer() {
+      if (isTimerActive) pauseTimer();
+      else startTimer();
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+      const secs = (elapsedSeconds % 60).toString().padStart(2, '0');
+      const target = document.getElementById('timeText');
+      target.innerText = `${mins}:${secs} / 03:00`;
+
+      if (elapsedSeconds > 180) {
+        target.style.color = '#F43F5E'; // Red when over 3 mins
+      } else if (elapsedSeconds > 150) {
+        target.style.color = '#FBBF24'; // Warning amber at 2:30
+      } else {
+        target.style.color = '#E2E8F0';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Keyboard bindings for smooth presenting
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 't') {
+        toggleTimer();
+      }
+    });
+
+    document.getElementById('timerBadge').addEventListener('click', toggleTimer);
+  </script>
+</body>
+</html>
