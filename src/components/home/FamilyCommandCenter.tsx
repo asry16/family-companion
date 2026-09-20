@@ -136,7 +136,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
   // Map mode: OpenStreetMap / Satellite
-  const [mapMode, setMapMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
+  const [mapMode, setMapMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-standard');
 
   // Animation drivers
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -1032,9 +1032,9 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
             onPress={() => {
               triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
               setMapMode((m) => {
-                if (m === 'osm-dark' || m === 'osm-positron') return 'osm-standard';
+                if (m === 'osm-dark') return 'osm-standard';
                 if (m === 'osm-standard') return 'satellite';
-                return isDark ? 'osm-dark' : 'osm-positron';
+                return isDark ? 'osm-dark' : 'osm-standard';
               });
             }}
             style={({ pressed }) => [
@@ -1051,7 +1051,7 @@ export const FamilyCommandCenter: React.FC<FamilyCommandCenterProps> = ({ isFull
               color={colors.text}
             />
             <Text style={[styles.overlayMapModeText, { color: colors.text }]}>
-              {mapMode === 'satellite' ? 'Satellite' : mapMode === 'osm-standard' ? 'OSM Standard' : 'OSM Canvas'}
+              {mapMode === 'satellite' ? 'Satellite' : mapMode === 'osm-standard' ? 'OSM Standard' : 'Dark Canvas'}
             </Text>
           </Pressable>
 

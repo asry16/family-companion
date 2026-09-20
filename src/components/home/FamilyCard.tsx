@@ -44,7 +44,7 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
   const memberLon = primaryMember.coords?.longitude ?? 77.2005;
   const tileX = lon2tile(memberLon, 14);
   const tileY = lat2tile(memberLat, 14);
-  const tileUrl = getTileUrl(tileX, tileY, 14, isDark ? 'osm-dark' : 'osm-positron', isDark);
+  const tileUrl = getTileUrl(tileX, tileY, 14, isDark ? 'osm-dark' : 'osm-standard', isDark);
 
   // Accessibility: reduced motion
   const [isReducedMotion, setIsReducedMotion] = useState(false);

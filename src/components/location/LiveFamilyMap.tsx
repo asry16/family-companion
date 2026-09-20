@@ -42,7 +42,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   // Map mode: OpenStreetMap / Satellite
-  const [mapStyle, setMapStyle] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
+  const [mapStyle, setMapStyle] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-standard');
 
   // Live Location & Layout State
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
@@ -153,9 +153,9 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
           onPress={() => {
             triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
             setMapStyle((prev) => {
-              if (prev === 'osm-dark' || prev === 'osm-positron') return 'osm-standard';
+              if (prev === 'osm-dark') return 'osm-standard';
               if (prev === 'osm-standard') return 'satellite';
-              return isDark ? 'osm-dark' : 'osm-positron';
+              return isDark ? 'osm-dark' : 'osm-standard';
             });
           }}
           style={[
@@ -168,7 +168,7 @@ export const LiveFamilyMap: React.FC<LiveFamilyMapProps> = ({
             color={colors.textSecondary}
           />
           <Text style={[styles.mapStyleText, { color: colors.textSecondary }]}>
-            {mapStyle === 'satellite' ? 'Satellite' : mapStyle === 'osm-standard' ? 'OSM Standard' : 'OSM Canvas'}
+            {mapStyle === 'satellite' ? 'Satellite' : mapStyle === 'osm-standard' ? 'OSM Standard' : 'Dark Canvas'}
           </Text>
         </Pressable>
       </View>

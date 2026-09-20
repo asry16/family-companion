@@ -24,23 +24,26 @@ export function lat2tile(lat: number, zoom: number): number {
   );
 }
 
-export type MapTileMode = 'osm-dark' | 'osm-standard' | 'osm-positron' | 'satellite' | 'streets';
+export type MapTileMode = 'osm-standard' | 'osm-dark' | 'osm-hot' | 'osm-positron' | 'satellite' | 'streets';
 
-export function getOsmAttribution(mode: MapTileMode = 'osm-dark'): string {
+export function getOsmAttribution(mode: MapTileMode = 'osm-standard'): string {
   if (mode === 'satellite') {
     return '© Esri, Maxar, Earthstar';
   }
   if (mode === 'osm-standard') {
     return '© OpenStreetMap contributors';
   }
-  return '© OpenStreetMap contributors, © CARTO';
+  if (mode === 'osm-hot') {
+    return '© OpenStreetMap contributors, HOT';
+  }
+  return '© OpenStreetMap contributors, Esri';
 }
 
 export function getTileUrl(
   x: number,
   y: number,
   zoom: number,
-  mode: MapTileMode = 'streets',
+  mode: MapTileMode = 'osm-standard',
   isDark: boolean = true
 ): string {
   const normX = ((x % Math.pow(2, zoom)) + Math.pow(2, zoom)) % Math.pow(2, zoom);
@@ -50,22 +53,34 @@ export function getTileUrl(
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${normY}/${normX}`;
   }
 
-  if (mode === 'osm-standard') {
-    // Official OpenStreetMap Standard tiles (Slippy Map format: {z}/{x}/{y}.png)
+  // Official OpenStreetMap Standard tiles (100% Free, NO API key, zero watermark)
+  if (mode === 'osm-standard' || (mode === 'streets' && !isDark)) {
     return `https://tile.openstreetmap.org/${zoom}/${normX}/${normY}.png`;
   }
 
-  if (mode === 'osm-positron' || (mode === 'streets' && !isDark)) {
-    // CartoDB Positron - Light OpenStreetMap tiles
-    const subdomains = ['a', 'b', 'c', 'd'];
+  // OpenStreetMap Humanitarian style (100% Free, high clarity, NO API key, zero watermark)
+  if (mode === 'osm-hot') {
+    const subdomains = ['a', 'b', 'c'];
     const s = subdomains[Math.abs(normX + normY) % subdomains.length];
-    return `https://${s}.basemaps.cartocdn.com/rastertiles/light_all/${zoom}/${normX}/${normY}.png`;
+    return `https://${s}.tile.openstreetmap.fr/hot/${zoom}/${normX}/${normY}.png`;
   }
 
-  // CartoDB Dark Matter - High-contrast Deep Indigo OpenStreetMap tiles
-  const subdomains = ['a', 'b', 'c', 'd'];
-  const s = subdomains[Math.abs(normX + normY) % subdomains.length];
-  return `https://${s}.basemaps.cartocdn.com/rastertiles/dark_all/${zoom}/${normX}/${normY}.png`;
+  // If user provided a CARTO API key in env, use CartoDB tiles with key
+  const cartoKey = process.env.EXPO_PUBLIC_CARTO_API_KEY;
+  if (cartoKey) {
+    const subdomains = ['a', 'b', 'c', 'd'];
+    const s = subdomains[Math.abs(normX + normY) % subdomains.length];
+    const style = isDark ? 'dark_all' : 'light_all';
+    return `https://${s}.basemaps.cartocdn.com/rastertiles/${style}/${zoom}/${normX}/${normY}.png?key=${cartoKey}`;
+  }
+
+  // High-contrast Dark Canvas: ArcGIS World Dark Gray Base (100% Free, NO API key, zero watermark)
+  if (isDark || mode === 'osm-dark') {
+    return `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${zoom}/${normY}/${normX}`;
+  }
+
+  // High-contrast Light Canvas: ArcGIS World Light Gray Base (100% Free, NO API key, zero watermark)
+  return `https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${zoom}/${normY}/${normX}`;
 }
 
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {

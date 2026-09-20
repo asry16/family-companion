@@ -105,21 +105,20 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   // Live Location from GPS
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);
   const [isGpsLive, setIsGpsLive] = useState<boolean>(true);
-  const [tileMode, setTileMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-positron');
+  const [tileMode, setTileMode] = useState<MapTileMode>(isDark ? 'osm-dark' : 'osm-standard');
   const [tileError, setTileError] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cardLayout, setCardLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
 
-  // Cycle through OpenStreetMap layers (Dark -> Standard OSM -> Satellite -> Positron)
+  // Cycle through map layers: Dark Canvas -> Official OSM Standard -> Satellite
   const cycleMapMode = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setTileMode((prev) => {
       if (prev === 'osm-dark') return 'osm-standard';
       if (prev === 'osm-standard') return 'satellite';
-      if (prev === 'satellite') return isDark ? 'osm-dark' : 'osm-positron';
-      return 'osm-dark';
+      return isDark ? 'osm-dark' : 'osm-standard';
     });
   };
 
