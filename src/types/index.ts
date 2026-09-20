@@ -90,6 +90,10 @@ export interface MemoryItem {
   tags: string[];
   relatedMemberIds: string[];
   emoji: string;
+  isStarred?: boolean; // Starred as important, visible to all family members
+  fileUri?: string; // Attached file URI from device
+  fileType?: 'pdf' | 'image' | 'scan' | 'other';
+  fileName?: string;
 }
 
 export type DocumentType = 'electricity_bill' | 'medical_prescription' | 'receipt' | 'insurance' | 'tax' | 'id_card';

@@ -17,9 +17,10 @@ interface VaultItemCardProps {
   item: MemoryItem;
   onPress?: () => void;
   onDelete?: () => void;
+  onToggleStar?: () => void;
 }
 
-export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress, onDelete }) => {
+export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress, onDelete, onToggleStar }) => {
   const { colors, isDark, isElderly } = useAppTheme();
 
   const triggerHaptic = () => {
@@ -142,6 +143,28 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress, onD
             showDot={false}
           />
 
+          {/* Star / Important Toggle */}
+          {onToggleStar && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                triggerHaptic();
+                onToggleStar();
+              }}
+              hitSlop={8}
+              accessibilityLabel={item.isStarred ? 'Unstar item' : 'Star as important'}
+              style={({ pressed }) => [
+                styles.starBtn,
+                { opacity: pressed ? 0.65 : 1 },
+              ]}>
+              <Ionicons
+                name={item.isStarred ? 'star' : 'star-outline'}
+                size={15}
+                color={item.isStarred ? '#F59E0B' : isDark ? colors.textMuted : '#94A3B8'}
+              />
+            </Pressable>
+          )}
+
           {onDelete && (
             <Pressable
               onPress={(e) => {
@@ -238,6 +261,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  starBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteBtn: {
     width: 26,

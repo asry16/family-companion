@@ -4,3 +4,4 @@ export { VaultSuggestionChips } from './VaultSuggestionChips';
 export { VaultCategoryFilters } from './VaultCategoryFilters';
 export { VaultEmptyStateCard } from './VaultEmptyStateCard';
 export { VaultItemCard } from './VaultItemCard';
+export { VaultActionsBar } from './VaultActionsBar';

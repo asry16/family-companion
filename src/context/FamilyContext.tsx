@@ -73,6 +73,7 @@ interface FamilyContextValue {
   addReminder: (reminder: Omit<Reminder, 'id'>) => void;
   addMemory: (memory: Omit<MemoryItem, 'id'>) => void;
   deleteMemory: (memoryId: string) => void;
+  toggleMemoryStar: (memoryId: string) => void;
   searchMemories: (query: string) => MemoryItem[];
   addDocument: (doc: Omit<FamilyDocument, 'id'>) => void;
   executeDocumentAction: (docId: string, actionId: string) => void;
@@ -726,6 +727,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     apiClient.vault.deleteMemory(memoryId).catch(() => {});
   }, []);
 
+  const toggleMemoryStar = useCallback((memoryId: string) => {
+    setMemories((prev) =>
+      prev.map((m) => (m.id === memoryId ? { ...m, isStarred: !m.isStarred } : m))
+    );
+  }, []);
+
   const searchMemories = useCallback(
     (query: string): MemoryItem[] => {
       const q = query.trim().toLowerCase();
@@ -1170,6 +1177,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addReminder,
         addMemory,
         deleteMemory,
+        toggleMemoryStar,
         searchMemories,
         addDocument,
         executeDocumentAction,

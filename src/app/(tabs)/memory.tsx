@@ -23,6 +23,7 @@ import { MemoryItem } from '@/types';
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
+import { VaultActionsBar } from '@/components/vault/VaultActionsBar';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
@@ -38,7 +39,7 @@ export default function MemoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuth();
-  const { memories, searchMemories, addMemory, deleteMemory, activeUser } = useFamily();
+  const { memories, searchMemories, addMemory, deleteMemory, toggleMemoryStar, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
 
   useEffect(() => {
@@ -150,10 +151,40 @@ export default function MemoryScreen() {
           onSaveLocationPress={() => setAddModalVisible(true)}
         />
 
-        {/* 5. Quick Actions Grid */}
-        <QuickActionsGrid onSeeAll={() => router.push('/(tabs)/plans')} />
+        {/* 5. Vault Actions Bar: Add from Files, Scan, Save Details, Star Docs */}
+        <VaultActionsBar
+          onAddDetails={() => setAddModalVisible(true)}
+          onScanPress={() => router.push('/modal/scan-document')}
+          onAddFiles={(fileItem) => {
+            addMemory(fileItem);
+          }}
+        />
 
-        {/* 6. Section Header for Saved Details */}
+        {/* 6. Starred / Important Section */}
+        {memories.filter((m) => m.isStarred).length > 0 && (
+          <>
+            <SectionHeader
+              title="⭐ Important – Shared with Family"
+              categoryTag="STARRED"
+              actionText={`${memories.filter((m) => m.isStarred).length} starred`}
+            />
+            <View style={styles.itemsListContainer}>
+              {memories
+                .filter((m) => m.isStarred)
+                .map((item) => (
+                  <VaultItemCard
+                    key={`starred-${item.id}`}
+                    item={item}
+                    onPress={() => setSelectedDetailItem(item)}
+                    onDelete={() => setDeleteTargetItem(item)}
+                    onToggleStar={() => toggleMemoryStar(item.id)}
+                  />
+                ))}
+            </View>
+          </>
+        )}
+
+        {/* 7. Section Header for All Saved Details */}
         <SectionHeader
           title="Saved Family Details"
           categoryTag="VAULT"
@@ -190,6 +221,7 @@ export default function MemoryScreen() {
                 item={item}
                 onPress={() => setSelectedDetailItem(item)}
                 onDelete={() => setDeleteTargetItem(item)}
+                onToggleStar={() => toggleMemoryStar(item.id)}
               />
             ))}
           </View>
