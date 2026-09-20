@@ -140,7 +140,7 @@ export const SettingsPrivacySection: React.FC = () => {
           <Switch
             value={ghostMode}
             onValueChange={handleGhostModeToggle}
-            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: accentViolet }}
+            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: '#1E3A8A' }}
             thumbColor="#FFFFFF"
           />
         </View>
@@ -154,8 +154,8 @@ export const SettingsPrivacySection: React.FC = () => {
               borderColor: isDark ? 'rgba(130, 140, 255, 0.16)' : 'rgba(124, 92, 224, 0.12)',
             },
           ]}>
-          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(79, 142, 247, 0.15)' : 'rgba(59, 111, 240, 0.10)' }]}>
-            <Ionicons name="locate" size={16} color={colors.blue} />
+          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
+            <Ionicons name="locate" size={16} color={isDark ? '#60A5FA' : '#1E3A8A'} />
           </View>
           <View style={styles.toggleTextCol}>
             <Text style={[styles.toggleTitle, { color: colors.text }]}>Precise GPS</Text>
@@ -169,7 +169,7 @@ export const SettingsPrivacySection: React.FC = () => {
               triggerHaptic();
               setPreciseLocation(val);
             }}
-            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: colors.blue }}
+            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: '#1E3A8A' }}
             thumbColor="#FFFFFF"
           />
         </View>
@@ -183,8 +183,8 @@ export const SettingsPrivacySection: React.FC = () => {
               borderColor: isDark ? 'rgba(130, 140, 255, 0.16)' : 'rgba(124, 92, 224, 0.12)',
             },
           ]}>
-          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.15)' : 'rgba(34, 197, 139, 0.10)' }]}>
-            <Ionicons name="notifications" size={16} color={colors.green} />
+          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
+            <Ionicons name="notifications" size={16} color={isDark ? '#60A5FA' : '#1E3A8A'} />
           </View>
           <View style={styles.toggleTextCol}>
             <Text style={[styles.toggleTitle, { color: colors.text }]}>Arrival & Departure Alerts</Text>
@@ -198,7 +198,7 @@ export const SettingsPrivacySection: React.FC = () => {
               triggerHaptic();
               setGeofenceAlerts(val);
             }}
-            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: colors.green }}
+            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: '#1E3A8A' }}
             thumbColor="#FFFFFF"
           />
         </View>
@@ -212,8 +212,8 @@ export const SettingsPrivacySection: React.FC = () => {
               borderColor: isDark ? 'rgba(130, 140, 255, 0.16)' : 'rgba(124, 92, 224, 0.12)',
             },
           ]}>
-          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.10)' }]}>
-            <Ionicons name="battery-charging" size={16} color={colors.pink} />
+          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
+            <Ionicons name="battery-charging" size={16} color={isDark ? '#60A5FA' : '#1E3A8A'} />
           </View>
           <View style={styles.toggleTextCol}>
             <Text style={[styles.toggleTitle, { color: colors.text }]}>Battery & Sound Sharing</Text>
@@ -227,7 +227,7 @@ export const SettingsPrivacySection: React.FC = () => {
               triggerHaptic();
               setBatterySharing(val);
             }}
-            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: colors.pink }}
+            trackColor={{ false: isDark ? '#2A3060' : '#D1D5DB', true: '#1E3A8A' }}
             thumbColor="#FFFFFF"
           />
         </View>

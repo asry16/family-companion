@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   Share,
   Platform,
+  Pressable,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -33,6 +38,10 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { LightBackdrop } from '@/components/ui/LightBackdrop';
 import { DarkBackdrop } from '@/components/ui/DarkBackdrop';
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export interface FamilySettingsScreenProps {
   initialFamilyName?: string;
   initialInviteCode?: string;
@@ -45,59 +54,74 @@ export interface FamilySettingsScreenProps {
   fromTab?: TabKey;
 }
 
-export default function FamilySettingsScreen({
-  initialFamilyName,
-  initialInviteCode,
-  initialMembers,
-  account,
-  fromTab: fromTabProp,
-}: FamilySettingsScreenProps) {
+interface SectionItem {
+  id: string;
+  title: string;
+  shortLabel: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  badge?: string;
+}
+
+const SECTIONS: SectionItem[] = [
+  { id: 'profile', title: 'Profile Details', shortLabel: 'Profile', icon: 'person-outline', badge: 'Organizer' },
+  { id: 'theme', title: 'Appearance & Theme', shortLabel: 'Theme', icon: 'color-palette-outline', badge: 'Active' },
+  { id: 'invite', title: 'Family Invitation & QR', shortLabel: 'Invite', icon: 'qr-code-outline', badge: 'Private' },
+  { id: 'members', title: 'Family Members', shortLabel: 'Members', icon: 'people-outline' },
+  { id: 'privacy', title: 'Places & Privacy Controls', shortLabel: 'Privacy', icon: 'shield-checkmark-outline', badge: 'Encrypted' },
+  { id: 'security', title: 'Security & Sessions', shortLabel: 'Security', icon: 'lock-closed-outline', badge: 'Protected' },
+  { id: 'account', title: 'Account & Sign Out', shortLabel: 'Account', icon: 'log-out-outline' },
+];
+
+export default function FamilySettingsScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ fromTab?: string }>();
   const insets = useSafeAreaInsets();
-  const { colors } = useAppTheme();
-  const { user, signOut, updateUserProfile } = useAuth();
+  const params = useLocalSearchParams<{ fromTab?: string }>();
+  const callerTab: TabKey = (params?.fromTab as TabKey) || 'circle';
+
+  const { colors, isDark, isElderly } = useAppTheme();
+  const { user, signOut } = useAuth();
   const {
     profile,
     members: contextMembers,
+    updateFamilyProfile,
     updateFamilyMember,
     addFamilyMember,
   } = useFamily();
 
-  // Tab caller source: default to 'circle' if opened from Circle, or 'home', etc.
-  const callerTab: TabKey = (
-    fromTabProp ||
-    (params.fromTab as TabKey) ||
-    'circle'
-  );
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionPositions = useRef<{ [key: string]: number }>({});
 
-  // Dynamic Family Data
-  const familyName = initialFamilyName || profile?.name || user?.familyName || 'My Family';
-  const inviteCode = initialInviteCode || profile?.code || 'KIN-0000';
+  const [activeSectionId, setActiveSectionId] = useState<string>('profile');
+  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
+    profile: true,
+    theme: true,
+    invite: true,
+    members: true,
+    privacy: true,
+    security: true,
+    account: true,
+  });
 
-  // State
+  const familyName = profile?.name || user?.familyName || 'The Anderson Family';
+  const inviteCode = profile?.code || 'KIN-4829';
+
   const [memberList, setMemberList] = useState<FamilyMember[]>(() => {
-    if (initialMembers && initialMembers.length > 0) return initialMembers;
     if (contextMembers && contextMembers.length > 0) return contextMembers;
     if (user) {
       return [
         {
-          id: user.familyMemberId || `mem-${user.id}`,
-          name: user.name,
-          relation: ((user.relation as MemberRelation) || 'Self'),
-          initials: user.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase(),
-          avatarColor: '#3B6FF0',
+          id: user.familyMemberId || 'self-1',
+          name: user.name || 'Family Organizer',
+          relation: (user.relation || 'Self') as MemberRelation,
+          initials: (user.name?.charAt(0) || 'F').toUpperCase(),
+          avatarColor: colors.brandAccent || '#7C5CE0',
+          photoUrl: user.photoUrl,
+          phone: user.phone || '+1 (555) 019-2834',
           isSelf: true,
-          humanLocation: 'At Home',
-          statusMessage: 'Online and safe',
-          batteryLevel: 95,
+          statusMessage: 'Family Organizer',
+          batteryLevel: 94,
           isCharging: false,
-          phone: user.phone || '',
+          humanLocation: 'Home',
           currentPlaceId: 'home',
           isSharingLocation: true,
           sharingDuration: 'always',
@@ -116,7 +140,6 @@ export default function FamilySettingsScreen({
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [profileEditModalVisible, setProfileEditModalVisible] = useState(false);
 
-  // Current user's member object
   const selfMember = memberList.find((m) => m.isSelf || m.id === user?.familyMemberId) || memberList[0];
   const userName = user?.name || selfMember?.name || 'Family Member';
   const userEmail = user?.email || '';
@@ -133,7 +156,49 @@ export default function FamilySettingsScreen({
     }
   };
 
-  // Share QR Invite Code via Native Share Sheet
+  // Smooth scrolling opening of any section
+  const handleScrollOpenSection = (id: string) => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    setActiveSectionId(id);
+
+    // Make sure section is opened
+    setOpenSections((prev) => ({ ...prev, [id]: true }));
+    try {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    } catch (e) {}
+
+    // Scroll to position
+    const targetY = sectionPositions.current[id];
+    if (targetY !== undefined) {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(0, targetY - 60),
+        animated: true,
+      });
+    }
+  };
+
+  // Toggle individual section expansion
+  const toggleSection = (id: string) => {
+    triggerHaptic();
+    const willOpen = !openSections[id];
+    try {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    } catch (e) {}
+    setOpenSections((prev) => ({ ...prev, [id]: willOpen }));
+
+    if (willOpen) {
+      setTimeout(() => {
+        const targetY = sectionPositions.current[id];
+        if (targetY !== undefined) {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, targetY - 60),
+            animated: true,
+          });
+        }
+      }, 50);
+    }
+  };
+
   const handleShareInvite = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
@@ -144,19 +209,16 @@ export default function FamilySettingsScreen({
     } catch (e) {}
   };
 
-  // Add Member
   const handleOpenAddMember = () => {
     setEditingMember(null);
     setEditModalVisible(true);
   };
 
-  // Edit Existing Member
   const handleOpenEditMember = (member: FamilyMember) => {
     setEditingMember(member);
     setEditModalVisible(true);
   };
 
-  // Save Member (Add or Edit)
   const handleSaveMember = (data: {
     id?: string;
     name: string;
@@ -165,7 +227,6 @@ export default function FamilySettingsScreen({
     location?: string;
   }) => {
     if (data.id) {
-      // Update existing
       setMemberList((prev) =>
         prev.map((m) =>
           m.id === data.id
@@ -183,59 +244,40 @@ export default function FamilySettingsScreen({
         name: data.name,
         relation: data.relation,
         phone: data.phone,
+        humanLocation: data.location || 'Home',
       });
-
-      // If updating self member, also sync to auth profile
-      if (data.id === selfMember?.id) {
-        updateUserProfile({
-          name: data.name,
-          phone: data.phone,
-          relation: data.relation,
-        });
-      }
     } else {
-      // Add new
-      const newMember: FamilyMember = {
-        id: `mem-${Date.now()}`,
+      const newMember = addFamilyMember({
         name: data.name,
         relation: data.relation,
         initials: data.name.charAt(0).toUpperCase(),
-        avatarColor: '#7C5CE0',
-        humanLocation: data.location || 'At Home',
-        statusMessage: 'Connected to Family',
-        batteryLevel: 90,
-        isCharging: false,
+        avatarColor: colors.purple || '#8B7CF6',
+        isSelf: false,
         phone: data.phone,
+        humanLocation: data.location || 'At Home',
+        statusMessage: 'Recently joined family circle',
         currentPlaceId: 'home',
+        batteryLevel: 96,
         isSharingLocation: true,
         sharingDuration: 'always',
         lastUpdated: 'Just now',
         availability: 'available',
-      };
+      });
       setMemberList((prev) => [...prev, newMember]);
-      const { id: _ignoredId, ...memberData } = newMember;
-      addFamilyMember(memberData);
     }
+    setEditModalVisible(false);
   };
 
-  // Save Profile Changes
-  const handleSaveProfile = async (data: {
+  const handleSaveProfile = (data: {
     name: string;
     photoUrl?: string;
     phone: string;
     relation: MemberRelation;
     statusMessage: string;
   }) => {
-    // 1. Update Auth Context
-    await updateUserProfile({
-      name: data.name,
-      photoUrl: data.photoUrl,
-      phone: data.phone,
-      relation: data.relation,
-    });
-
-    // 2. Update Self in local memberList state
-    const targetId = selfMember?.id || user?.familyMemberId || 'mem-1';
+    setProfileEditModalVisible(false);
+    updateFamilyProfile({ name: familyName });
+    const targetId = selfMember?.id || 'self-1';
     setMemberList((prev) =>
       prev.map((m) =>
         m.id === targetId
@@ -252,7 +294,6 @@ export default function FamilySettingsScreen({
       )
     );
 
-    // 3. Sync to Family Context
     updateFamilyMember(targetId, {
       name: data.name,
       photoUrl: data.photoUrl,
@@ -262,7 +303,6 @@ export default function FamilySettingsScreen({
     });
   };
 
-  // Logout
   const handleConfirmLogout = async () => {
     setLogoutModalVisible(false);
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
@@ -270,7 +310,7 @@ export default function FamilySettingsScreen({
     router.replace('/login');
   };
 
-  const accountInfo = account || {
+  const accountInfo = {
     name: userName,
     email: userEmail,
     signInMethod: user?.provider === 'google' ? 'Google' : 'Email',
@@ -280,7 +320,8 @@ export default function FamilySettingsScreen({
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <LightBackdrop />
       <DarkBackdrop />
-      {/* 1. Top Bar: Back Arrow, Centered "Family Settings" and Subtitle */}
+
+      {/* 1. Top Bar */}
       <SettingsTopBar
         title="Family Settings"
         familyName={familyName}
@@ -288,64 +329,281 @@ export default function FamilySettingsScreen({
         onBack={() => router.back()}
       />
 
+      {/* 2. Top Horizontal Scrolling Section Navigation Pills */}
+      <View style={styles.quickNavWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickNavContent}>
+          {SECTIONS.map((sec) => {
+            const isActive = activeSectionId === sec.id;
+            return (
+              <Pressable
+                key={sec.id}
+                onPress={() => handleScrollOpenSection(sec.id)}
+                style={({ pressed }) => [
+                  styles.quickPill,
+                  {
+                    backgroundColor: isActive
+                      ? isDark
+                        ? 'rgba(139, 124, 246, 0.22)'
+                        : 'rgba(124, 92, 224, 0.15)'
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.04)'
+                      : 'rgba(20, 32, 58, 0.04)',
+                    borderColor: isActive
+                      ? isDark
+                        ? '#8B7CF6'
+                        : '#7C5CE0'
+                      : isDark
+                      ? 'rgba(130, 140, 255, 0.20)'
+                      : 'rgba(124, 92, 224, 0.15)',
+                    opacity: pressed ? 0.75 : 1,
+                  },
+                ]}>
+                <Ionicons
+                  name={sec.icon}
+                  size={13}
+                  color={isActive ? (isDark ? '#8B7CF6' : '#7C5CE0') : (isDark ? colors.textMuted : colors.textSecondary)}
+                />
+                <Text
+                  style={[
+                    styles.quickPillText,
+                    {
+                      color: isActive ? (isDark ? '#F2F4FF' : '#1E1B6B') : (isDark ? colors.textMuted : colors.textSecondary),
+                      fontWeight: isActive ? '700' : '500',
+                    },
+                  ]}>
+                  {sec.shortLabel}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: TabBarTokens.getScrollBottomPadding(insets.bottom) },
         ]}
         showsVerticalScrollIndicator={false}>
-        {/* 2. Section: YOUR PROFILE DETAILS & EDITING */}
-        <SettingsProfileSection
-          name={userName}
-          email={userEmail}
-          photoUrl={userPhotoUrl}
-          phone={userPhone}
-          relation={userRelation === 'Self' ? 'Self (Family Organizer)' : userRelation}
-          statusMessage={userStatus}
-          onEditProfile={() => setProfileEditModalVisible(true)}
-        />
 
-        {/* 3. Section: CHANGING MODES (Dark mode, Light mode, Mobile default) */}
-        <SettingsThemeSection />
+        {/* Section 1: PROFILE */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['profile'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('profile')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(79, 142, 247, 0.15)' : 'rgba(59, 111, 240, 0.12)' }]}>
+                <Ionicons name="person-circle-outline" size={18} color={colors.blue} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Profile Details</Text>
+              <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.18)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                <Text style={[styles.badgePillText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Organizer</Text>
+              </View>
+            </View>
+            <Ionicons
+              name={openSections['profile'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['profile'] && (
+            <SettingsProfileSection
+              name={userName}
+              email={userEmail}
+              photoUrl={userPhotoUrl}
+              phone={userPhone}
+              relation={userRelation === 'Self' ? 'Self (Family Organizer)' : userRelation}
+              statusMessage={userStatus}
+              onEditProfile={() => setProfileEditModalVisible(true)}
+            />
+          )}
+        </View>
 
-        {/* 4. Section: FAMILY INVITATION & QR CODE */}
-        <SettingsInviteCard
-          inviteCode={inviteCode}
-          familyName={familyName}
-          onViewQR={() => setQrModalVisible(true)}
-          onShareInvite={handleShareInvite}
-          onJoinOtherFamily={() => setJoinModalVisible(true)}
-        />
+        {/* Section 2: THEME */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['theme'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('theme')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                <Ionicons name="color-palette-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Appearance & Modes</Text>
+            </View>
+            <Ionicons
+              name={openSections['theme'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['theme'] && <SettingsThemeSection />}
+        </View>
 
-        {/* 5. Section: FAMILY MEMBERS (count) */}
-        <SettingsMembersSection
-          members={memberList}
-          currentUserId={selfMember?.id || memberList[0]?.id}
-          onAddMember={handleOpenAddMember}
-          onEditMember={handleOpenEditMember}
-        />
+        {/* Section 3: INVITATION & QR */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['invite'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('invite')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.15)' : 'rgba(34, 197, 139, 0.12)' }]}>
+                <Ionicons name="qr-code-outline" size={18} color={colors.green} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Invitation & QR</Text>
+            </View>
+            <Ionicons
+              name={openSections['invite'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['invite'] && (
+            <SettingsInviteCard
+              inviteCode={inviteCode}
+              familyName={familyName}
+              onViewQR={() => setQrModalVisible(true)}
+              onShareInvite={handleShareInvite}
+              onJoinOtherFamily={() => setJoinModalVisible(true)}
+            />
+          )}
+        </View>
 
-        {/* 6. Section: FAMILY PLACES & PRIVACY CONTROLS */}
-        <SettingsPrivacySection />
+        {/* Section 4: MEMBERS */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['members'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('members')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(79, 142, 247, 0.15)' : 'rgba(59, 111, 240, 0.12)' }]}>
+                <Ionicons name="people-outline" size={18} color={colors.blue} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Family Members</Text>
+              <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(20, 32, 58, 0.06)' }]}>
+                <Text style={[styles.badgePillText, { color: isDark ? colors.text : colors.textSecondary }]}>
+                  {memberList.length} Connected
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name={openSections['members'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['members'] && (
+            <SettingsMembersSection
+              members={memberList}
+              currentUserId={selfMember?.id || memberList[0]?.id}
+              onAddMember={handleOpenAddMember}
+              onEditMember={handleOpenEditMember}
+            />
+          )}
+        </View>
 
-        {/* 7. Section: SECURITY & SESSIONS (Where logged in, security checkup, saved login) */}
-        <SettingsSecuritySection />
+        {/* Section 5: PRIVACY CONTROLS */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['privacy'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('privacy')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.12)' }]}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={isDark ? '#60A5FA' : '#1E3A8A'} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Places & Privacy Controls</Text>
+            </View>
+            <Ionicons
+              name={openSections['privacy'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['privacy'] && <SettingsPrivacySection />}
+        </View>
 
-        {/* 8. Section: ACCOUNT & SESSION */}
-        <SettingsAccountSection
-          userName={accountInfo.name}
-          userEmail={accountInfo.email}
-          signInMethod={accountInfo.signInMethod}
-          onLogout={() => setLogoutModalVisible(true)}
-        />
+        {/* Section 6: SECURITY & SESSIONS */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['security'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('security')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(139, 124, 246, 0.15)' : 'rgba(124, 92, 224, 0.12)' }]}>
+                <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Security & Sessions</Text>
+            </View>
+            <Ionicons
+              name={openSections['security'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['security'] && <SettingsSecuritySection />}
+        </View>
+
+        {/* Section 7: ACCOUNT & LOGOUT */}
+        <View
+          onLayout={(e) => {
+            sectionPositions.current['account'] = e.nativeEvent.layout.y;
+          }}
+          style={styles.sectionContainer}>
+          <Pressable
+            onPress={() => toggleSection('account')}
+            style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.headerIconBox, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.10)' }]}>
+                <Ionicons name="log-out-outline" size={18} color="#EF4444" />
+              </View>
+              <Text style={[styles.accordionTitle, { color: colors.text }]}>Account & Sign Out</Text>
+            </View>
+            <Ionicons
+              name={openSections['account'] ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? colors.textMuted : colors.textSecondary}
+            />
+          </Pressable>
+          {openSections['account'] && (
+            <SettingsAccountSection
+              userName={accountInfo.name}
+              userEmail={accountInfo.email}
+              signInMethod={accountInfo.signInMethod}
+              onLogout={() => setLogoutModalVisible(true)}
+            />
+          )}
+        </View>
       </ScrollView>
 
-      {/* 8. Fixed Bottom Tab Bar: Highlight caller tab */}
+      {/* Fixed Bottom Tab Bar */}
       <BottomTabBar activeTab={callerTab} />
 
       {/* Modals */}
-      {/* 1. Profile Edit Modal */}
       <SettingsProfileEditModal
         visible={profileEditModalVisible}
         initialName={userName}
@@ -357,7 +615,6 @@ export default function FamilySettingsScreen({
         onSave={handleSaveProfile}
       />
 
-      {/* 2. View QR Modal */}
       <FamilyQRModal
         visible={qrModalVisible}
         familyCode={inviteCode}
@@ -365,14 +622,12 @@ export default function FamilySettingsScreen({
         onClose={() => setQrModalVisible(false)}
       />
 
-      {/* 3. Join Family Scanner Modal */}
       <JoinFamilyModal
         visible={joinModalVisible}
         onClose={() => setJoinModalVisible(false)}
         onSuccess={() => setJoinModalVisible(false)}
       />
 
-      {/* 4. Member Edit / Add Modal */}
       <SettingsMemberEditModal
         visible={editModalVisible}
         member={editingMember}
@@ -380,7 +635,6 @@ export default function FamilySettingsScreen({
         onSave={handleSaveMember}
       />
 
-      {/* 5. Logout Confirmation Modal */}
       <ConfirmationModal
         visible={logoutModalVisible}
         title="Log Out of Kinly?"
@@ -400,11 +654,73 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  quickNavWrap: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(130, 140, 255, 0.12)',
+  },
+  quickNavContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+    alignItems: 'center',
+  },
+  quickPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  quickPillText: {
+    fontSize: 12,
+    letterSpacing: -0.1,
+  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 4,
-    gap: 10,
+    paddingTop: 10,
+    gap: 12,
+    maxWidth: 520,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  sectionContainer: {
+    gap: 6,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+  },
+  accordionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accordionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  badgePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  badgePillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
   },
 });

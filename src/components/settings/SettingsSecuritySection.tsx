@@ -256,7 +256,7 @@ export const SettingsSecuritySection: React.FC<SettingsSecuritySectionProps> = (
             onValueChange={handleToggleSavedLogin}
             trackColor={{
               false: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-              true: isDark ? '#8B7CF6' : '#7C5CE0',
+              true: '#1E3A8A',
             }}
             thumbColor="#FFFFFF"
             ios_backgroundColor={

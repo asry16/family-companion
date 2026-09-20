@@ -4,3 +4,4 @@ export { CircleLiveMapCard } from './CircleLiveMapCard';
 export { CircleMembersCard } from './CircleMembersCard';
 export { CircleMemberRow } from './CircleMemberRow';
 export { CircleMemberDetailSheet } from './CircleMemberDetailSheet';
+export { CircleAddMemberOptionsSheet } from './CircleAddMemberOptionsSheet';

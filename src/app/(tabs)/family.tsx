@@ -20,24 +20,31 @@ import {
   CircleLiveMapCard,
   CircleMembersCard,
   CircleMemberDetailSheet,
+  CircleAddMemberOptionsSheet,
 } from '@/components/circle';
 
 // Backdrops & Modals
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
 import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
+import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
+import { SettingsMemberEditModal } from '@/components/settings/SettingsMemberEditModal';
+import { MemberRelation } from '@/types';
 
 export default function CircleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuth();
-  const { profile, members: ctxMembers, activeUser, sendFamilyPing } = useFamily();
+  const { profile, members: ctxMembers, activeUser, sendFamilyPing, addFamilyMember } = useFamily();
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [membersCardY, setMembersCardY] = useState<number>(450);
 
   // Modals & Bottom Sheet state
+  const [addOptionsVisible, setAddOptionsVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
+  const [manualAddVisible, setManualAddVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -212,7 +219,7 @@ export default function CircleScreen() {
             currentUserId={activeUser?.id || user?.familyMemberId}
             selectedMemberId={selectedMemberId}
             onSelectMember={handleSelectMember}
-            onAddMember={() => router.push({ pathname: '/modal/family-settings', params: { fromTab: 'circle' } })}
+            onAddMember={() => setAddOptionsVisible(true)}
           />
         </View>
       </ScrollView>
@@ -228,12 +235,56 @@ export default function CircleScreen() {
         onAskStatus={handleAskStatus}
       />
 
-      {/* Family QR Modal */}
+      {/* Add Member Options Bottom Sheet: QR Joining, Code, Manual Detail */}
+      <CircleAddMemberOptionsSheet
+        visible={addOptionsVisible}
+        inviteCode={profile?.code || 'KINLY-2026'}
+        onClose={() => setAddOptionsVisible(false)}
+        onSelectQR={() => setQrModalVisible(true)}
+        onSelectCode={() => setJoinModalVisible(true)}
+        onSelectManual={() => setManualAddVisible(true)}
+      />
+
+      {/* 1. Family QR Modal */}
       <FamilyQRModal
         visible={qrModalVisible}
         onClose={() => setQrModalVisible(false)}
         familyCode={profile?.code || 'KINLY-2026'}
         familyName={profile?.name || 'Kinly Family'}
+      />
+
+      {/* 2. Join Family / Code Modal */}
+      <JoinFamilyModal
+        visible={joinModalVisible}
+        onClose={() => setJoinModalVisible(false)}
+        onSuccess={() => setJoinModalVisible(false)}
+      />
+
+      {/* 3. Manual Detail Joining Modal */}
+      <SettingsMemberEditModal
+        visible={manualAddVisible}
+        member={null}
+        onClose={() => setManualAddVisible(false)}
+        onSave={(data) => {
+          setManualAddVisible(false);
+          addFamilyMember({
+            name: data.name,
+            relation: data.relation,
+            initials: data.name.charAt(0).toUpperCase(),
+            avatarColor: '#4F8EF7',
+            statusMessage: 'Active on Kinly',
+            currentPlaceId: 'home',
+            humanLocation: data.location || 'At Home',
+            batteryLevel: 98,
+            isSharingLocation: true,
+            sharingDuration: 'always',
+            lastUpdated: 'Just now',
+            availability: 'available',
+            phone: data.phone,
+            ringerMode: 'sound',
+            deviceModel: 'Smartphone',
+          });
+        }}
       />
     </View>
   );
