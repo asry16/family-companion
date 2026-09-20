@@ -74,10 +74,7 @@ export default function LoginScreen() {
   // Animation Values
   const brandTranslateY = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(hasPlayedIntroGlobal ? FrontPageTokens.timings.phase2LogoFinalScale : 1)).current;
-  const keyboardScale = useRef(new Animated.Value(1)).current;
-  const keyboardTranslateY = useRef(new Animated.Value(0)).current;
   const keyboardOpacity = useRef(new Animated.Value(1)).current;
-  const cardKeyboardTranslateY = useRef(new Animated.Value(0)).current;
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -324,39 +321,40 @@ export default function LoginScreen() {
 
       const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
 
-      // Dynamic card lift depending on auth form state and keyboard height
-      let targetCardLift = -155;
+      // Dynamic card lift: elevates credentials card so input fields and buttons are 100% visible
+      let targetCardLift = -205;
       if (authState === 'signUp') {
-        targetCardLift = -Math.round(Math.min(200, Math.max(165, kh * 0.55)));
+        targetCardLift = -Math.round(Math.max(225, kh * 0.65));
       } else if (authState === 'verifySignUpOtp') {
-        targetCardLift = -Math.round(Math.min(150, Math.max(120, kh * 0.42)));
+        targetCardLift = -Math.round(Math.max(160, kh * 0.48));
       } else {
         // signIn / default
-        targetCardLift = -Math.round(Math.min(185, Math.max(145, kh * 0.48)));
+        targetCardLift = -Math.round(Math.max(205, kh * 0.58));
       }
 
-      const targetBrandLift = -Math.round(Math.min(95, Math.max(75, kh * 0.26)));
+      const targetBrandLift = -Math.round(Math.max(85, Math.min(105, kh * 0.28)));
+      const targetBrandScale = FrontPageTokens.timings.phase2LogoFinalScale * 0.42;
 
       Animated.parallel([
-        Animated.timing(keyboardScale, {
-          toValue: 0.38,
+        Animated.timing(brandScale, {
+          toValue: targetBrandScale,
           duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.timing(keyboardTranslateY, {
+        Animated.timing(brandTranslateY, {
           toValue: targetBrandLift,
           duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardOpacity, {
-          toValue: 0.28,
+          toValue: 0.25,
           duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.timing(cardKeyboardTranslateY, {
+        Animated.timing(cardTranslateY, {
           toValue: targetCardLift,
           duration,
           easing: Easing.out(Easing.cubic),
@@ -372,13 +370,13 @@ export default function LoginScreen() {
       const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
 
       Animated.parallel([
-        Animated.timing(keyboardScale, {
-          toValue: 1,
+        Animated.timing(brandScale, {
+          toValue: FrontPageTokens.timings.phase2LogoFinalScale,
           duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.timing(keyboardTranslateY, {
+        Animated.timing(brandTranslateY, {
           toValue: 0,
           duration,
           easing: Easing.out(Easing.cubic),
@@ -390,7 +388,7 @@ export default function LoginScreen() {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.timing(cardKeyboardTranslateY, {
+        Animated.timing(cardTranslateY, {
           toValue: 0,
           duration,
           easing: Easing.out(Easing.cubic),
@@ -406,7 +404,7 @@ export default function LoginScreen() {
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardScale, keyboardTranslateY, keyboardOpacity, cardKeyboardTranslateY, authState]);
+  }, [brandScale, brandTranslateY, keyboardOpacity, cardTranslateY, authState]);
 
   // Handle tap anywhere during Phase 1 to skip straight to Phase 2
   const handlePhase1Tap = () => {
@@ -573,7 +571,7 @@ export default function LoginScreen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + finalTopY,
-            paddingBottom: isKeyboardVisible ? keyboardHeight + 80 : insets.bottom + 120,
+            paddingBottom: isKeyboardVisible ? keyboardHeight + 120 : insets.bottom + 120,
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -593,8 +591,6 @@ export default function LoginScreen() {
               transform: [
                 { translateY: brandTranslateY },
                 { scale: brandScale },
-                { translateY: keyboardTranslateY },
-                { scale: keyboardScale },
               ],
             },
           ]}>
@@ -684,10 +680,7 @@ export default function LoginScreen() {
             {
               marginTop: FrontPageTokens.brandCardGap,
               opacity: cardOpacity,
-              transform: [
-                { translateY: cardTranslateY },
-                { translateY: cardKeyboardTranslateY },
-              ],
+              transform: [{ translateY: cardTranslateY }],
             },
           ]}>
           <AuthCard
