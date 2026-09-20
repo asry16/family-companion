@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useVoice } from '@/context/VoiceContext';
 import { AIActionCard } from '@/services/aiService';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { SecondaryButton } from '@/components/ui/SecondaryButton';
+import { Radius } from '@/constants/theme';
 
 export interface AIMessageItem {
   id: string;
@@ -28,7 +30,7 @@ export const AIMessage: React.FC<AIMessageProps> = ({
   onActionConfirm,
   onActionCancel,
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
   const { speak, isSpeaking, stopSpeaking } = useVoice();
 
   const isUser = message.sender === 'user';
@@ -49,15 +51,26 @@ export const AIMessage: React.FC<AIMessageProps> = ({
       ]}>
       {!isUser && (
         <View style={styles.assistantHeader}>
-          <View style={[styles.botIcon, { backgroundColor: colors.brandAccent }]}>
-            <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+          <View
+            style={[
+              styles.botIcon,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(139, 124, 246, 0.20)'
+                  : 'rgba(124, 92, 224, 0.12)',
+                borderColor: isDark
+                  ? 'rgba(139, 124, 246, 0.40)'
+                  : 'rgba(124, 92, 224, 0.22)',
+              },
+            ]}>
+            <Ionicons name="sparkles" size={12} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
           </View>
           <Text
             style={[
               styles.botName,
-              { color: colors.textSecondary, fontSize: isElderly ? 15 : 12 },
+              { color: isDark ? colors.textSecondary : colors.text, fontSize: isElderly ? 15 : 12 },
             ]}>
-            FamilyOS AI
+            Kinly AI
           </Text>
           <Pressable
             onPress={handleSpeak}
@@ -68,8 +81,8 @@ export const AIMessage: React.FC<AIMessageProps> = ({
             ]}>
             <Ionicons
               name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
-              size={16}
-              color={colors.textSecondary}
+              size={15}
+              color={isDark ? colors.textTertiary : colors.textSecondary}
             />
           </Pressable>
         </View>
@@ -78,29 +91,60 @@ export const AIMessage: React.FC<AIMessageProps> = ({
       <View
         style={[
           styles.bubble,
-          {
-            backgroundColor: isUser
-              ? isElderly
-                ? '#FDE047'
-                : colors.brand
-              : colors.cardBackground,
-            borderColor: isUser ? 'transparent' : colors.border,
-            borderBottomRightRadius: isUser ? 4 : 18,
-            borderBottomLeftRadius: isUser ? 18 : 4,
-          },
+          isUser
+            ? {
+                backgroundColor: isElderly ? '#FDE047' : undefined,
+                borderBottomRightRadius: 4,
+                borderBottomLeftRadius: 20,
+                shadowColor: '#8A6BF2',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: isDark ? 0.35 : 0.20,
+                shadowRadius: 8,
+                elevation: 3,
+              }
+            : {
+                backgroundColor: isDark
+                  ? 'rgba(20, 27, 74, 0.78)'
+                  : 'rgba(255, 255, 255, 0.78)',
+                borderColor: isDark
+                  ? 'rgba(130, 140, 255, 0.22)'
+                  : 'rgba(124, 92, 224, 0.16)',
+                borderWidth: 1,
+                borderBottomRightRadius: 20,
+                borderBottomLeftRadius: 4,
+                shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.25 : 0.08,
+                shadowRadius: 8,
+                elevation: 2,
+              },
         ]}>
+        {isUser && !isElderly && (
+          <LinearGradient
+            colors={['#4F8EF7', '#8A6BF2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 20, borderBottomRightRadius: 4 }]}
+          />
+        )}
+
         {message.highlight && (
           <View
             style={[
               styles.highlightPill,
               {
-                backgroundColor: isElderly ? colors.separator : colors.blueSoft,
+                backgroundColor: isDark
+                  ? 'rgba(139, 124, 246, 0.18)'
+                  : 'rgba(124, 92, 224, 0.10)',
+                borderColor: isDark
+                  ? 'rgba(139, 124, 246, 0.35)'
+                  : 'rgba(124, 92, 224, 0.20)',
               },
             ]}>
             <Text
               style={[
                 styles.highlightText,
-                { color: colors.blue, fontSize: isElderly ? 14 : 12 },
+                { color: isDark ? '#C9CEFF' : '#6D5BD0', fontSize: isElderly ? 14 : 11.5 },
               ]}>
               {message.highlight}
             </Text>
@@ -129,8 +173,13 @@ export const AIMessage: React.FC<AIMessageProps> = ({
           style={[
             styles.actionCardWrapper,
             {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.yellowBorder,
+              backgroundColor: isDark
+                ? 'rgba(20, 27, 74, 0.85)'
+                : 'rgba(255, 255, 255, 0.85)',
+              borderColor: isDark
+                ? 'rgba(251, 191, 36, 0.40)'
+                : 'rgba(245, 158, 11, 0.25)',
+              shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
             },
           ]}>
           <View style={styles.actionCardHeader}>
@@ -148,7 +197,7 @@ export const AIMessage: React.FC<AIMessageProps> = ({
             <Text
               style={[
                 styles.actionCardSubtitle,
-                { color: colors.textSecondary, fontSize: isElderly ? 15 : 13 },
+                { color: isDark ? colors.textMuted : colors.textSecondary, fontSize: isElderly ? 15 : 13 },
               ]}>
               {message.actionCard.subtitle}
             </Text>
@@ -174,7 +223,7 @@ export const AIMessage: React.FC<AIMessageProps> = ({
         style={[
           styles.timestamp,
           {
-            color: colors.textMuted,
+            color: isDark ? colors.textTertiary : colors.textMuted,
             textAlign: isUser ? 'right' : 'left',
             fontSize: isElderly ? 13 : 11,
           },
@@ -204,15 +253,16 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   botIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   botName: {
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: -0.1,
   },
   speakBtn: {
     padding: 2,
@@ -221,17 +271,15 @@ const styles = StyleSheet.create({
   bubble: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
   },
   highlightPill: {
     paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
     alignSelf: 'flex-start',
     marginBottom: 6,
   },
@@ -242,11 +290,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
   actionCardWrapper: {
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1.5,
-    padding: 14,
+    padding: 16,
     marginTop: 8,
     gap: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
   },
   actionCardHeader: {
     flexDirection: 'row',
@@ -266,5 +318,6 @@ const styles = StyleSheet.create({
   timestamp: {
     marginTop: 4,
     marginHorizontal: 6,
+    fontWeight: '500',
   },
 });

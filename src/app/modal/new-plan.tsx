@@ -11,16 +11,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { useVoice } from '@/context/VoiceContext';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { LightBackdrop, DarkBackdrop, GlassCard } from '@/components/ui';
 import { PriorityLevel } from '@/types';
 
 export default function NewPlanModal() {
   const router = useRouter();
-  const { colors, isElderly } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { colors, isDark, isElderly } = useAppTheme();
   const { members, activeUser, addTask, addEvent, addReminder } = useFamily();
   const { speak } = useVoice();
 
@@ -30,6 +33,15 @@ export default function NewPlanModal() {
   const [dueDate, setDueDate] = useState('Tomorrow');
   const [time, setTime] = useState('10:00 AM');
   const [priority, setPriority] = useState<PriorityLevel>('urgent');
+
+  const handleClose = () => {
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {}
+    }
+    router.back();
+  };
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -81,31 +93,47 @@ export default function NewPlanModal() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <LightBackdrop />
+      <DarkBackdrop />
+
+      {/* Modern Frosted Header */}
       <View
         style={[
           styles.navBar,
           {
-            backgroundColor: colors.cardBackground,
-            borderBottomColor: colors.borderSubtle,
+            paddingTop: insets.top > 0 ? insets.top + 8 : 16,
+            borderBottomColor: isDark ? 'rgba(130, 140, 255, 0.14)' : 'rgba(124, 92, 224, 0.10)',
           },
         ]}>
-        <Text
-          style={[
-            styles.navTitle,
-            { color: colors.text, fontSize: isElderly ? 22 : 17 },
-          ]}>
-          Create Family Plan
-        </Text>
+        <View>
+          <Text
+            style={[
+              styles.navTitle,
+              { color: colors.text, fontSize: isElderly ? 22 : 18 },
+            ]}>
+            Create Family Plan
+          </Text>
+          <Text style={[styles.navSubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+            Coordinate events, tasks, and care
+          </Text>
+        </View>
+
         <Pressable
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={styles.closeBtn}>
-          <Ionicons name="close" size={24} color={colors.text} />
+          onPress={handleClose}
+          hitSlop={8}
+          style={[
+            styles.closeBtn,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.08)',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)',
+            },
+          ]}>
+          <Ionicons name="close" size={19} color={colors.text} />
         </Pressable>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 36 }]}
         showsVerticalScrollIndicator={false}>
         {/* Type Selector (Task, Event, Reminder) */}
         <View style={styles.typeRow}>
@@ -118,26 +146,37 @@ export default function NewPlanModal() {
             return (
               <Pressable
                 key={t.id}
-                onPress={() => setType(t.id as any)}
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }
+                  setType(t.id as any);
+                }}
                 style={({ pressed }) => [
                   styles.typeBtn,
                   {
-                    backgroundColor: isSelected ? colors.brand : colors.cardBackground,
-                    borderColor: isSelected ? colors.brand : colors.border,
-                    opacity: pressed ? 0.75 : 1,
+                    backgroundColor: isSelected
+                      ? (isDark ? '#8A6BF2' : '#7C5CE0')
+                      : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
+                    borderColor: isSelected
+                      ? 'transparent'
+                      : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
+                    opacity: pressed ? 0.85 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
                   },
                 ]}>
                 <Ionicons
                   name={t.icon as any}
                   size={16}
-                  color={isSelected ? '#FFFFFF' : colors.textSecondary}
+                  color={isSelected ? '#FFFFFF' : (isDark ? '#A594FD' : '#6E5ADC')}
                 />
                 <Text
                   style={[
                     styles.typeBtnText,
                     {
-                      color: isSelected ? '#FFFFFF' : colors.textSecondary,
-                      fontSize: isElderly ? 16 : 13,
+                      color: isSelected ? '#FFFFFF' : (isDark ? '#C7CEEA' : '#4E5375'),
+                      fontSize: isElderly ? 16 : 13.5,
+                      fontWeight: isSelected ? '700' : '600',
                     },
                   ]}>
                   {t.label}
@@ -152,22 +191,22 @@ export default function NewPlanModal() {
           <Text
             style={[
               styles.fieldLabel,
-              { color: colors.textSecondary, fontSize: isElderly ? 16 : 13 },
+              { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
             ]}>
             WHAT NEEDS TO BE DONE?
           </Text>
           <TextInput
             placeholder="e.g. Buy milk & vegetables, Mom doctor consult..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
             value={title}
             onChangeText={setTitle}
             style={[
               styles.input,
               {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
                 color: colors.text,
-                fontSize: isElderly ? 18 : 15,
+                fontSize: isElderly ? 17 : 15,
               },
             ]}
           />
@@ -178,23 +217,33 @@ export default function NewPlanModal() {
           <Text
             style={[
               styles.fieldLabel,
-              { color: colors.textSecondary, fontSize: isElderly ? 16 : 13 },
+              { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
             ]}>
             ASSIGN TO FAMILY MEMBER
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
             {members.map((m) => {
               const isSelected = assigneeId === m.id;
               return (
                 <Pressable
                   key={m.id}
-                  onPress={() => setAssigneeId(m.id)}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') {
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }
+                    setAssigneeId(m.id);
+                  }}
                   style={({ pressed }) => [
                     styles.memberPickCard,
                     {
-                      backgroundColor: isSelected ? colors.brand : colors.cardBackground,
-                      borderColor: isSelected ? colors.brand : colors.border,
-                      opacity: pressed ? 0.75 : 1,
+                      backgroundColor: isSelected
+                        ? (isDark ? '#8A6BF2' : '#7C5CE0')
+                        : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
+                      borderColor: isSelected
+                        ? 'transparent'
+                        : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ scale: pressed ? 0.98 : 1 }],
                     },
                   ]}>
                   <FamilyAvatar member={m} size="sm" showStatus={false} />
@@ -204,6 +253,7 @@ export default function NewPlanModal() {
                       {
                         color: isSelected ? '#FFFFFF' : colors.text,
                         fontSize: isElderly ? 15 : 13,
+                        fontWeight: isSelected ? '700' : '600',
                       },
                     ]}>
                     {m.name}
@@ -216,60 +266,102 @@ export default function NewPlanModal() {
 
         {/* Timing options */}
         <View style={styles.timingRow}>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+          <View style={{ flex: 1, gap: 8 }}>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+              ]}>
               DATE
             </Text>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {['Today', 'Tomorrow'].map((d) => (
-                <Pressable
-                  key={d}
-                  onPress={() => setDueDate(d)}
-                  style={[
-                    styles.timingPill,
-                    {
-                      backgroundColor: dueDate === d ? colors.brand : colors.cardBackground,
-                      borderColor: dueDate === d ? colors.brand : colors.border,
-                    },
-                  ]}>
-                  <Text style={{ color: dueDate === d ? '#FFFFFF' : colors.text, fontWeight: '600', fontSize: 13 }}>
-                    {d}
-                  </Text>
-                </Pressable>
-              ))}
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {['Today', 'Tomorrow'].map((d) => {
+                const isSelected = dueDate === d;
+                return (
+                  <Pressable
+                    key={d}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                      }
+                      setDueDate(d);
+                    }}
+                    style={[
+                      styles.timingPill,
+                      {
+                        backgroundColor: isSelected
+                          ? (isDark ? '#8A6BF2' : '#7C5CE0')
+                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
+                        borderColor: isSelected
+                          ? 'transparent'
+                          : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
+                      },
+                    ]}>
+                    <Text
+                      style={{
+                        color: isSelected ? '#FFFFFF' : colors.text,
+                        fontWeight: isSelected ? '700' : '600',
+                        fontSize: 13,
+                      }}>
+                      {d}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+          <View style={{ flex: 1, gap: 8 }}>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: isDark ? '#A594FD' : '#7C5CE0', fontSize: isElderly ? 15 : 12 },
+              ]}>
               PRIORITY
             </Text>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
-                { id: 'urgent', label: 'Urgent', color: colors.red },
-                { id: 'important', label: 'Normal', color: colors.blue },
-              ].map((p) => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => setPriority(p.id as any)}
-                  style={[
-                    styles.timingPill,
-                    {
-                      backgroundColor: priority === p.id ? colors.brand : colors.cardBackground,
-                      borderColor: priority === p.id ? colors.brand : colors.border,
-                    },
-                  ]}>
-                  <Text style={{ color: priority === p.id ? '#FFFFFF' : colors.text, fontWeight: '600', fontSize: 13 }}>
-                    {p.label}
-                  </Text>
-                </Pressable>
-              ))}
+                { id: 'urgent', label: 'Urgent', color: '#EF4444' },
+                { id: 'important', label: 'Normal', color: '#4F8EF7' },
+              ].map((p) => {
+                const isSelected = priority === p.id;
+                return (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') {
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                      }
+                      setPriority(p.id as any);
+                    }}
+                    style={[
+                      styles.timingPill,
+                      {
+                        backgroundColor: isSelected
+                          ? p.id === 'urgent' ? '#EF4444' : (isDark ? '#4F8EF7' : '#3B82F6')
+                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.82)'),
+                        borderColor: isSelected
+                          ? 'transparent'
+                          : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
+                      },
+                    ]}>
+                    <Text
+                      style={{
+                        color: isSelected ? '#FFFFFF' : colors.text,
+                        fontWeight: isSelected ? '700' : '600',
+                        fontSize: 13,
+                      }}>
+                      {p.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         </View>
 
         {/* Submit */}
-        <View style={{ marginTop: 14 }}>
+        <View style={{ marginTop: 8 }}>
           <PrimaryButton
             label="Save to Family Planner"
             onPress={handleSave}
@@ -291,19 +383,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingBottom: 14,
     borderBottomWidth: 1,
   },
   navTitle: {
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  navSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
   closeBtn: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
-    padding: 20,
-    gap: 16,
-    paddingBottom: 40,
+    padding: 18,
+    gap: 18,
+    maxWidth: 520,
+    width: '100%',
+    alignSelf: 'center',
   },
   typeRow: {
     flexDirection: 'row',
@@ -314,50 +419,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 999,
     borderWidth: 1,
     gap: 6,
   },
   typeBtnText: {
-    fontWeight: '700',
+    letterSpacing: 0.1,
   },
   formGroup: {
     gap: 8,
   },
   fieldLabel: {
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   input: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontWeight: '500',
   },
   memberPickCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
     gap: 8,
   },
   memberName: {
-    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   timingRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
   },
   timingPill: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 10,
+    borderRadius: 999,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
 });
+

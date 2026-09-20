@@ -5,6 +5,8 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyDocument } from '@/types';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Radius } from '@/constants/theme';
 
 interface DocumentCardProps {
   document: FamilyDocument;
@@ -17,7 +19,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onActionPress,
   onPress,
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
 
   const handleAction = (actionId: string) => {
     if (Platform.OS !== 'web') {
@@ -42,24 +44,31 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   };
 
   return (
-    <Pressable
+    <GlassCard
+      borderRadius={24}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.border,
-          opacity: pressed ? 0.92 : 1,
-        },
-      ]}>
+      glowColor={isDark ? (document.status === 'paid' ? 'rgba(52, 211, 153, 0.25)' : 'rgba(240, 82, 77, 0.25)') : undefined}
+      style={styles.cardWrapper}
+      contentStyle={styles.cardContent}>
       <View style={styles.topRow}>
         <View style={styles.headerLeft}>
           <View
             style={[
               styles.iconCircle,
-              { backgroundColor: colors.separator },
+              {
+                backgroundColor: isDark
+                  ? 'rgba(139, 124, 246, 0.15)'
+                  : 'rgba(124, 92, 224, 0.10)',
+                borderColor: isDark
+                  ? 'rgba(139, 124, 246, 0.35)'
+                  : 'rgba(124, 92, 224, 0.20)',
+              },
             ]}>
-            <Ionicons name={getDocIcon()} size={20} color={colors.brand} />
+            <Ionicons
+              name={getDocIcon()}
+              size={20}
+              color={isDark ? '#8B7CF6' : '#7C5CE0'}
+            />
           </View>
           <View style={{ flex: 1 }}>
             <Text
@@ -72,7 +81,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             <Text
               style={[
                 styles.providerText,
-                { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
+                { color: isDark ? colors.textMuted : colors.textSecondary, fontSize: isElderly ? 14 : 12 },
               ]}>
               {document.provider || 'Verified Document'} • Scanned {document.scannedAt}
             </Text>
@@ -91,15 +100,19 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           style={[
             styles.amountBanner,
             {
-              backgroundColor: colors.separator,
-              borderColor: colors.borderSubtle,
+              backgroundColor: isDark
+                ? 'rgba(255, 255, 255, 0.04)'
+                : 'rgba(124, 92, 224, 0.06)',
+              borderColor: isDark
+                ? 'rgba(130, 140, 255, 0.18)'
+                : 'rgba(124, 92, 224, 0.14)',
             },
           ]}>
           <View>
             <Text
               style={[
                 styles.amountLabel,
-                { color: colors.textSecondary, fontSize: isElderly ? 13 : 11 },
+                { color: isDark ? colors.textTertiary : colors.textSecondary, fontSize: isElderly ? 13 : 11 },
               ]}>
               TOTAL AMOUNT
             </Text>
@@ -117,7 +130,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               <Text
                 style={[
                   styles.amountLabel,
-                  { color: colors.textSecondary, fontSize: isElderly ? 13 : 11 },
+                  { color: isDark ? colors.textTertiary : colors.textSecondary, fontSize: isElderly ? 13 : 11 },
                 ]}>
                 DUE DATE
               </Text>
@@ -140,7 +153,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               <Text
                 style={[
                   styles.fieldLabel,
-                  { color: colors.textMuted, fontSize: isElderly ? 13 : 11 },
+                  { color: isDark ? colors.textTertiary : colors.textMuted, fontSize: isElderly ? 13 : 11 },
                 ]}>
                 {f.label}
               </Text>
@@ -157,11 +170,19 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       )}
 
       {document.status !== 'paid' && document.suggestedActions.length > 0 && (
-        <View style={styles.actionsContainer}>
+        <View
+          style={[
+            styles.actionsContainer,
+            {
+              borderTopColor: isDark
+                ? 'rgba(130, 140, 255, 0.12)'
+                : 'rgba(124, 92, 224, 0.10)',
+            },
+          ]}>
           <Text
             style={[
               styles.suggestedActionsTitle,
-              { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
+              { color: isDark ? colors.textTertiary : colors.textSecondary, fontSize: isElderly ? 14 : 11.5 },
             ]}>
             SUGGESTED 1-TAP ACTIONS:
           </Text>
@@ -173,9 +194,14 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                 style={({ pressed }) => [
                   styles.actionButton,
                   {
-                    backgroundColor: colors.separator,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.75 : 1,
+                    backgroundColor: isDark
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(124, 92, 224, 0.08)',
+                    borderColor: isDark
+                      ? 'rgba(139, 124, 246, 0.45)'
+                      : 'rgba(124, 92, 224, 0.22)',
+                    opacity: pressed ? 0.8 : 1,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
                   },
                 ]}>
                 <Ionicons
@@ -187,12 +213,12 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                       : 'card-outline'
                   }
                   size={14}
-                  color={colors.text}
+                  color={isDark ? '#8B7CF6' : '#7C5CE0'}
                 />
                 <Text
                   style={[
                     styles.actionButtonText,
-                    { color: colors.text, fontSize: isElderly ? 14 : 12 },
+                    { color: isDark ? '#8B7CF6' : '#7C5CE0', fontSize: isElderly ? 14 : 12 },
                   ]}>
                   {action.label}
                 </Text>
@@ -201,16 +227,15 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </View>
         </View>
       )}
-    </Pressable>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
+  cardWrapper: {
     marginVertical: 6,
+  },
+  cardContent: {
     gap: 12,
   },
   topRow: {
@@ -225,9 +250,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -243,13 +269,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
   amountLabel: {
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   amountValue: {
     fontWeight: '800',
@@ -269,7 +295,8 @@ const styles = StyleSheet.create({
     minWidth: '45%',
   },
   fieldLabel: {
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   fieldVal: {
     fontWeight: '600',
@@ -278,12 +305,11 @@ const styles = StyleSheet.create({
   actionsContainer: {
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
     paddingTop: 10,
   },
   suggestedActionsTitle: {
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -294,12 +320,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    paddingHorizontal: 13,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    gap: 5,
+    gap: 6,
   },
   actionButtonText: {
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

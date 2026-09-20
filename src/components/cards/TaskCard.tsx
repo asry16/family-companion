@@ -7,6 +7,8 @@ import { useFamily } from '@/context/FamilyContext';
 import { Task } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Radius } from '@/constants/theme';
 
 interface TaskCardProps {
   task: Task;
@@ -15,7 +17,7 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
   const { members } = useFamily();
 
   const assignee = members.find((m) => m.id === task.assignedToMemberId);
@@ -57,27 +59,39 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
   };
 
   return (
-    <Pressable
+    <GlassCard
+      borderRadius={22}
       onPress={handleToggle}
-      style={({ pressed }) => [
-        styles.card,
+      glowColor={task.isCompleted ? (isDark ? 'rgba(52, 211, 153, 0.20)' : undefined) : undefined}
+      style={[
+        styles.cardWrapper,
         {
-          backgroundColor: colors.cardBackground,
-          borderColor: task.isCompleted ? colors.borderSubtle : colors.border,
-          opacity: task.isCompleted ? 0.65 : pressed ? 0.9 : 1,
+          opacity: task.isCompleted ? 0.65 : 1,
         },
-      ]}>
+      ]}
+      contentStyle={styles.cardContent}>
       <Pressable
         onPress={handleToggle}
         hitSlop={12}
         style={[
           styles.checkbox,
           {
-            backgroundColor: task.isCompleted ? colors.green : 'transparent',
-            borderColor: task.isCompleted ? colors.green : colors.border,
+            backgroundColor: task.isCompleted
+              ? colors.green
+              : isDark
+              ? 'rgba(255, 255, 255, 0.05)'
+              : 'rgba(124, 92, 224, 0.06)',
+            borderColor: task.isCompleted
+              ? colors.green
+              : isDark
+              ? 'rgba(130, 140, 255, 0.35)'
+              : 'rgba(124, 92, 224, 0.25)',
             width: isElderly ? 36 : 28,
             height: isElderly ? 36 : 28,
             borderRadius: isElderly ? 18 : 14,
+            shadowColor: task.isCompleted ? colors.green : undefined,
+            shadowOpacity: task.isCompleted ? 0.45 : 0,
+            shadowRadius: 8,
           },
         ]}>
         {task.isCompleted && (
@@ -92,7 +106,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
             style={[
               styles.titleText,
               {
-                color: task.isCompleted ? colors.textMuted : colors.text,
+                color: task.isCompleted ? (isDark ? colors.textMuted : colors.textSecondary) : colors.text,
                 fontSize: isElderly ? 20 : 15,
                 textDecorationLine: task.isCompleted ? 'line-through' : 'none',
               },
@@ -105,7 +119,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
           <Text
             style={[
               styles.noteText,
-              { color: colors.textSecondary, fontSize: isElderly ? 15 : 12 },
+              { color: isDark ? colors.textMuted : colors.textSecondary, fontSize: isElderly ? 15 : 12 },
             ]}>
             {task.note}
           </Text>
@@ -113,12 +127,23 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
 
         <View style={styles.metaRow}>
           {assignee && (
-            <View style={styles.assigneePill}>
+            <View
+              style={[
+                styles.assigneePill,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark
+                    ? 'rgba(140, 150, 255, 0.20)'
+                    : 'rgba(124, 92, 224, 0.16)',
+                },
+              ]}>
               <FamilyAvatar member={assignee} size="sm" showStatus={false} />
               <Text
                 style={[
                   styles.assigneeName,
-                  { color: colors.textSecondary, fontSize: isElderly ? 15 : 12 },
+                  { color: isDark ? colors.textSecondary : colors.text, fontSize: isElderly ? 14 : 12 },
                 ]}>
                 {assignee.name}
               </Text>
@@ -128,7 +153,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
           <Text
             style={[
               styles.dueDateText,
-              { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
+              { color: isDark ? colors.textTertiary : colors.textSecondary, fontSize: isElderly ? 14 : 12 },
             ]}>
             • {task.dueDate} {task.dueTime ? `(${task.dueTime})` : ''}
           </Text>
@@ -151,25 +176,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete }) 
             styles.deleteBtn,
             { opacity: pressed ? 0.6 : 1 },
           ]}>
-          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="trash-outline" size={16} color={isDark ? colors.textTertiary : colors.textMuted} />
         </Pressable>
       )}
-    </Pressable>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  cardWrapper: {
+    marginVertical: 4,
+  },
+  cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginVertical: 4,
     gap: 12,
   },
   checkbox: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -183,7 +207,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   titleText: {
-    fontWeight: '600',
+    fontWeight: '700',
     flex: 1,
     letterSpacing: -0.1,
   },
@@ -201,7 +225,11 @@ const styles = StyleSheet.create({
   assigneePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   assigneeName: {
     fontWeight: '600',

@@ -12,6 +12,7 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
@@ -171,12 +172,18 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
+              backgroundColor: isDark ? 'rgba(16, 22, 60, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.18)',
+              shadowColor: isDark ? '#000' : '#6E5ADC',
             },
           ]}>
           {/* Sheet Handle */}
-          <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+          <View
+            style={[
+              styles.handleBar,
+              { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(0, 0, 0, 0.15)' },
+            ]}
+          />
 
           {/* Header Row */}
           <View style={styles.headerRow}>
@@ -184,7 +191,7 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
               <Text style={[styles.headerTitle, { color: colors.text, fontSize: isElderly ? 22 : 18 }]}>
                 {activeTab === 'invite' ? 'Share Family Access' : 'Join Family Circle'}
               </Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+              <Text style={[styles.headerSubtitle, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
                 {activeTab === 'invite'
                   ? `${profile.name} • Private Encrypted Vault`
                   : 'Enter code or scan QR to link with family'}
@@ -194,13 +201,26 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
             <Pressable
               onPress={onClose}
               hitSlop={8}
-              style={[styles.closeBtn, { backgroundColor: colors.separator }]}>
+              style={[
+                styles.closeBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.08)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.20)' : 'rgba(124, 92, 224, 0.14)',
+                },
+              ]}>
               <Ionicons name="close" size={18} color={colors.text} />
             </Pressable>
           </View>
 
           {/* Segmented Switcher */}
-          <View style={[styles.segmentedRow, { backgroundColor: colors.separator }]}>
+          <View
+            style={[
+              styles.segmentedRow,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(124, 92, 224, 0.08)',
+                borderColor: isDark ? 'rgba(130, 140, 255, 0.18)' : 'rgba(124, 92, 224, 0.12)',
+              },
+            ]}>
             <Pressable
               onPress={() => {
                 triggerHaptic();
@@ -209,21 +229,25 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
               style={[
                 styles.segmentTab,
                 activeTab === 'invite' && {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
+                  backgroundColor: isDark ? 'rgba(138, 107, 242, 0.28)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(138, 107, 242, 0.50)' : 'rgba(124, 92, 224, 0.22)',
                   borderWidth: 1,
+                  shadowColor: isDark ? '#8A6BF2' : '#6E5ADC',
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  elevation: 2,
                 },
               ]}>
               <Ionicons
                 name="qr-code-outline"
                 size={15}
-                color={activeTab === 'invite' ? colors.brandAccent : colors.textSecondary}
+                color={activeTab === 'invite' ? (isDark ? '#A594FD' : '#7C5CE0') : (isDark ? colors.textMuted : colors.textSecondary)}
               />
               <Text
                 style={[
                   styles.segmentLabel,
                   {
-                    color: activeTab === 'invite' ? colors.text : colors.textSecondary,
+                    color: activeTab === 'invite' ? (isDark ? '#FFFFFF' : '#1E1B4B') : (isDark ? colors.textMuted : colors.textSecondary),
                     fontWeight: activeTab === 'invite' ? '700' : '500',
                   },
                 ]}>
@@ -239,21 +263,25 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
               style={[
                 styles.segmentTab,
                 activeTab === 'join' && {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
+                  backgroundColor: isDark ? 'rgba(138, 107, 242, 0.28)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(138, 107, 242, 0.50)' : 'rgba(124, 92, 224, 0.22)',
                   borderWidth: 1,
+                  shadowColor: isDark ? '#8A6BF2' : '#6E5ADC',
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  elevation: 2,
                 },
               ]}>
               <Ionicons
                 name="enter-outline"
                 size={16}
-                color={activeTab === 'join' ? colors.brandAccent : colors.textSecondary}
+                color={activeTab === 'join' ? (isDark ? '#A594FD' : '#7C5CE0') : (isDark ? colors.textMuted : colors.textSecondary)}
               />
               <Text
                 style={[
                   styles.segmentLabel,
                   {
-                    color: activeTab === 'join' ? colors.text : colors.textSecondary,
+                    color: activeTab === 'join' ? (isDark ? '#FFFFFF' : '#1E1B4B') : (isDark ? colors.textMuted : colors.textSecondary),
                     fontWeight: activeTab === 'join' ? '700' : '500',
                   },
                 ]}>
@@ -270,17 +298,24 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                 <FamilyQRCode
                   familyCode={profile.code}
                   familyName={profile.name}
-                  size={190}
+                  size={180}
                 />
               </View>
 
               {/* Code Display & Action Row */}
-              <View style={[styles.codeDisplayCard, { backgroundColor: colors.separator, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.codeDisplayCard,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(245, 247, 255, 0.85)',
+                    borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)',
+                  },
+                ]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.codeCardLabel, { color: colors.textSecondary }]}>
+                  <Text style={[styles.codeCardLabel, { color: isDark ? '#A594FD' : '#7C5CE0' }]}>
                     HOUSEHOLD INVITE CODE
                   </Text>
-                  <Text style={[styles.codeCardValue, { color: colors.brandAccent }]}>
+                  <Text style={[styles.codeCardValue, { color: isDark ? '#FFFFFF' : '#1E1B4B' }]}>
                     {profile.code || 'KIN-4892'}
                   </Text>
                 </View>
@@ -290,20 +325,24 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                   style={({ pressed }) => [
                     styles.copyBtn,
                     {
-                      backgroundColor: copied ? colors.green : colors.cardBackground,
-                      borderColor: copied ? colors.green : colors.border,
+                      backgroundColor: copied
+                        ? (isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.15)')
+                        : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF'),
+                      borderColor: copied
+                        ? '#10B981'
+                        : (isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)'),
                       opacity: pressed ? 0.8 : 1,
                     },
                   ]}>
                   <Ionicons
                     name={copied ? 'checkmark' : 'copy-outline'}
                     size={14}
-                    color={copied ? '#FFFFFF' : colors.text}
+                    color={copied ? '#10B981' : (isDark ? '#A594FD' : '#7C5CE0')}
                   />
                   <Text
                     style={[
                       styles.copyBtnText,
-                      { color: copied ? '#FFFFFF' : colors.text },
+                      { color: copied ? '#10B981' : colors.text },
                     ]}>
                     {copied ? 'Copied!' : 'Copy Code'}
                   </Text>
@@ -315,16 +354,22 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                 <Pressable
                   onPress={handleShareInvite}
                   style={({ pressed }) => [
-                    styles.primaryBtn,
+                    styles.primaryBtnWrap,
                     {
-                      backgroundColor: colors.brandAccent,
-                      opacity: pressed ? 0.85 : 1,
+                      opacity: pressed ? 0.88 : 1,
+                      transform: [{ scale: pressed ? 0.98 : 1 }],
                     },
                   ]}>
-                  <Ionicons name="share-social" size={16} color={colors.buttonTextOnAccent} />
-                  <Text style={[styles.primaryBtnText, { color: colors.buttonTextOnAccent }]}>
-                    Share Invite Link
-                  </Text>
+                  <LinearGradient
+                    colors={['#4F8EF7', '#8A6BF2']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryGradient}>
+                    <Ionicons name="share-social" size={16} color="#FFFFFF" />
+                    <Text style={styles.primaryBtnText}>
+                      Share Invite Link
+                    </Text>
+                  </LinearGradient>
                 </Pressable>
 
                 <Pressable
@@ -335,14 +380,14 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                   style={({ pressed }) => [
                     styles.secondaryBtn,
                     {
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.80)',
+                      borderColor: isDark ? 'rgba(130, 140, 255, 0.28)' : 'rgba(124, 92, 224, 0.22)',
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}>
-                  <Ionicons name="scan-outline" size={16} color={colors.text} />
-                  <Text style={[styles.secondaryBtnText, { color: colors.text }]}>
-                    Join Another Circle
+                  <Ionicons name="scan-outline" size={16} color={isDark ? '#A594FD' : '#7C5CE0'} />
+                  <Text style={[styles.secondaryBtnText, { color: isDark ? '#FFFFFF' : '#1E1B4B' }]}>
+                    Join Circle
                   </Text>
                 </Pressable>
               </View>
@@ -353,19 +398,26 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
           {activeTab === 'join' && (
             <View style={styles.tabContent}>
               {/* Camera Scanner Simulation Viewfinder */}
-              <View style={[styles.viewfinderCard, { backgroundColor: '#0A0F1D' }]}>
+              <View
+                style={[
+                  styles.viewfinderCard,
+                  {
+                    backgroundColor: isDark ? 'rgba(10, 15, 35, 0.90)' : '#0F172A',
+                    borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)',
+                  },
+                ]}>
                 {scannerActive ? (
                   <View style={styles.scannerActiveArea}>
                     <Animated.View
                       style={[
                         styles.scannerLaser,
                         {
-                          backgroundColor: colors.brandAccent,
+                          backgroundColor: '#8A6BF2',
                           transform: [
                             {
                               translateY: laserAnim.interpolate({
                                 inputRange: [0, 1],
-                                outputRange: [10, 120],
+                                outputRange: [10, 110],
                               }),
                             },
                           ],
@@ -376,12 +428,18 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                   </View>
                 ) : (
                   <View style={styles.viewfinderEmpty}>
-                    <Ionicons name="scan" size={40} color={colors.brandAccent} />
+                    <Ionicons name="scan" size={36} color="#A594FD" />
                     <Text style={styles.viewfinderPrompt}>Point camera at another phone's QR code</Text>
                     <Pressable
                       onPress={() => handleSimulateScan(profile.code || 'KIN-8756')}
-                      style={[styles.simScanBtn, { backgroundColor: colors.brandAccent + '25', borderColor: colors.brandAccent }]}>
-                      <Text style={[styles.simScanBtnText, { color: colors.brandAccent }]}>
+                      style={[
+                        styles.simScanBtn,
+                        {
+                          backgroundColor: 'rgba(138, 107, 242, 0.18)',
+                          borderColor: '#8A6BF2',
+                        },
+                      ]}>
+                      <Text style={styles.simScanBtnText}>
                         Tap to Scan QR Code
                       </Text>
                     </Pressable>
@@ -401,20 +459,22 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                     setErrorMessage(null);
                   }}
                   placeholder="e.g. KIN-8756"
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
                   autoCapitalize="characters"
                   maxLength={10}
                   style={[
                     styles.inputField,
                     {
-                      backgroundColor: colors.separator,
-                      borderColor: errorMessage ? colors.red : colors.border,
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)',
+                      borderColor: errorMessage
+                        ? '#EF4444'
+                        : (isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.20)'),
                       color: colors.text,
                     },
                   ]}
                 />
                 {errorMessage && (
-                  <Text style={[styles.errorText, { color: colors.red }]}>
+                  <Text style={[styles.errorText, { color: '#EF4444' }]}>
                     {errorMessage}
                   </Text>
                 )}
@@ -438,16 +498,20 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                         style={[
                           styles.roleChip,
                           {
-                            backgroundColor: isSelected ? colors.brandAccent : colors.separator,
-                            borderColor: isSelected ? colors.brandAccent : colors.border,
+                            backgroundColor: isSelected
+                              ? (isDark ? '#8A6BF2' : '#7C5CE0')
+                              : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 247, 255, 0.85)'),
+                            borderColor: isSelected
+                              ? 'transparent'
+                              : (isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)'),
                           },
                         ]}>
                         <Text
                           style={[
                             styles.roleChipText,
                             {
-                              color: isSelected ? colors.buttonTextOnAccent : colors.text,
-                              fontWeight: isSelected ? '700' : '500',
+                              color: isSelected ? '#FFFFFF' : (isDark ? '#C7CEEA' : '#4E5375'),
+                              fontWeight: isSelected ? '700' : '600',
                             },
                           ]}>
                           {r}
@@ -463,22 +527,28 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                 onPress={handleJoinSubmit}
                 disabled={isJoining}
                 style={({ pressed }) => [
-                  styles.primaryBtn,
+                  styles.primaryBtnWrap,
                   {
-                    backgroundColor: colors.brandAccent,
-                    opacity: pressed || isJoining ? 0.85 : 1,
+                    opacity: pressed || isJoining ? 0.88 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
                   },
                 ]}>
-                {isJoining ? (
-                  <ActivityIndicator color={isDark ? '#000000' : '#FFFFFF'} />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle" size={17} color={colors.buttonTextOnAccent} />
-                    <Text style={[styles.primaryBtnText, { color: colors.buttonTextOnAccent }]}>
-                      Connect & Join Family
-                    </Text>
-                  </>
-                )}
+                <LinearGradient
+                  colors={['#4F8EF7', '#8A6BF2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.primaryGradient}>
+                  {isJoining ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={17} color="#FFFFFF" />
+                      <Text style={styles.primaryBtnText}>
+                        Connect & Join Family
+                      </Text>
+                    </>
+                  )}
+                </LinearGradient>
               </Pressable>
             </View>
           )}
@@ -491,23 +561,27 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    backgroundColor: 'rgba(5, 8, 26, 0.72)',
     justifyContent: 'flex-end',
   },
   dismissArea: {
     flex: 1,
   },
   sheetContainer: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     borderTopWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 38 : 24,
     maxHeight: '90%',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.20,
+    shadowRadius: 16,
+    elevation: 10,
   },
   handleBar: {
-    width: 40,
+    width: 42,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
@@ -531,14 +605,16 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentedRow: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 999,
     padding: 3,
-    marginBottom: 16,
+    borderWidth: 1,
+    marginBottom: 14,
   },
   segmentTab: {
     flex: 1,
@@ -546,18 +622,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    borderRadius: 11,
+    paddingVertical: 9,
+    borderRadius: 999,
   },
   segmentLabel: {
     fontSize: 12,
   },
   tabContent: {
-    gap: 14,
+    gap: 12,
   },
   qrPresentationWrap: {
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 2,
   },
   codeDisplayCard: {
     flexDirection: 'row',
@@ -565,27 +641,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
   },
   codeCardLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   codeCardValue: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     letterSpacing: 2,
     marginTop: 2,
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
+    gap: 5,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 999,
     borderWidth: 1,
   },
   copyBtnText: {
@@ -595,65 +671,77 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: 10,
+    marginTop: 4,
   },
-  primaryBtn: {
+  primaryBtnWrap: {
     flex: 1,
+    borderRadius: 999,
+    overflow: 'hidden',
+    shadowColor: '#6E5ADC',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  primaryGradient: {
+    height: 48,
+    borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 48,
-    borderRadius: 14,
+    paddingHorizontal: 16,
   },
   primaryBtnText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   secondaryBtn: {
-    flex: 1,
+    flex: 0.85,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     height: 48,
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
   },
   secondaryBtnText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '700',
   },
   viewfinderCard: {
-    height: 140,
-    borderRadius: 18,
+    height: 130,
+    borderRadius: 20,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
   },
   viewfinderEmpty: {
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   viewfinderPrompt: {
-    color: '#94A3B8',
+    color: '#CBD5E1',
     fontSize: 12,
   },
   simScanBtn: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 999,
     borderWidth: 1,
     marginTop: 4,
   },
   simScanBtnText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#A594FD',
   },
   scannerActiveArea: {
     width: '80%',
-    height: 120,
+    height: 110,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -663,7 +751,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    shadowColor: '#60A5FA',
+    shadowColor: '#8A6BF2',
     shadowOpacity: 0.9,
     shadowRadius: 6,
   },
@@ -680,10 +768,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   inputField: {
-    height: 44,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 16,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 1.5,
@@ -702,11 +790,12 @@ const styles = StyleSheet.create({
   },
   roleChip: {
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingVertical: 8,
+    borderRadius: 999,
     borderWidth: 1,
   },
   roleChipText: {
     fontSize: 12,
   },
 });
+

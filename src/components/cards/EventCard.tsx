@@ -6,6 +6,8 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useFamily } from '@/context/FamilyContext';
 import { CalendarEvent } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Radius } from '@/constants/theme';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -13,7 +15,7 @@ interface EventCardProps {
 }
 
 export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
   const { members } = useFamily();
 
   const attendees = members.filter((m) =>
@@ -48,31 +50,37 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
   };
 
   return (
-    <Pressable
+    <GlassCard
+      borderRadius={22}
       onPress={handlePress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.border,
-          borderLeftColor: colors.blue,
-          borderLeftWidth: 4,
-          opacity: pressed ? 0.9 : 1,
-        },
-      ]}>
-      <View style={styles.timeColumn}>
+      glowColor={isDark ? 'rgba(79, 142, 247, 0.20)' : undefined}
+      style={styles.cardWrapper}
+      contentStyle={styles.cardContent}>
+      {/* Time & Category Pill Capsule */}
+      <View
+        style={[
+          styles.timePill,
+          {
+            backgroundColor: isDark
+              ? 'rgba(79, 142, 247, 0.12)'
+              : 'rgba(124, 92, 224, 0.08)',
+            borderColor: isDark
+              ? 'rgba(79, 142, 247, 0.30)'
+              : 'rgba(124, 92, 224, 0.18)',
+          },
+        ]}>
+        <Text style={{ fontSize: isElderly ? 20 : 16 }}>
+          {getEventIcon()}
+        </Text>
         <Text
           style={[
             styles.timeText,
             {
-              color: colors.blue,
-              fontSize: isElderly ? 18 : 14,
+              color: isDark ? '#8B7CF6' : colors.blue,
+              fontSize: isElderly ? 16 : 13,
             },
           ]}>
           {event.time}
-        </Text>
-        <Text style={{ fontSize: isElderly ? 22 : 18, marginTop: 4 }}>
-          {getEventIcon()}
         </Text>
       </View>
 
@@ -82,19 +90,23 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
             styles.titleText,
             {
               color: colors.text,
-              fontSize: isElderly ? 20 : 15,
+              fontSize: isElderly ? 20 : 15.5,
             },
           ]}>
           {event.title}
         </Text>
 
         <View style={styles.locationRow}>
-          <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
+          <Ionicons
+            name="location-outline"
+            size={13}
+            color={isDark ? colors.textTertiary : colors.textSecondary}
+          />
           <Text
             style={[
               styles.locationText,
               {
-                color: colors.textSecondary,
+                color: isDark ? colors.textMuted : colors.textSecondary,
                 fontSize: isElderly ? 15 : 12,
               },
             ]}>
@@ -107,7 +119,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
             style={[
               styles.notesText,
               {
-                color: colors.textMuted,
+                color: isDark ? colors.textTertiary : colors.textMuted,
                 fontSize: isElderly ? 14 : 11,
               },
             ]}>
@@ -129,45 +141,48 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
             style={[
               styles.attendeesCount,
               {
-                color: colors.textSecondary,
+                color: isDark ? colors.textTertiary : colors.textSecondary,
                 fontSize: isElderly ? 13 : 11,
-                marginLeft: 12,
+                marginLeft: attendees.length > 0 ? 12 : 0,
               },
             ]}>
             {attendees.map((a) => a.name).join(', ')}
           </Text>
         </View>
       </View>
-    </Pressable>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
+  cardWrapper: {
     marginVertical: 4,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 14,
   },
-  timeColumn: {
+  timePill: {
     alignItems: 'center',
-    width: 60,
     justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#F1F5F9',
-    paddingRight: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    minWidth: 64,
+    gap: 4,
   },
   timeText: {
     fontWeight: '700',
+    letterSpacing: 0.1,
   },
   detailsColumn: {
     flex: 1,
     gap: 4,
   },
   titleText: {
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: -0.1,
   },
   locationRow: {
@@ -187,6 +202,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   attendeesCount: {
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

@@ -6,6 +6,8 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { FamilyMember } from '@/types';
 import { FamilyAvatar } from '@/components/ui/FamilyAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Radius } from '@/constants/theme';
 
 interface FamilyMemberCardProps {
   member: FamilyMember;
@@ -20,7 +22,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
   onCall,
   onPing,
 }) => {
-  const { colors, isElderly } = useAppTheme();
+  const { colors, isDark, isElderly } = useAppTheme();
 
   const handleCardPress = () => {
     if (onPress) {
@@ -47,16 +49,12 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
   };
 
   return (
-    <Pressable
+    <GlassCard
+      borderRadius={24}
       onPress={handleCardPress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.border,
-          opacity: pressed ? 0.92 : 1,
-        },
-      ]}>
+      glowColor={member.availability === 'available' ? (isDark ? 'rgba(52, 211, 153, 0.20)' : undefined) : undefined}
+      style={styles.cardWrapper}
+      contentStyle={styles.cardContent}>
       <View style={styles.headerRow}>
         <FamilyAvatar member={member} size={isElderly ? 'lg' : 'md'} />
 
@@ -76,9 +74,20 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
               <View
                 style={[
                   styles.selfBadge,
-                  { backgroundColor: colors.separator },
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(139, 124, 246, 0.20)'
+                      : 'rgba(124, 92, 224, 0.10)',
+                    borderColor: isDark
+                      ? 'rgba(139, 124, 246, 0.40)'
+                      : 'rgba(124, 92, 224, 0.20)',
+                  },
                 ]}>
-                <Text style={[styles.selfText, { color: colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.selfText,
+                    { color: isDark ? '#C9CEFF' : '#7C5CE0' },
+                  ]}>
                   You
                 </Text>
               </View>
@@ -89,7 +98,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
             style={[
               styles.relationText,
               {
-                color: colors.textSecondary,
+                color: isDark ? colors.textMuted : colors.textSecondary,
                 fontSize: isElderly ? 16 : 13,
               },
             ]}>
@@ -109,20 +118,24 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
           style={[
             styles.nextTaskSection,
             {
-              backgroundColor: colors.separator,
-              borderColor: colors.borderSubtle,
+              backgroundColor: isDark
+                ? 'rgba(255, 255, 255, 0.04)'
+                : 'rgba(124, 92, 224, 0.06)',
+              borderColor: isDark
+                ? 'rgba(130, 140, 255, 0.18)'
+                : 'rgba(124, 92, 224, 0.12)',
             },
           ]}>
           <Ionicons
             name="calendar-outline"
             size={14}
-            color={colors.textSecondary}
+            color={isDark ? '#8B7CF6' : colors.blue}
           />
           <Text
             style={[
               styles.nextTaskLabel,
               {
-                color: colors.textSecondary,
+                color: isDark ? colors.textTertiary : colors.textSecondary,
                 fontSize: isElderly ? 16 : 13,
               },
             ]}>
@@ -154,13 +167,13 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
                   ? colors.redSoft
                   : member.ringerMode === 'vibrate'
                   ? colors.yellowSoft
-                  : colors.blueSoft,
+                  : isDark ? 'rgba(79, 142, 247, 0.12)' : colors.blueSoft,
               borderColor:
                 member.ringerMode === 'silent'
                   ? colors.redBorder
                   : member.ringerMode === 'vibrate'
                   ? colors.yellowBorder
-                  : colors.blueBorder,
+                  : isDark ? 'rgba(79, 142, 247, 0.28)' : colors.blueBorder,
             },
           ]}>
           <Ionicons
@@ -177,7 +190,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
                 ? colors.red
                 : member.ringerMode === 'vibrate'
                 ? colors.yellow
-                : colors.blue
+                : isDark ? '#8B7CF6' : colors.blue
             }
           />
           <Text
@@ -189,7 +202,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
                     ? colors.red
                     : member.ringerMode === 'vibrate'
                     ? colors.yellow
-                    : colors.blue,
+                    : isDark ? '#8B7CF6' : colors.blue,
               },
             ]}>
             {member.ringerMode === 'silent'
@@ -259,10 +272,25 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
           <View
             style={[
               styles.phonePill,
-              { backgroundColor: colors.separator, borderColor: colors.border },
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255, 255, 255, 0.04)'
+                  : 'rgba(124, 92, 224, 0.06)',
+                borderColor: isDark
+                  ? 'rgba(130, 140, 255, 0.18)'
+                  : 'rgba(124, 92, 224, 0.14)',
+              },
             ]}>
-            <Ionicons name="phone-portrait-outline" size={11} color={colors.textSecondary} />
-            <Text style={[styles.phonePillText, { color: colors.textSecondary }]}>
+            <Ionicons
+              name="phone-portrait-outline"
+              size={11}
+              color={isDark ? colors.textTertiary : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.phonePillText,
+                { color: isDark ? colors.textTertiary : colors.textSecondary },
+              ]}>
               {member.deviceModel}
             </Text>
           </View>
@@ -274,7 +302,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
           <Text
             style={[
               styles.telemetryText,
-              { color: colors.textSecondary, fontSize: isElderly ? 14 : 12 },
+              { color: isDark ? colors.textTertiary : colors.textSecondary, fontSize: isElderly ? 14 : 12 },
             ]}>
             Updated {member.lastUpdated}
           </Text>
@@ -282,7 +310,7 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
             <Text
               style={[
                 styles.sharingDurationPill,
-                { color: colors.blue, fontSize: isElderly ? 13 : 11 },
+                { color: isDark ? '#8B7CF6' : colors.blue, fontSize: isElderly ? 13 : 11 },
               ]}>
               • {member.sharingDuration === 'always' ? 'Live GPS' : `Until ${member.sharingDuration}`}
             </Text>
@@ -297,9 +325,10 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
               style={({ pressed }) => [
                 styles.actionPill,
                 {
-                  backgroundColor: colors.greenSoft,
-                  borderColor: colors.greenBorder,
-                  opacity: pressed ? 0.7 : 1,
+                  backgroundColor: isDark ? 'rgba(52, 211, 153, 0.16)' : colors.greenSoft,
+                  borderColor: isDark ? 'rgba(52, 211, 153, 0.35)' : colors.greenBorder,
+                  opacity: pressed ? 0.75 : 1,
+                  transform: [{ scale: pressed ? 0.96 : 1 }],
                 },
               ]}>
               <Ionicons name="call" size={13} color={colors.green} />
@@ -316,29 +345,29 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({
               style={({ pressed }) => [
                 styles.actionPill,
                 {
-                  backgroundColor: colors.blueSoft,
-                  borderColor: colors.blueBorder,
-                  opacity: pressed ? 0.7 : 1,
+                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.16)' : colors.blueSoft,
+                  borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : colors.blueBorder,
+                  opacity: pressed ? 0.75 : 1,
+                  transform: [{ scale: pressed ? 0.96 : 1 }],
                 },
               ]}>
-              <Ionicons name="chatbubble-ellipses" size={13} color={colors.blue} />
-              <Text style={[styles.actionPillText, { color: colors.blue }]}>
+              <Ionicons name="chatbubble-ellipses" size={13} color={isDark ? '#8B7CF6' : colors.blue} />
+              <Text style={[styles.actionPillText, { color: isDark ? '#8B7CF6' : colors.blue }]}>
                 Ask
               </Text>
             </Pressable>
           )}
         </View>
       </View>
-    </Pressable>
+    </GlassCard>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
+  cardWrapper: {
     marginVertical: 6,
+  },
+  cardContent: {
     gap: 12,
   },
   headerRow: {
@@ -360,12 +389,13 @@ const styles = StyleSheet.create({
   },
   selfBadge: {
     paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
+    paddingHorizontal: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   selfText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
   },
   relationText: {
@@ -377,12 +407,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     gap: 6,
   },
   nextTaskLabel: {
-    fontWeight: '600',
+    fontWeight: '700',
   },
   nextTaskValue: {
     flex: 1,
@@ -397,10 +427,10 @@ const styles = StyleSheet.create({
   phonePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
     borderWidth: 1,
   },
   phonePillText: {
@@ -432,14 +462,14 @@ const styles = StyleSheet.create({
   actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 9,
-    borderRadius: 12,
+    paddingVertical: 5.5,
+    paddingHorizontal: 11,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    gap: 4,
+    gap: 5,
   },
   actionPillText: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '700',
   },
 });
