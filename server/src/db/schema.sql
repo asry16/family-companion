@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   username TEXT UNIQUE,
   email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  age INTEGER,
   password_hash TEXT NOT NULL,
   provider TEXT DEFAULT 'email',
   is_verified INTEGER DEFAULT 0,

@@ -40,6 +40,8 @@ export interface DbUser {
   name: string;
   username: string | null;
   email: string;
+  phone: string | null;
+  age: number | null;
   password_hash: string;
   provider: string;
   is_verified: number;
@@ -54,20 +56,24 @@ export const usersRepo = {
     name: string;
     username?: string;
     email: string;
+    phone?: string;
+    age?: number;
     passwordHash: string;
     provider?: string;
     isVerified?: boolean;
     verificationCode?: string;
   }) => {
     const stmt = db.prepare(`
-      INSERT INTO users (id, name, username, email, password_hash, provider, is_verified, verification_code)
-      VALUES (@id, @name, @username, @email, @passwordHash, @provider, @isVerified, @verificationCode)
+      INSERT INTO users (id, name, username, email, phone, age, password_hash, provider, is_verified, verification_code)
+      VALUES (@id, @name, @username, @email, @phone, @age, @passwordHash, @provider, @isVerified, @verificationCode)
     `);
     stmt.run({
       id: user.id,
       name: user.name,
       username: user.username || null,
       email: user.email.toLowerCase(),
+      phone: user.phone || null,
+      age: user.age || null,
       passwordHash: user.passwordHash,
       provider: user.provider || 'email',
       isVerified: user.isVerified ? 1 : 0,

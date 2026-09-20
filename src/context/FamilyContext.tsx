@@ -107,7 +107,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [profile, setProfile] = useState<FamilyProfile>({
     id: 'fam_empty',
     name: 'My Family',
-    code: 'KIN-0000',
+    code: '',
     address: 'Home',
     homeCity: '',
     membersCount: 0,
@@ -217,10 +217,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               coords: { x: 50, y: 50 },
             };
 
+            const rawHandle = user.familyUsername;
+            const familyHandle = rawHandle
+              ? (rawHandle.startsWith('@') ? rawHandle : `@${rawHandle}`)
+              : (user.familyInviteCode || '');
+
             const userProfile: FamilyProfile = {
               id: `fam_${user.id}`,
               name: user.familyName || `${user.name.split(' ')[0]}'s Family`,
-              code: user.familyInviteCode || 'KIN-4402',
+              username: user.familyUsername,
+              code: familyHandle,
               membersCount: 1,
               address: 'Home',
               homeCity: 'Local',
@@ -263,7 +269,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               setProfile({
                 id: 'fam_empty',
                 name: 'My Family',
-                code: 'KIN-0000',
+                code: '',
                 membersCount: 0,
                 address: 'Home',
                 homeCity: '',
@@ -1230,7 +1236,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const cleanUsername = username
         ? username.replace(/^@/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
         : `${baseSlug}_${Math.floor(1000 + Math.random() * 9000)}`;
-      const inviteCode = `KIN-${Math.floor(1000 + Math.random() * 9000)}`;
+      const inviteCode = `@${cleanUsername}`;
 
       const newProfile: FamilyProfile = {
         id: familyId,

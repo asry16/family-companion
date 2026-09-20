@@ -16,6 +16,7 @@ export interface AuthUser {
   email: string;
   photoUrl?: string;
   phone?: string;
+  age?: number;
   provider: 'google' | 'apple' | 'email' | 'demo';
   familyMemberId?: string;
   familyName?: string;
@@ -33,6 +34,7 @@ interface StoredUserAccount {
   username?: string;
   email: string;
   phone?: string;
+  age?: number;
   dateOfBirth?: string;
   passwordHash: string; // SHA-256 hashed, NEVER plain text
   familyMemberId?: string;
@@ -55,12 +57,10 @@ interface AuthContextValue {
   signIn: (identifier: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signUp: (payload: {
     name: string;
-    email?: string;
-    phone?: string;
-    dateOfBirth?: string;
+    email: string;
+    phone: string;
+    age: number | string;
     password: string;
-    inviteCode?: string;
-    mode?: 'elderly' | 'default';
   }) => Promise<{
     success: boolean;
     error?: string;
@@ -330,37 +330,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = useCallback(
     async (payload: {
       name: string;
-      email?: string;
-      phone?: string;
-      dateOfBirth?: string;
+      email: string;
+      phone: string;
+      age: number | string;
       password: string;
-      inviteCode?: string;
-      mode?: 'elderly' | 'default';
     }) => {
       try {
         const cleanName = payload.name.trim();
-        const cleanEmail = payload.email?.trim().toLowerCase() || '';
-        const cleanPhone = payload.phone?.trim() || '';
-        const cleanPhoneDigits = cleanPhone.replace(/\D/g, '');
-        const cleanDob = payload.dateOfBirth?.trim() || '';
+        const cleanEmail = payload.email.trim().toLowerCase();
+        const cleanPhone = payload.phone.trim();
+        const cleanAge = payload.age !== undefined && payload.age !== null && payload.age !== '' ? parseInt(String(payload.age), 10) : undefined;
         const cleanPass = payload.password.trim();
-        const inviteCode = payload.inviteCode?.trim();
-        const mode = payload.mode || 'default';
 
         if (!cleanName) {
           return { success: false, error: 'Full name is required.' };
         }
 
-        if (!cleanEmail && !cleanPhone) {
-          return { success: false, error: 'Please enter an email address or phone number.' };
+        if (!cleanEmail) {
+          return { success: false, error: 'Email address is required.' };
         }
 
-        if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
           return { success: false, error: 'Please enter a valid email address.' };
         }
 
-        if (cleanPhone && (cleanPhoneDigits.length < 7 || cleanPhoneDigits.length > 15)) {
-          return { success: false, error: 'Please enter a valid phone number (at least 7 digits).' };
+        if (!cleanPhone) {
+          return { success: false, error: 'Phone number is required.' };
+        }
+
+        if (!cleanAge || isNaN(cleanAge) || cleanAge < 1 || cleanAge > 120) {
+          return { success: false, error: 'Please enter a valid age.' };
         }
 
         if (cleanPass.length < 8) {
@@ -374,27 +373,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let accounts: StoredUserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : [];
 
         // Check duplicate email
-        if (cleanEmail && accounts.some((a) => a.email && a.email.toLowerCase() === cleanEmail)) {
+        if (accounts.some((a) => a.email && a.email.toLowerCase() === cleanEmail)) {
           return { success: false, error: 'An account with this email already exists. Please sign in.' };
         }
 
-        // Check duplicate phone
-        if (cleanPhoneDigits && accounts.some((a) => a.phone && a.phone.replace(/\D/g, '') === cleanPhoneDigits)) {
-          return { success: false, error: 'An account with this phone number already exists. Please sign in.' };
-        }
-
         const localUserId = `user_${Date.now()}`;
-        const fallbackEmail = cleanEmail || `${cleanPhoneDigits || localUserId}@kinly.local`;
-
         let serverUserId: string | null = null;
         let serverVerificationCode: string | undefined = undefined;
         let serverDelivered = false;
 
-        // Try backend registration in background (non-blocking)
+        // Try backend registration
         try {
           const apiRes = await apiClient.auth.register({
             name: cleanName,
-            email: fallbackEmail,
+            email: cleanEmail,
+            phone: cleanPhone,
+            age: cleanAge,
             password: cleanPass,
           });
           if (apiRes.success && apiRes.data?.user) {
@@ -412,9 +406,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newAccount: StoredUserAccount = {
           id: userId,
           name: cleanName,
-          email: fallbackEmail,
-          phone: cleanPhone || undefined,
-          dateOfBirth: cleanDob || undefined,
+          email: cleanEmail,
+          phone: cleanPhone,
+          age: cleanAge,
           passwordHash: hashed,
           familyMemberId: undefined,
           familyName: undefined,
@@ -422,7 +416,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           relation: 'Self',
           isEmailVerified: false,
           verificationCode,
-          mode,
         };
 
         accounts.push(newAccount);
@@ -432,8 +425,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           success: true,
           requiresVerification: true,
           verificationCode,
-          email: fallbackEmail,
-          phone: cleanPhone || undefined,
+          email: cleanEmail,
+          phone: cleanPhone,
           delivered: serverDelivered,
         };
       } catch (err: any) {
@@ -597,7 +590,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userProfile: FamilyProfile = {
           id: `family_${Date.now()}`,
           name: customFamilyName,
-          code: `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
+          code: '',
           address: 'Home Address',
           homeCity: 'Family Home',
           membersCount: 1,

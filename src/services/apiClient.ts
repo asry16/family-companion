@@ -150,6 +150,8 @@ export const apiClient = {
     register: async (payload: {
       name: string;
       email: string;
+      phone?: string;
+      age?: number | string;
       password: string;
       username?: string;
       familyName?: string;

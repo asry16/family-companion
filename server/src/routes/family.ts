@@ -190,6 +190,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
         profile: {
           id: family.id,
           name: family.name,
+          username: family.username,
           code: family.invite_code,
           address: family.address,
           homeCity: family.home_city,
@@ -224,7 +225,7 @@ function generateFamilyUsername(name: string): string {
 }
 
 function generateInviteCode(): string {
-  return `KIN-${Math.floor(1000 + Math.random() * 9000)}`;
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 // -------------------------------------------------------------
@@ -247,16 +248,17 @@ router.post('/create', async (req: AuthenticatedRequest, res: Response) => {
       : '';
 
     if (!familyUsername) {
-      familyUsername = generateFamilyUsername(cleanName);
+      return res.status(400).json({ success: false, error: 'Family ID is required (e.g. @therfamily).' });
+    }
+
+    if (familyUsername.length < 3) {
+      return res.status(400).json({ success: false, error: 'Family ID must be at least 3 characters long.' });
     }
 
     // Ensure uniqueness
-    let existing = familiesRepo.findByUsername(familyUsername);
-    let attempts = 0;
-    while (existing && attempts < 10) {
-      familyUsername = generateFamilyUsername(cleanName);
-      existing = familiesRepo.findByUsername(familyUsername);
-      attempts++;
+    const existing = familiesRepo.findByUsername(familyUsername);
+    if (existing) {
+      return res.status(409).json({ success: false, error: `Family ID "@${familyUsername}" is already taken. Please choose another.` });
     }
 
     let inviteCode = generateInviteCode();

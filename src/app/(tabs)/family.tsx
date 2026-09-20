@@ -198,7 +198,11 @@ export default function CircleScreen() {
       {/* Executive Family Space Access: Share Code or Enter Code */}
       <CircleAddMemberOptionsSheet
         visible={addOptionsVisible}
-        inviteCode={profile?.code || 'KIN-4402'}
+        inviteCode={
+          profile?.username
+            ? (profile.username.startsWith('@') ? profile.username : `@${profile.username}`)
+            : (profile?.code || '')
+        }
         onClose={() => setAddOptionsVisible(false)}
         onSuccess={() => setAddOptionsVisible(false)}
       />

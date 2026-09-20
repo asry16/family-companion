@@ -101,8 +101,12 @@ export default function FamilySettingsScreen() {
     account: false,
   });
 
-  const familyName = profile?.name || user?.familyName || 'The Anderson Family';
-  const inviteCode = profile?.code || 'KIN-4829';
+  const familyName = profile?.name || user?.familyName || 'My Family';
+  const rawHandle = profile?.username || user?.familyUsername;
+  const familyHandle = rawHandle
+    ? (rawHandle.startsWith('@') ? rawHandle : `@${rawHandle}`)
+    : (profile?.code || user?.familyInviteCode || '');
+  const inviteCode = familyHandle;
 
   const [memberList, setMemberList] = useState<FamilyMember[]>(() => {
     if (contextMembers && contextMembers.length > 0) return contextMembers;
@@ -192,7 +196,7 @@ export default function FamilySettingsScreen() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await Share.share({
-        message: `Join ${familyName} on Kinly! Use our household private invite code: ${inviteCode} or scan our family QR code to connect and sync live safety status.`,
+        message: `Join ${familyName} on Kinly! Use our Family ID: ${familyHandle} or scan our family QR code to connect and sync live safety status.`,
         title: `Join ${familyName} on Kinly`,
       });
     } catch (e) {}
@@ -504,7 +508,7 @@ export default function FamilySettingsScreen() {
                 </View>
                 {!openSections['invite'] && (
                   <Text numberOfLines={1} style={[styles.summaryText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
-                    Invite Code: {inviteCode} • Scan or share QR
+                    Family ID: {familyHandle} • Scan or share QR
                   </Text>
                 )}
               </View>

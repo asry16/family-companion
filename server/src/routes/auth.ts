@@ -11,8 +11,7 @@ const router = Router();
 const pendingRegistrationOtps = new Map<string, { code: string; expiresAt: number }>();
 
 function generateInviteCode(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `KIN-${num}`;
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 // -------------------------------------------------------------
@@ -20,7 +19,7 @@ function generateInviteCode(): string {
 // -------------------------------------------------------------
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { name, email, password, username, familyName, relation } = req.body || {};
+    const { name, email, phone, age, password, username, familyName, relation } = req.body || {};
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, error: 'Name, email, and password are required.' });
@@ -28,6 +27,8 @@ router.post('/register', async (req: Request, res: Response) => {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim();
+    const cleanPhone = phone ? String(phone).trim() : undefined;
+    const cleanAge = age !== undefined && age !== null && age !== '' ? parseInt(String(age), 10) : undefined;
     const cleanUsername = username?.trim();
 
     // Check duplicate email
@@ -49,6 +50,8 @@ router.post('/register', async (req: Request, res: Response) => {
       name: cleanName,
       username: cleanUsername,
       email: cleanEmail,
+      phone: cleanPhone,
+      age: cleanAge,
       passwordHash,
       isVerified: false,
       verificationCode,
@@ -153,6 +156,8 @@ router.post('/register', async (req: Request, res: Response) => {
         id: userRecord?.id,
         name: userRecord?.name,
         email: userRecord?.email,
+        phone: userRecord?.phone,
+        age: userRecord?.age,
         username: userRecord?.username,
         isVerified: userRecord?.is_verified === 1,
         familyMemberId: memberId,
@@ -246,6 +251,8 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        age: user.age,
         username: user.username,
         isVerified: user.is_verified === 1,
         familyMemberId: member?.id,
@@ -416,6 +423,8 @@ router.post('/login-with-otp', async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        age: user.age,
         username: user.username,
         isVerified: true,
         familyMemberId: member?.id,
@@ -701,6 +710,8 @@ const handleVerifyCode = async (req: Request, res: Response) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          phone: user.phone,
+          age: user.age,
           username: user.username,
           isVerified: true,
           familyMemberId: member?.id,

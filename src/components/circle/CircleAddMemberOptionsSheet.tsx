@@ -74,7 +74,9 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
     }
   }, [visible, initialMode]);
 
-  const activeFamilyCode = profile?.code || propInviteCode || 'KIN-4402';
+  const activeFamilyCode = profile?.username
+    ? (profile.username.startsWith('@') ? profile.username : `@${profile.username}`)
+    : (profile?.code || propInviteCode || '');
   const activeFamilyName = profile?.name || 'Kinly Family';
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
@@ -106,16 +108,16 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
     try {
       await Share.share({
         title: `Join ${activeFamilyName} on Kinly`,
-        message: `Join our private family circle on Kinly! Use invite code: ${activeFamilyCode}\n\nDownload Kinly or open the app to stay connected in real-time.`,
+        message: `Join our private family circle on Kinly! Use Family ID: ${activeFamilyCode}\n\nDownload Kinly or open the app to stay connected in real-time.`,
       });
     } catch {}
   };
 
   // 3. Enter Code Join Handler
   const handleJoinFamily = async () => {
-    const cleanCode = inputCode.trim().toUpperCase();
+    const cleanCode = inputCode.trim();
     if (!cleanCode) {
-      setErrorMessage('Please enter an 8-character family invite code (e.g. KIN-4402).');
+      setErrorMessage('Please enter a Family ID (e.g. @therfamily) or code.');
       return;
     }
 
@@ -511,7 +513,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
                       borderColor: isDark ? 'rgba(99, 102, 241, 0.30)' : 'rgba(99, 102, 241, 0.20)',
                     },
                   ]}>
-                  <Text style={styles.inputSectionLabel}>ENTER HOUSEHOLD INVITE CODE</Text>
+                  <Text style={styles.inputSectionLabel}>ENTER FAMILY ID OR INVITE CODE</Text>
 
                   <View
                     style={[
@@ -529,19 +531,14 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
                     <TextInput
                       value={inputCode}
                       onChangeText={(val) => {
-                        let formatted = val.toUpperCase().replace(/\s/g, '');
-                        // Auto-hyphenate KIN prefix
-                        if (formatted.length === 3 && !formatted.includes('-')) {
-                          formatted = formatted + '-';
-                        }
-                        setInputCode(formatted);
+                        setInputCode(val.trim());
                         if (errorMessage) setErrorMessage(null);
                       }}
-                      placeholder="e.g. KIN-4402"
+                      placeholder="e.g. @therfamily"
                       placeholderTextColor={isDark ? '#475569' : '#94A3B8'}
-                      autoCapitalize="characters"
+                      autoCapitalize="none"
                       autoCorrect={false}
-                      maxLength={12}
+                      maxLength={30}
                       style={[styles.textInputField, { color: colors.text }]}
                     />
                     {inputCode.length > 0 && (
@@ -558,7 +555,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
                     )}
                   </View>
                   <Text style={[styles.inputHint, { color: isDark ? '#94A3B8' : '#64748B' }]}>
-                    Enter the 8-character invite code provided by your family organizer.
+                    Enter the Family ID (e.g. @therfamily) or invite code provided by your family organizer.
                   </Text>
                 </View>
 

@@ -30,7 +30,7 @@ export interface AuthCardProps {
   initialState?: AuthCardState;
   showSocialSignIn?: boolean;
   onSuccess: (params?: { isNewSignUp?: boolean }) => void;
-  onJoinWithCode: () => void;
+  onJoinWithCode?: () => void;
   onForgotPassword?: (prefilledIdentifier?: string) => void;
   onOpenTerms?: () => void;
   onOpenPrivacy?: () => void;
@@ -65,17 +65,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const [signInPassword, setSignInPassword] = useState('');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
 
-  // Form Fields - Sign Up (Email & Phone in one bar, Confirmation Password, DOB auto-format, Age 50+ mode)
+  // Form Fields - Sign Up (name, email, phone, age, password, confirm password)
   const [signUpName, setSignUpName] = useState('');
-  const [signUpContact, setSignUpContact] = useState(''); // email and phone number in one bar
-  const [signUpDob, setSignUpDob] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('');
+  const [signUpAge, setSignUpAge] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showSignUpConfirmPassword, setShowSignUpConfirmPassword] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'elderly' | 'default'>('elderly');
-  const [inviteCodeExpanded, setInviteCodeExpanded] = useState(false);
-  const [signUpInviteCode, setSignUpInviteCode] = useState('');
 
   // OTP Verification States for Sign Up
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
@@ -104,11 +102,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const signInEmailRef = useRef<TextInput>(null);
   const signInPasswordRef = useRef<TextInput>(null);
   const nameInputRef = useRef<TextInput>(null);
-  const contactInputRef = useRef<TextInput>(null);
-  const dobInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const phoneInputRef = useRef<TextInput>(null);
+  const ageInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const confirmPasswordInputRef = useRef<TextInput>(null);
-  const inviteCodeRef = useRef<TextInput>(null);
   const otpInputRef = useRef<TextInput>(null);
 
   // Validation Errors
@@ -207,92 +205,38 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
   };
 
-  // Age calculation from YYYY/MM/DD
-  const computedAge = useMemo(() => {
-    const parts = signUpDob.split('/');
-    if (parts.length === 3 && parts[0].length === 4 && parts[1].length === 2 && parts[2].length === 2) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      if (year > 1900 && month >= 0 && month < 12 && day >= 1 && day <= 31) {
-        const birthDate = new Date(year, month, day);
-        if (!isNaN(birthDate.getTime())) {
-          const today = new Date();
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const m = today.getMonth() - birthDate.getMonth();
-          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-          return age;
-        }
-      }
-    }
-    return null;
-  }, [signUpDob]);
-
-  const isEligibleForElderlyMode = computedAge !== null && computedAge >= 50;
-
-  // Auto-format DOB: automatically insert / after year, month, and date
-  const handleDobChange = (rawText: string) => {
-    if (rawText.length < signUpDob.length) {
-      if (signUpDob.endsWith('/') && rawText === signUpDob.slice(0, -1)) {
-        setSignUpDob(rawText.slice(0, -1));
-        return;
-      }
-      setSignUpDob(rawText);
-      return;
-    }
-
-    const digits = rawText.replace(/\D/g, '').slice(0, 8);
-    let formatted = '';
-
-    if (digits.length <= 4) {
-      formatted = digits.length === 4 ? `${digits}/` : digits;
-    } else if (digits.length <= 6) {
-      const year = digits.slice(0, 4);
-      const month = digits.slice(4);
-      formatted = month.length === 2 ? `${year}/${month}/` : `${year}/${month}`;
-    } else {
-      const year = digits.slice(0, 4);
-      const month = digits.slice(4, 6);
-      const day = digits.slice(6, 8);
-      formatted = `${year}/${month}/${day}`;
-    }
-
-    setSignUpDob(formatted);
-    if (errors.dob) setErrors((prev) => ({ ...prev, dob: '' }));
-  };
-
   // Sign Up Handler
   const handleSignUp = async () => {
     const newErrors: Record<string, string> = {};
     const cleanName = signUpName.trim();
-    const cleanContact = signUpContact.trim();
-    const cleanDob = signUpDob.trim();
+    const cleanEmail = signUpEmail.trim().toLowerCase();
+    const cleanPhone = signUpPhone.trim();
+    const cleanAge = signUpAge.trim();
+    const parsedAge = parseInt(cleanAge, 10);
 
     if (!cleanName) {
       newErrors.name = 'Full name is required.';
     }
 
-    // Email and Phone number in one bar - mandatory
-    if (!cleanContact) {
-      newErrors.contact = 'Email address or phone number is required.';
-    } else if (cleanContact.includes('@')) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContact)) {
-        newErrors.contact = 'Please enter a valid email address.';
-      }
+    if (!cleanEmail) {
+      newErrors.email = 'Email address (Mail ID) is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (!cleanPhone) {
+      newErrors.phone = 'Phone number is required.';
     } else {
-      const digits = cleanContact.replace(/\D/g, '');
+      const digits = cleanPhone.replace(/\D/g, '');
       if (digits.length < 7 || digits.length > 15) {
-        newErrors.contact = 'Please enter a valid phone number (at least 7 digits).';
+        newErrors.phone = 'Please enter a valid phone number (at least 7 digits).';
       }
     }
 
-    if (cleanDob) {
-      const parts = cleanDob.split('/');
-      if (parts.length !== 3 || parts[0].length !== 4 || parts[1].length !== 2 || parts[2].length !== 2) {
-        newErrors.dob = 'Please enter date in YYYY/MM/DD format.';
-      }
+    if (!cleanAge) {
+      newErrors.age = 'Age is required.';
+    } else if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+      newErrors.age = 'Please enter a valid age (1-120).';
     }
 
     if (!signUpPassword) {
@@ -301,7 +245,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       newErrors.password = 'Password must be at least 8 characters.';
     }
 
-    // Confirmation Password Bar
+    // Confirmation Password
     if (!signUpConfirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password.';
     } else if (signUpPassword !== signUpConfirmPassword) {
@@ -322,43 +266,27 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setLoading(true);
 
     try {
-      const isEmail = cleanContact.includes('@');
       const res = await signUp({
         name: cleanName,
-        email: isEmail ? cleanContact : undefined,
-        phone: !isEmail ? cleanContact : undefined,
-        dateOfBirth: cleanDob || undefined,
+        email: cleanEmail,
+        phone: cleanPhone,
+        age: parsedAge,
         password: signUpPassword,
-        inviteCode: signUpInviteCode,
-        mode: isEligibleForElderlyMode ? selectedMode : undefined,
       });
-      if (res.success) {
-        if (res.requiresVerification) {
-          setPendingVerificationEmail(res.email || cleanContact);
-          setPendingVerificationCode(res.verificationCode || null);
-          setIsCodeDelivered(Boolean(res.delivered));
-          setSignUpOtp('');
-          setOtpError(null);
-          setOtpCooldown(30);
-          switchState('verifySignUpOtp');
-        } else {
-          // If user is 50+ and opted for elderly mode, enable simple/elderly mode
-          if (isEligibleForElderlyMode && selectedMode === 'elderly') {
-            setSimpleMode(true);
-          }
 
-          if (Platform.OS !== 'web') {
-            try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (e) {}
-          }
-          onSuccess({ isNewSignUp: true });
-        }
+      if (res.success) {
+        setPendingVerificationEmail(res.email || cleanEmail);
+        setPendingVerificationCode(res.verificationCode || null);
+        setIsCodeDelivered(Boolean(res.delivered));
+        setSignUpOtp('');
+        setOtpError(null);
+        setOtpCooldown(30);
+        switchState('verifySignUpOtp');
       } else {
         setErrors({ general: res.error || 'Registration failed. Please try again.' });
       }
     } catch (err: any) {
-      setErrors({ general: err.message || 'An unexpected error occurred.' });
+      setErrors({ general: err?.message || 'An unexpected error occurred.' });
     } finally {
       setLoading(false);
     }
@@ -383,9 +311,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     try {
       const res = await verifyEmailCode(pendingVerificationEmail, code);
       if (res.success) {
-        if (isEligibleForElderlyMode && selectedMode === 'elderly') {
-          setSimpleMode(true);
-        }
         if (Platform.OS !== 'web') {
           try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -538,44 +463,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               </Text>
             </Pressable>
 
-            {/* Divider with "or" */}
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(148, 163, 184, 0.20)' : 'rgba(124, 92, 224, 0.14)' }]} />
-              <Text style={[styles.dividerLabel, { color: themeTokens.dividerText }]}>
-                or
-              </Text>
-              <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(148, 163, 184, 0.20)' : 'rgba(124, 92, 224, 0.14)' }]} />
-            </View>
-
-            {/* Join with Invite Code Action Link */}
-            <Pressable
-              onPress={onJoinWithCode}
-              style={({ pressed }) => [
-                styles.joinCodeLink,
-                pressed && { opacity: 0.8 },
-              ]}>
-              <Ionicons
-                name="qr-code-outline"
-                size={18}
-                color={themeTokens.linkViolet}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={[styles.joinCodeText, { color: themeTokens.linkViolet }]}>
-                Join with invite code
-              </Text>
-            </Pressable>
-
-            {/* Optional Social Sign-In Row */}
-            {showSocialSignIn && (
-              <View style={styles.socialRow}>
-                <Pressable style={[styles.socialButton, { borderColor: themeTokens.inputBorder }]}>
-                  <Ionicons name="logo-google" size={18} color={colors.text} />
-                </Pressable>
-                <Pressable style={[styles.socialButton, { borderColor: themeTokens.inputBorder }]}>
-                  <Ionicons name="logo-apple" size={20} color={colors.text} />
-                </Pressable>
-              </View>
-            )}
           </View>
         )}
 
@@ -810,7 +697,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
             {/* Form Fields */}
             <View style={[styles.fieldsContainer, { gap: 10 }]}>
-              {/* Full Name */}
+              {/* 1. Full Name */}
               <View>
                 <Pressable
                   onPress={() => nameInputRef.current?.focus()}
@@ -830,12 +717,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     }}
                     onFocus={() => setFocusedField('name')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Full name"
+                    placeholder="Full name *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     autoCapitalize="words"
                     autoCorrect={false}
                     returnKeyType="next"
-                    onSubmitEditing={() => contactInputRef.current?.focus()}
+                    onSubmitEditing={() => emailInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
                     selectionColor={themeTokens.linkViolet}
                   />
@@ -847,158 +734,123 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 ) : null}
               </View>
 
-              {/* Email & Phone Number in One Bar */}
+              {/* 2. Email Address (Mail ID) */}
               <View>
                 <Pressable
-                  onPress={() => contactInputRef.current?.focus()}
-                  style={inputStyle('contact')}>
+                  onPress={() => emailInputRef.current?.focus()}
+                  style={inputStyle('email')}>
                   <Ionicons
-                    name={
-                      signUpContact.includes('@')
-                        ? 'mail-outline'
-                        : /\d/.test(signUpContact)
-                        ? 'call-outline'
-                        : 'mail-outline'
-                    }
+                    name="mail-outline"
                     size={18}
-                    color={focusedField === 'contact' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                    color={focusedField === 'email' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
-                    ref={contactInputRef}
-                    value={signUpContact}
+                    ref={emailInputRef}
+                    value={signUpEmail}
                     onChangeText={(t) => {
-                      setSignUpContact(t);
-                      if (errors.contact || errors.general) {
-                        setErrors((prev) => ({ ...prev, contact: '', general: '' }));
+                      setSignUpEmail(t);
+                      if (errors.email || errors.general) {
+                        setErrors((prev) => ({ ...prev, email: '', general: '' }));
                       }
                     }}
-                    onFocus={() => setFocusedField('contact')}
+                    onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Email address or phone number *"
+                    placeholder="Email address (Mail ID) *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="next"
-                    onSubmitEditing={() => dobInputRef.current?.focus()}
+                    onSubmitEditing={() => phoneInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
                     selectionColor={themeTokens.linkViolet}
                   />
                 </Pressable>
-                {errors.contact ? (
+                {errors.email ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
-                    {errors.contact}
+                    {errors.email}
                   </Text>
                 ) : null}
               </View>
 
-              {/* Date of Birth (YYYY/MM/DD) */}
+              {/* 3. Phone Number */}
               <View>
                 <Pressable
-                  onPress={() => dobInputRef.current?.focus()}
-                  style={inputStyle('dob')}>
+                  onPress={() => phoneInputRef.current?.focus()}
+                  style={inputStyle('phone')}>
                   <Ionicons
-                    name="calendar-outline"
+                    name="call-outline"
                     size={18}
-                    color={focusedField === 'dob' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                    color={focusedField === 'phone' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
                     style={{ marginRight: 10 }}
                   />
                   <TextInput
-                    ref={dobInputRef}
-                    value={signUpDob}
-                    onChangeText={handleDobChange}
-                    onFocus={() => setFocusedField('dob')}
+                    ref={phoneInputRef}
+                    value={signUpPhone}
+                    onChangeText={(t) => {
+                      setSignUpPhone(t);
+                      if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+                    }}
+                    onFocus={() => setFocusedField('phone')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Date of birth (YYYY/MM/DD)"
+                    placeholder="Phone number *"
+                    placeholderTextColor={themeTokens.inputPlaceholder}
+                    keyboardType="phone-pad"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => ageInputRef.current?.focus()}
+                    style={[styles.textInput, { color: colors.text }]}
+                    selectionColor={themeTokens.linkViolet}
+                  />
+                </Pressable>
+                {errors.phone ? (
+                  <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
+                    {errors.phone}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* 4. Age */}
+              <View>
+                <Pressable
+                  onPress={() => ageInputRef.current?.focus()}
+                  style={inputStyle('age')}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={focusedField === 'age' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
+                    style={{ marginRight: 10 }}
+                  />
+                  <TextInput
+                    ref={ageInputRef}
+                    value={signUpAge}
+                    onChangeText={(t) => {
+                      const numeric = t.replace(/[^0-9]/g, '');
+                      setSignUpAge(numeric);
+                      if (errors.age) setErrors((prev) => ({ ...prev, age: '' }));
+                    }}
+                    onFocus={() => setFocusedField('age')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Age *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     keyboardType="number-pad"
-                    maxLength={10}
-                    autoCapitalize="none"
+                    maxLength={3}
                     returnKeyType="next"
                     onSubmitEditing={() => passwordInputRef.current?.focus()}
                     style={[styles.textInput, { color: colors.text }]}
                     selectionColor={themeTokens.linkViolet}
                   />
                 </Pressable>
-                {errors.dob ? (
+                {errors.age ? (
                   <Text style={[styles.fieldError, { color: isDark ? '#F87171' : '#E11D48' }]}>
-                    {errors.dob}
+                    {errors.age}
                   </Text>
                 ) : null}
               </View>
 
-              {/* Age 50+ Mode Selection */}
-              {isEligibleForElderlyMode && (
-                <View style={styles.modeOptionContainer}>
-                  <View style={styles.modeOptionHeader}>
-                    <Ionicons name="heart" size={16} color="#EC4899" style={{ marginRight: 6 }} />
-                    <Text style={[styles.modeOptionTitle, { color: colors.text }]}>
-                      Experience Mode (Age {computedAge})
-                    </Text>
-                  </View>
-                  <Text style={[styles.modeOptionSubtitle, { color: colors.textSecondary }]}>
-                    Choose your preferred reading & navigation experience:
-                  </Text>
-                  <View style={styles.modeChoiceRow}>
-                    <Pressable
-                      onPress={() => setSelectedMode('elderly')}
-                      style={[
-                        styles.modeCard,
-                        {
-                          borderColor: selectedMode === 'elderly' ? themeTokens.linkViolet : themeTokens.inputBorder,
-                          backgroundColor:
-                            selectedMode === 'elderly'
-                              ? isDark
-                                ? 'rgba(124, 92, 224, 0.22)'
-                                : 'rgba(124, 92, 224, 0.10)'
-                              : themeTokens.inputBg,
-                        },
-                      ]}>
-                      <View style={styles.modeCardHeader}>
-                        <Ionicons
-                          name={selectedMode === 'elderly' ? 'radio-button-on' : 'radio-button-off'}
-                          size={16}
-                          color={selectedMode === 'elderly' ? themeTokens.linkViolet : colors.textSecondary}
-                        />
-                        <Text style={[styles.modeCardName, { color: colors.text }]}>Elderly Mode</Text>
-                      </View>
-                      <Text style={[styles.modeCardDesc, { color: colors.textSecondary }]}>
-                        Larger fonts, high contrast & gentle guidance
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => setSelectedMode('default')}
-                      style={[
-                        styles.modeCard,
-                        {
-                          borderColor: selectedMode === 'default' ? themeTokens.linkViolet : themeTokens.inputBorder,
-                          backgroundColor:
-                            selectedMode === 'default'
-                              ? isDark
-                                ? 'rgba(56, 189, 248, 0.20)'
-                                : 'rgba(79, 142, 247, 0.10)'
-                              : themeTokens.inputBg,
-                        },
-                      ]}>
-                      <View style={styles.modeCardHeader}>
-                        <Ionicons
-                          name={selectedMode === 'default' ? 'radio-button-on' : 'radio-button-off'}
-                          size={16}
-                          color={selectedMode === 'default' ? themeTokens.linkViolet : colors.textSecondary}
-                        />
-                        <Text style={[styles.modeCardName, { color: colors.text }]}>Default Mode</Text>
-                      </View>
-                      <Text style={[styles.modeCardDesc, { color: colors.textSecondary }]}>
-                        Standard KinLy family companion space
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              )}
-
-              {/* Password */}
+              {/* 5. Password */}
               <View>
                 <Pressable
                   onPress={() => passwordInputRef.current?.focus()}
@@ -1018,7 +870,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     }}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Password (minimum 8 characters)"
+                    placeholder="Password (minimum 8 characters) *"
                     placeholderTextColor={themeTokens.inputPlaceholder}
                     secureTextEntry={!showSignUpPassword}
                     autoCapitalize="none"
@@ -1052,7 +904,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 )}
               </View>
 
-              {/* Confirmation Password */}
+              {/* 6. Confirmation Password */}
               <View>
                 <Pressable
                   onPress={() => confirmPasswordInputRef.current?.focus()}
@@ -1097,64 +949,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     {errors.confirmPassword}
                   </Text>
                 ) : null}
-              </View>
-
-              {/* Collapsible "Have an invite code?" */}
-              <View style={styles.collapsibleContainer}>
-                <Pressable
-                  onPress={() => {
-                    try {
-                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                    } catch (e) {}
-                    setInviteCodeExpanded(!inviteCodeExpanded);
-                  }}
-                  style={styles.collapsibleTrigger}>
-                  <View style={styles.collapsibleTriggerLeft}>
-                    <Ionicons
-                      name="ticket-outline"
-                      size={16}
-                      color={themeTokens.linkViolet}
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={[styles.collapsibleTriggerText, { color: themeTokens.linkViolet }]}>
-                      Have an invite code?
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={inviteCodeExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={themeTokens.linkViolet}
-                  />
-                </Pressable>
-
-                {inviteCodeExpanded && (
-                  <View style={{ marginTop: 8 }}>
-                    <Pressable
-                      onPress={() => inviteCodeRef.current?.focus()}
-                      style={inputStyle('inviteCode')}>
-                      <Ionicons
-                        name="qr-code-outline"
-                        size={18}
-                        color={focusedField === 'inviteCode' ? themeTokens.inputFocusBorder : themeTokens.inputPlaceholder}
-                        style={{ marginRight: 10 }}
-                      />
-                      <TextInput
-                        ref={inviteCodeRef}
-                        value={signUpInviteCode}
-                        onChangeText={setSignUpInviteCode}
-                        onFocus={() => setFocusedField('inviteCode')}
-                        onBlur={() => setFocusedField(null)}
-                        placeholder="e.g. KIN-9428"
-                        placeholderTextColor={themeTokens.inputPlaceholder}
-                        autoCapitalize="characters"
-                        returnKeyType="done"
-                        onSubmitEditing={handleSignUp}
-                        style={[styles.textInput, { color: colors.text }]}
-                        selectionColor={themeTokens.linkViolet}
-                      />
-                    </Pressable>
-                  </View>
-                )}
               </View>
 
               {/* Submit Button */}
@@ -1227,7 +1021,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 <Text style={[styles.cardSubtitle, { color: colors.textSecondary, textAlign: 'left', marginBottom: 0 }]}>
                   Enter the 6-digit code sent to{' '}
                   <Text style={{ fontWeight: '700', color: colors.text }}>
-                    {pendingVerificationEmail || signUpContact}
+                    {pendingVerificationEmail || signUpEmail}
                   </Text>
                 </Text>
               </View>

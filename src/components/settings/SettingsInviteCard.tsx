@@ -21,7 +21,7 @@ export interface SettingsInviteCardProps {
 }
 
 export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
-  inviteCode = 'KIN-0000',
+  inviteCode = '',
   familyName = 'My Family',
   onViewQR,
   onShareInvite,
@@ -69,10 +69,10 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
                 styles.codeLabel,
                 { color: isDark ? colors.textTertiary : colors.textSecondary },
               ]}>
-              Household Private Invite Code
+              Household Family ID
             </Text>
 
-            {/* Invite Code in Large Bold Type */}
+            {/* Family ID in Large Bold Type */}
             <Text
               style={[
                 styles.codeText,
@@ -132,7 +132,7 @@ export const SettingsInviteCard: React.FC<SettingsInviteCardProps> = ({
             styles.descriptionText,
             { color: isDark ? colors.textTertiary : colors.textSecondary },
           ]}>
-          Anyone with this QR code or 8-character invite code can instantly join {familyName} and sync real-time safety status.
+          Anyone with this Family ID (@handle) or QR code can instantly join {familyName} and sync real-time safety status.
         </Text>
 
         {/* Two Buttons Side by Side */}

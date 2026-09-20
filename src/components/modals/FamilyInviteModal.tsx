@@ -98,9 +98,11 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
     }
   };
 
+  const familyHandle = profile.username ? (profile.username.startsWith('@') ? profile.username : `@${profile.username}`) : (profile.code || '');
+
   const handleCopyCode = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    const code = profile.code || 'KIN-0000';
+    const code = familyHandle;
     try {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(code);
@@ -115,19 +117,19 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
 
   const handleShareInvite = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    const code = profile.code || 'KIN-0000';
+    const code = familyHandle;
     try {
       await Share.share({
         title: `Join ${profile.name} on Kinly!`,
-        message: `Join our private family circle "${profile.name}" on Kinly using our invite code: ${code}\n\nStay connected with real-time presence, safe battery status, and shared family plans.`,
+        message: `Join our private family circle "${profile.name}" on Kinly using our Family ID: ${code}\n\nStay connected with real-time presence, safe battery status, and shared family plans.`,
       });
     } catch {}
   };
 
   const handleJoinSubmit = async () => {
-    const cleanCode = inviteCode.trim().toUpperCase();
+    const cleanCode = inviteCode.trim();
     if (!cleanCode) {
-      setErrorMessage('Please enter an 8-character family code.');
+      setErrorMessage('Please enter a Family ID (e.g. @therfamily) or code.');
       return;
     }
     setErrorMessage(null);
@@ -313,10 +315,10 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                 ]}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.codeCardLabel, { color: isDark ? '#A594FD' : '#7C5CE0' }]}>
-                    HOUSEHOLD INVITE CODE
+                    HOUSEHOLD FAMILY ID
                   </Text>
                   <Text style={[styles.codeCardValue, { color: isDark ? '#FFFFFF' : '#1E1B4B' }]}>
-                    {profile.code || 'KIN-4892'}
+                    {familyHandle}
                   </Text>
                 </View>
 
@@ -431,7 +433,7 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
                     <Ionicons name="scan" size={36} color="#A594FD" />
                     <Text style={styles.viewfinderPrompt}>Point camera at another phone's QR code</Text>
                     <Pressable
-                      onPress={() => handleSimulateScan(profile.code || 'KIN-8756')}
+                      onPress={() => handleSimulateScan(familyHandle)}
                       style={[
                         styles.simScanBtn,
                         {
@@ -450,18 +452,19 @@ export const FamilyInviteModal: React.FC<FamilyInviteModalProps> = ({
               {/* Code Input Field */}
               <View style={styles.inputBlock}>
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  Or Enter 8-Digit Invite Code
+                  Or Enter Family ID / Invite Code
                 </Text>
                 <TextInput
                   value={inviteCode}
                   onChangeText={(val) => {
-                    setInviteCode(val.toUpperCase());
+                    setInviteCode(val.trim());
                     setErrorMessage(null);
                   }}
-                  placeholder="e.g. KIN-8756"
+                  placeholder="e.g. @therfamily"
                   placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
-                  autoCapitalize="characters"
-                  maxLength={10}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={30}
                   style={[
                     styles.inputField,
                     {

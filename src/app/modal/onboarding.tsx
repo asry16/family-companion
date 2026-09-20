@@ -156,7 +156,7 @@ export default function OnboardingModal() {
                   <TextInput
                     value={familyName}
                     onChangeText={setFamilyName}
-                    placeholder="e.g. The Anderson Family"
+                    placeholder="e.g. The R Family"
                     placeholderTextColor={isDark ? 'rgba(160, 170, 210, 0.6)' : '#94A3B8'}
                     style={[
                       styles.input,

@@ -74,9 +74,7 @@ export default function FamilySetupScreen() {
 
   // Form State - Create
   const [familyName, setFamilyName] = useState('');
-  const [discriminator, setDiscriminator] = useState<number>(() => Math.floor(1000 + Math.random() * 9000));
-  const [customUsername, setCustomUsername] = useState('');
-  const [isEditingHandle, setIsEditingHandle] = useState(false);
+  const [familyId, setFamilyId] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -115,15 +113,6 @@ export default function FamilySetupScreen() {
   const successScaleAnim = useRef(new Animated.Value(0.9)).current;
   const successOpacityAnim = useRef(new Animated.Value(0)).current;
 
-  // Compute live suggested handle
-  const generatedUsername = useMemo(() => {
-    if (isEditingHandle && customUsername.length > 0) {
-      return sanitizeUsername(customUsername);
-    }
-    const targetName = familyName.trim() || `${user?.name || 'Family'}`;
-    return generateHandle(targetName, discriminator);
-  }, [familyName, user?.name, discriminator, isEditingHandle, customUsername]);
-
   // Pulse animation on logo badge
   useEffect(() => {
     const loop = Animated.loop(
@@ -155,18 +144,6 @@ export default function FamilySetupScreen() {
     setActiveTab(tab);
     setCreateError(null);
     setJoinError(null);
-  };
-
-  // Roll new discriminator
-  const handleRerollDiscriminator = () => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch {}
-    }
-    setDiscriminator(Math.floor(1000 + Math.random() * 9000));
-    setIsEditingHandle(false);
-    setCustomUsername('');
   };
 
   // Live Debounced Lookup when typing in Join tab
@@ -207,8 +184,20 @@ export default function FamilySetupScreen() {
   // Handle Create Family
   const handleCreateSubmit = async () => {
     const cleanName = familyName.trim();
+    const cleanHandle = familyId.replace(/^@/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
     if (!cleanName) {
       setCreateError('Please enter a family name (e.g. "The Robinson Family").');
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        } catch {}
+      }
+      return;
+    }
+
+    if (!cleanHandle || cleanHandle.length < 3) {
+      setCreateError('Please enter a valid Family ID of format @familyid (e.g. @therfamily).');
       if (Platform.OS !== 'web') {
         try {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -221,7 +210,7 @@ export default function FamilySetupScreen() {
     setCreateError(null);
 
     try {
-      const res = await createFamily(cleanName, generatedUsername);
+      const res = await createFamily(cleanName, cleanHandle);
       if (res.success) {
         if (Platform.OS !== 'web') {
           try {
@@ -230,7 +219,7 @@ export default function FamilySetupScreen() {
         }
         setCreatedResult({
           familyName: res.familyName || cleanName,
-          familyUsername: res.familyUsername || generatedUsername,
+          familyUsername: res.familyUsername || cleanHandle,
           inviteCode: res.inviteCode || '',
         });
 
@@ -251,7 +240,7 @@ export default function FamilySetupScreen() {
         setCreateError(res.error || 'Failed to create family circle. Please try again.');
       }
     } catch (err: any) {
-      setCreateError(err.message || 'An unexpected error occurred.');
+      setCreateError(err?.message || 'An unexpected error occurred.');
     } finally {
       setCreateLoading(false);
     }
@@ -609,17 +598,16 @@ export default function FamilySetupScreen() {
                         },
                       ]}>
                       <Text style={[styles.cardHeading, { color: colors.text }]}>
-                        Name Your Family Space
+                        Create a Family Space
                       </Text>
                       <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                        Enter a household name. We will generate a unique family username for other
-                        members to join your team.
+                        Set up your private household circle. Enter a family name and choose a unique Family ID.
                       </Text>
 
                       {/* Family Name Input */}
                       <View style={styles.inputGroup}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                          Family Name
+                          Family Name *
                         </Text>
                         <View
                           style={[
@@ -632,7 +620,7 @@ export default function FamilySetupScreen() {
                           <Ionicons name="home-outline" size={20} color={isDark ? '#8B7CF6' : '#7C5CE0'} style={styles.inputIcon} />
                           <TextInput
                             style={[styles.textInput, { color: colors.text }]}
-                            placeholder="e.g. The Anderson Family"
+                            placeholder="e.g. The R Family"
                             placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                             value={familyName}
                             onChangeText={(val) => {
@@ -654,64 +642,46 @@ export default function FamilySetupScreen() {
                         </View>
                       </View>
 
-                      {/* Generated Family Username Preview */}
-                      <View
-                        style={[
-                          styles.handlePreviewCard,
-                          {
-                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(124, 92, 224, 0.06)',
-                            borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
-                          },
-                        ]}>
-                        <View style={styles.handleHeaderRow}>
-                          <View style={styles.handleBadge}>
-                            <Ionicons name="at" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
-                            <Text style={[styles.handleBadgeText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Generated Family Username</Text>
-                          </View>
-                          <Pressable
-                            style={styles.refreshHandleBtn}
-                            onPress={handleRerollDiscriminator}
-                            hitSlop={8}>
-                            <Ionicons name="dice-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
-                            <Text style={[styles.refreshHandleText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Roll Code</Text>
-                          </Pressable>
+                      {/* Family ID Input (Format: @familyid) */}
+                      <View style={styles.inputGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                          Family ID * (format: @familyid)
+                        </Text>
+                        <View
+                          style={[
+                            styles.inputWrapper,
+                            {
+                              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.70)',
+                              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
+                            },
+                          ]}>
+                          <Text style={[styles.atSymbolInput, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@</Text>
+                          <TextInput
+                            style={[styles.textInput, { color: colors.text }]}
+                            placeholder="therfamily"
+                            placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
+                            value={familyId.replace(/^@/, '')}
+                            onChangeText={(val) => {
+                              const sanitized = val.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+                              setFamilyId(sanitized ? `@${sanitized}` : '');
+                              if (createError) setCreateError(null);
+                            }}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            maxLength={30}
+                          />
+                          {familyId.length > 0 && (
+                            <Pressable onPress={() => setFamilyId('')} hitSlop={8}>
+                              <Ionicons
+                                name="close-circle"
+                                size={18}
+                                color={isDark ? '#7C84C0' : '#A0A3BD'}
+                              />
+                            </Pressable>
+                          )}
                         </View>
-
-                        {isEditingHandle ? (
-                          <View style={[styles.customHandleInputRow, { borderBottomColor: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
-                            <Text style={[styles.atSymbol, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@</Text>
-                            <TextInput
-                              style={[styles.customHandleInput, { color: colors.text }]}
-                              value={customUsername}
-                              onChangeText={setCustomUsername}
-                              placeholder="custom_handle"
-                              placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              maxLength={30}
-                            />
-                            <Pressable
-                              style={styles.customHandleDone}
-                              onPress={() => setIsEditingHandle(false)}>
-                              <Ionicons name="checkmark" size={18} color={isDark ? '#34D399' : '#2EBF8E'} />
-                            </Pressable>
-                          </View>
-                        ) : (
-                          <View style={styles.handleDisplayRow}>
-                            <Text style={[styles.handleDisplayText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@{generatedUsername}</Text>
-                            <Pressable
-                              style={styles.editHandleBtn}
-                              onPress={() => {
-                                setCustomUsername(generatedUsername);
-                                setIsEditingHandle(true);
-                              }}>
-                              <Ionicons name="pencil-outline" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
-                            </Pressable>
-                          </View>
-                        )}
-
-                        <Text style={[styles.handleHelperText, { color: colors.textSecondary }]}>
-                          Other family members will use this handle to connect during signup.
+                        <Text style={[styles.handleHelperText, { color: colors.textSecondary, marginTop: 6 }]}>
+                          Example: @therfamily — other members will use this ID to join your family.
                         </Text>
                       </View>
 
@@ -726,8 +696,7 @@ export default function FamilySetupScreen() {
                         ]}>
                         <Ionicons name="shield-checkmark-outline" size={18} color={isDark ? '#34D399' : '#2EBF8E'} />
                         <Text style={[styles.privacyNoteText, { color: isDark ? '#34D399' : '#059669' }]}>
-                          Clean slate guaranteed: Zero preset accounts or mock tasks. Only you will be
-                          in this family space.
+                          Clean slate: Zero preset members or mock data. Only you will be in this family circle.
                         </Text>
                       </View>
 
@@ -742,9 +711,9 @@ export default function FamilySetupScreen() {
                       <Pressable
                         style={[
                           styles.primaryCta,
-                          { opacity: createLoading || !familyName.trim() ? 0.7 : 1 },
+                          { opacity: createLoading || !familyName.trim() || !familyId.trim() ? 0.7 : 1 },
                         ]}
-                        disabled={createLoading || !familyName.trim()}
+                        disabled={createLoading || !familyName.trim() || !familyId.trim()}
                         onPress={handleCreateSubmit}>
                         <LinearGradient
                           colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
@@ -756,7 +725,7 @@ export default function FamilySetupScreen() {
                           <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
                           <>
-                            <Text style={styles.primaryCtaText}>Create Family Circle</Text>
+                            <Text style={styles.primaryCtaText}>Create Family Space</Text>
                             <Ionicons name="sparkles" size={18} color="#FFFFFF" />
                           </>
                         )}
@@ -776,13 +745,13 @@ export default function FamilySetupScreen() {
                         Connect to Your Family
                       </Text>
                       <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                        Enter the Family Username or Invite Code shared by your family admin to join.
+                        Enter the Family Code or Family ID (@familyid) shared by your family admin to join.
                       </Text>
 
                       {/* Handle / Code Input */}
                       <View style={styles.inputGroup}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                          Family Username or Code
+                          Family Code or Family ID
                         </Text>
                         <View
                           style={[
@@ -795,7 +764,7 @@ export default function FamilySetupScreen() {
                           <Text style={[styles.atSymbolInput, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@</Text>
                           <TextInput
                             style={[styles.textInput, { color: colors.text }]}
-                            placeholder="e.g. anderson_4821 or KIN-4821"
+                            placeholder="e.g. therfamily or family code"
                             placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                             value={joinInput}
                             onChangeText={(val) => {
