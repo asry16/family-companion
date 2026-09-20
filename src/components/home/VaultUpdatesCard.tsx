@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -187,13 +188,13 @@ export const VaultUpdatesCard: React.FC = () => {
             style={({ pressed }) => [
               styles.addTaskButton,
               {
-                backgroundColor: isDark ? 'rgba(139, 124, 246, 0.20)' : 'rgba(124, 92, 224, 0.12)',
-                borderColor: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.30)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.75)',
+                borderColor: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.28)',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}>
-            <Ionicons name="add" size={15} color={isDark ? '#C4B5FD' : '#7C5CE0'} />
-            <Text style={[styles.addTaskButtonText, { color: isDark ? '#C4B5FD' : '#7C5CE0' }]}>
+            <Ionicons name="add" size={15} color={isDark ? '#8B7CF6' : '#6D5BD0'} />
+            <Text style={[styles.addTaskButtonText, { color: isDark ? '#8B7CF6' : '#6D5BD0' }]}>
               + Task
             </Text>
           </Pressable>
@@ -218,10 +219,15 @@ export const VaultUpdatesCard: React.FC = () => {
               style={({ pressed }) => [
                 styles.emptyActionBtn,
                 {
-                  backgroundColor: colors.brandAccent,
                   opacity: pressed ? 0.88 : 1,
                 },
               ]}>
+              <LinearGradient
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
               <Ionicons name="add-circle" size={16} color="#FFFFFF" />
               <Text style={styles.emptyActionBtnText}>Add First Task</Text>
             </Pressable>
@@ -345,13 +351,13 @@ export const VaultUpdatesCard: React.FC = () => {
                 value={taskTitle}
                 onChangeText={setTaskTitle}
                 placeholder="e.g. Doctor appointment, Pick up groceries"
-                placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+                placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                 style={[
                   styles.formInput,
                   {
                     color: colors.text,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.70)',
+                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                   },
                 ]}
               />
@@ -370,15 +376,15 @@ export const VaultUpdatesCard: React.FC = () => {
                         styles.typeSelectBtn,
                         {
                           backgroundColor: isSel
-                            ? colors.brandAccent
+                            ? (isDark ? '#8B7CF6' : '#7C5CE0')
                             : isDark
-                            ? 'rgba(255, 255, 255, 0.04)'
-                            : '#F1F5F9',
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(255, 255, 255, 0.75)',
                           borderColor: isSel
-                            ? colors.brandAccent
+                            ? (isDark ? '#8B7CF6' : '#7C5CE0')
                             : isDark
-                            ? 'rgba(130, 140, 255, 0.22)'
-                            : '#E2E8F0',
+                            ? 'rgba(140, 150, 255, 0.25)'
+                            : 'rgba(124, 92, 224, 0.18)',
                         },
                       ]}>
                       <Text
@@ -403,10 +409,15 @@ export const VaultUpdatesCard: React.FC = () => {
               style={({ pressed }) => [
                 styles.saveSubmitBtn,
                 {
-                  backgroundColor: colors.brandAccent,
                   opacity: !taskTitle.trim() ? 0.45 : pressed ? 0.88 : 1,
                 },
               ]}>
+              <LinearGradient
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
               <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
               <Text style={styles.saveSubmitBtnText}>Add to Daily Tasks</Text>
             </Pressable>
@@ -460,9 +471,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 11,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 14,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   addTaskButtonText: {
@@ -489,10 +500,12 @@ const styles = StyleSheet.create({
   emptyActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
+    paddingHorizontal: 18,
+    height: 40,
+    borderRadius: 9999,
+    overflow: 'hidden',
     marginTop: 6,
   },
   emptyActionBtnText: {
@@ -552,7 +565,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
     padding: 22,
     gap: 14,
@@ -584,7 +597,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   formInput: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -597,7 +610,7 @@ const styles = StyleSheet.create({
   typeSelectBtn: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 9999,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -610,8 +623,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 12,
-    borderRadius: 16,
+    height: 48,
+    borderRadius: 9999,
+    overflow: 'hidden',
     marginTop: 6,
   },
   saveSubmitBtnText: {

@@ -102,7 +102,7 @@ export const SettingsMembersSection: React.FC<SettingsMembersSectionProps> = ({
           return (
             <GlassCard
               key={member.id}
-              borderRadius={20}
+              borderRadius={24}
               glowColor={undefined}
               style={styles.memberCard}
               contentStyle={styles.memberCardContent}>
@@ -245,9 +245,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   addMemberText: {
@@ -313,9 +313,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   youBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   youBadgeText: {

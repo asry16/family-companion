@@ -162,7 +162,7 @@ export const ElderlyDashboard: React.FC = () => {
             key={contact.id}
             onPress={() => handleCall(contact.name, contact.phone)}
             style={styles.callCard}>
-            <View style={[styles.callIconWrapper, { backgroundColor: contact.avatarColor || (idx === 0 ? '#3B82F6' : '#6366F1') }]}>
+            <View style={[styles.callIconWrapper, { backgroundColor: contact.avatarColor || (idx === 0 ? '#3B82F6' : '#7C5CE0') }]}>
               <Ionicons name="call" size={26} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
@@ -212,8 +212,8 @@ const styles = StyleSheet.create({
   exitPill: {
     backgroundColor: '#334155',
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderRadius: 9999,
     borderWidth: 1,
     borderColor: '#475569',
   },

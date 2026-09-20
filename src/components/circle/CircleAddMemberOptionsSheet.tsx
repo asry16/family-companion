@@ -167,8 +167,8 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: isDark ? '#0B0F28' : '#FFFFFF',
-              borderColor: isDark ? 'rgba(129, 140, 248, 0.20)' : 'rgba(99, 102, 241, 0.15)',
+              backgroundColor: isDark ? '#0D1126' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.16)',
               paddingBottom: Math.max(insets.bottom + 16, 24),
             },
           ]}>
@@ -186,7 +186,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
           <View style={styles.headerRow}>
             <View style={styles.headerIconWrap}>
               <LinearGradient
-                colors={['#6366F1', '#4F46E5']}
+                colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.headerIconGradient}>
@@ -256,7 +256,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
               ]}>
               {activeTab === 'share' && (
                 <LinearGradient
-                  colors={['#6366F1', '#4F46E5']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
@@ -293,7 +293,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
               ]}>
               {activeTab === 'enter' && (
                 <LinearGradient
-                  colors={['#6366F1', '#4F46E5']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
@@ -411,7 +411,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
                         { opacity: pressed ? 0.85 : 1 },
                       ]}>
                       <LinearGradient
-                        colors={['#6366F1', '#4F46E5']}
+                        colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
@@ -625,7 +625,7 @@ export const CircleAddMemberOptionsSheet: React.FC<CircleAddMemberOptionsSheetPr
                     { opacity: isJoining ? 0.75 : pressed ? 0.90 : 1 },
                   ]}>
                   <LinearGradient
-                    colors={['#6366F1', '#4F46E5']}
+                    colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={StyleSheet.absoluteFill}
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   segmentedContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 9999,
     padding: 4,
     borderWidth: 1,
     marginBottom: 16,
@@ -726,14 +726,14 @@ const styles = StyleSheet.create({
   segmentItem: {
     flex: 1,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 9999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   segmentItemActive: {
-    shadowColor: '#6366F1',
+    shadowColor: '#8A6BF2',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.30,
     shadowRadius: 6,
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   heroCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     padding: 18,
     alignItems: 'center',
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
   executiveBtn: {
     flex: 1,
     height: 44,
-    borderRadius: 13,
+    borderRadius: 9999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
     borderColor: '#10B981',
   },
   shareBtn: {
-    shadowColor: '#6366F1',
+    shadowColor: '#8A6BF2',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   inputCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     padding: 18,
   },
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 14,
   },
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 34,
     paddingHorizontal: 12,
-    borderRadius: 17,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   relationChipText: {
@@ -955,14 +955,14 @@ const styles = StyleSheet.create({
   },
   joinCtaBtn: {
     height: 48,
-    borderRadius: 15,
+    borderRadius: 9999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     marginTop: 10,
     overflow: 'hidden',
-    shadowColor: '#6366F1',
+    shadowColor: '#8A6BF2',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,

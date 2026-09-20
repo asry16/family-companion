@@ -39,10 +39,10 @@ const FolderIllustration: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const mid   = isDark ? { bg: '#2A2D7A', tab: '#323594', border: 'rgba(99,102,241,0.35)' }
                        : { bg: '#A5A9ED', tab: '#B4B8F2', border: 'rgba(99,102,241,0.30)' };
   const front = isDark
-    ? ['#4F46E5', '#6366F1'] as const
-    : ['#6366F1', '#8B5CF6'] as const;
+    ? (['#4F8EF7', '#8B6CF0'] as const)
+    : (['#4F8EF7', '#8A6BF2'] as const);
 
-  const sparkleColor = isDark ? '#818CF8' : '#6366F1';
+  const sparkleColor = isDark ? '#8B7CF6' : '#7C5CE0';
 
   return (
     <View style={folderStyles.outerContainer}>
@@ -136,7 +136,7 @@ export const VaultEmptyStateCard: React.FC<VaultEmptyStateCardProps> = ({
         onPress={tap}
         style={({ pressed }) => [styles.btnWrap, { opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
         <LinearGradient
-          colors={isDark ? ['#4F46E5', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+          colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={styles.btnInner}>
           <Ionicons name={isSearchEmpty ? 'refresh' : 'folder'} size={17} color="#FFF" />
@@ -158,23 +158,23 @@ const folderStyles = StyleSheet.create({
   leafLeft: { left: 0, alignItems: 'flex-start' },
   leafRight: { right: 0, alignItems: 'flex-end' },
   cluster: {
-    width: 200, height: 150,
+    width: 160, height: 120,
     position: 'relative',
+    alignItems: 'center', justifyContent: 'center',
   },
   // Sparkles
-  spark: { position: 'absolute', fontSize: 14, fontWeight: '900' },
-  sparkTL: { top: 10, left: 18 },
-  sparkTR: { top: 8, right: 30, fontSize: 11 },
-  sparkBL: { bottom: 25, left: 30, fontSize: 11 },
-  sparkBR: { bottom: 35, right: 20, fontSize: 16 },
+  spark: { position: 'absolute', fontSize: 13 },
+  sparkTL: { top: -2, left: -6 },
+  sparkTR: { top: -6, right: -4 },
+  sparkBL: { bottom: 2, left: -8 },
+  sparkBR: { bottom: -4, right: -6 },
   // Folder pieces
   folderWrap: { position: 'absolute' },
   folderTab: {
-    width: 50, height: 14,
-    borderTopLeftRadius: 8, borderTopRightRadius: 8,
-    marginBottom: -1,
-    borderWidth: 1,
-    borderBottomWidth: 0,
+    width: 48, height: 14,
+    borderTopLeftRadius: 7, borderTopRightRadius: 7,
+    borderWidth: 1, borderBottomWidth: 0,
+    marginLeft: 10,
   },
   folderBody: {
     width: 130, height: 92,
@@ -186,7 +186,7 @@ const folderStyles = StyleSheet.create({
   frontTab: { borderWidth: 0, width: 52, height: 15 },
   frontBody: {
     width: 134, height: 96, borderRadius: 13, borderWidth: 0,
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#8A6BF2', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.40, shadowRadius: 16, elevation: 8,
   },
   shieldWrap: {
@@ -207,11 +207,11 @@ const styles = StyleSheet.create({
   },
   title: { fontWeight: '800', letterSpacing: -0.3, textAlign: 'center' },
   body: { fontSize: 13.5, fontWeight: '500', lineHeight: 20, textAlign: 'center', maxWidth: 300 },
-  btnWrap: { width: '100%', borderRadius: 28, marginTop: 6 },
+  btnWrap: { width: '100%', borderRadius: 9999, overflow: 'hidden', marginTop: 6 },
   btnInner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 28,
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 6 },
+    gap: 8, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 9999,
+    shadowColor: '#8A6BF2', shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.38, shadowRadius: 12, elevation: 6,
   },
   btnText: { color: '#FFF', fontSize: 15, fontWeight: '800', letterSpacing: -0.1 },

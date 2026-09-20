@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     height: 44,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 14,
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   relationChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 12,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   relationText: {

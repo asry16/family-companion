@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     height: 48,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 15,
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   relationChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   relationText: {
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     height: 46,
-    borderRadius: 14,
+    borderRadius: 9999,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -788,9 +788,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   avatarOptionPillActive: {},
@@ -834,9 +834,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   applyUrlBtn: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     height: 42,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },

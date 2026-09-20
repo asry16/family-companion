@@ -260,9 +260,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
     borderWidth: 1,
     marginTop: 2,
   },
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gradientBtnWrap: {
-    borderRadius: 20,
+    borderRadius: 9999,
     overflow: 'hidden',
   },
   gradientBtnInner: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 11,
     paddingHorizontal: 10,
-    borderRadius: 20,
+    borderRadius: 9999,
   },
   outlinedBtn: {
     flexDirection: 'row',
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 11,
     paddingHorizontal: 10,
-    borderRadius: 20,
+    borderRadius: 9999,
     borderWidth: 1.2,
   },
   btnText: {

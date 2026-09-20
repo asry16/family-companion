@@ -42,7 +42,7 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
             return (
               <Pressable key={cat.id} onPress={() => { tap(); onSelectCategory(cat.id); }}>
                 <LinearGradient
-                  colors={isDark ? ['#4F46E5', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+                  colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                   style={styles.selPill}>
                   <Text style={styles.selText}>{cat.label}</Text>
@@ -72,13 +72,13 @@ export const VaultCategoryFilters: React.FC<VaultCategoryFiltersProps> = ({
           style={({ pressed }) => [
             styles.savePill,
             {
-              borderColor: isDark ? 'rgba(139,124,246,0.55)' : '#6366F1',
-              backgroundColor: isDark ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.07)',
+              borderColor: isDark ? 'rgba(139,124,246,0.45)' : 'rgba(124, 92, 224, 0.28)',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.75)',
               opacity: pressed ? 0.75 : 1,
             },
           ]}>
-          <Ionicons name="add" size={14} color={isDark ? '#818CF8' : '#6366F1'} />
-          <Text style={[styles.saveTxt, { color: isDark ? '#818CF8' : '#6366F1' }]}>
+          <Ionicons name="add" size={14} color={isDark ? '#8B7CF6' : '#6D5BD0'} />
+          <Text style={[styles.saveTxt, { color: isDark ? '#8B7CF6' : '#6D5BD0' }]}>
             Save Location
           </Text>
         </Pressable>
@@ -92,20 +92,20 @@ const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, gap: 8, flexDirection: 'row', alignItems: 'center' },
   selPill: {
     paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: 20,
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 },
+    borderRadius: 9999,
+    shadowColor: '#8A6BF2', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.30, shadowRadius: 4, elevation: 3,
   },
   selText: { fontSize: 13, fontWeight: '700', color: '#FFF', letterSpacing: -0.1 },
   unselPill: {
     paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1,
+    borderRadius: 9999, borderWidth: 1,
   },
   unselText: { fontSize: 13, fontWeight: '600', letterSpacing: -0.1 },
   savePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 13, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1.3,
+    borderRadius: 9999, borderWidth: 1.2,
   },
   saveTxt: { fontSize: 13, fontWeight: '700' },
 });

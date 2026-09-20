@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -400,15 +401,15 @@ export default function FamilySetupScreen() {
                   style={[
                     styles.celebrationCard,
                     {
-                      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.95)',
-                      borderColor: '#10B981',
+                      backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : 'rgba(255, 255, 255, 0.90)',
+                      borderColor: isDark ? 'rgba(45, 212, 191, 0.40)' : 'rgba(46, 191, 142, 0.35)',
                       opacity: successOpacityAnim,
                       transform: [{ scale: successScaleAnim }],
                     },
                   ]}>
                   <View style={styles.successBadge}>
-                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                    <Text style={styles.successBadgeText}>Household Created</Text>
+                    <Ionicons name="checkmark-circle" size={24} color={isDark ? '#34D399' : '#2EBF8E'} />
+                    <Text style={[styles.successBadgeText, { color: isDark ? '#34D399' : '#2EBF8E' }]}>Household Created</Text>
                   </View>
 
                   <Text style={[styles.celebrationFamilyName, { color: colors.text }]}>
@@ -420,20 +421,20 @@ export default function FamilySetupScreen() {
                     style={[
                       styles.handleDisplayCard,
                       {
-                        backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
-                        borderColor: isDark ? '#334155' : '#E2E8F0',
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(124, 92, 224, 0.06)',
+                        borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                       },
                     ]}>
                     <Text style={[styles.handleLabel, { color: colors.textSecondary }]}>
                       Family Username for Members to Join:
                     </Text>
-                    <Text style={[styles.handleValueText, { color: '#6366F1' }]}>
+                    <Text style={[styles.handleValueText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
                       @{createdResult.familyUsername}
                     </Text>
 
                     <View style={styles.handleActionRow}>
                       <Pressable
-                        style={[styles.handleActionBtn, { backgroundColor: '#6366F1' }]}
+                        style={[styles.handleActionBtn, { backgroundColor: isDark ? '#8B7CF6' : '#7C5CE0' }]}
                         onPress={() => handleCopyUsername(createdResult.familyUsername)}>
                         <Ionicons
                           name={copiedHandle ? 'checkmark' : 'copy-outline'}
@@ -449,7 +450,9 @@ export default function FamilySetupScreen() {
                         style={[
                           styles.handleActionBtn,
                           {
-                            backgroundColor: isDark ? '#1E293B' : '#E2E8F0',
+                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(124, 92, 224, 0.12)',
+                            borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.22)',
+                            borderWidth: 1,
                           },
                         ]}
                         onPress={() =>
@@ -458,12 +461,12 @@ export default function FamilySetupScreen() {
                         <Ionicons
                           name="share-social-outline"
                           size={16}
-                          color={isDark ? '#F8FAFC' : '#1E293B'}
+                          color={isDark ? '#F2F4FF' : '#1F1B6D'}
                         />
                         <Text
                           style={[
                             styles.handleActionBtnText,
-                            { color: isDark ? '#F8FAFC' : '#1E293B' },
+                            { color: isDark ? '#F2F4FF' : '#1F1B6D' },
                           ]}>
                           Share Invite
                         </Text>
@@ -477,6 +480,12 @@ export default function FamilySetupScreen() {
                   </Text>
 
                   <Pressable style={styles.primaryCta} onPress={handleProceedToApp}>
+                    <LinearGradient
+                      colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={StyleSheet.absoluteFill}
+                    />
                     <Text style={styles.primaryCtaText}>Enter Family Vault</Text>
                     <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
                   </Pressable>
@@ -487,15 +496,15 @@ export default function FamilySetupScreen() {
                   style={[
                     styles.celebrationCard,
                     {
-                      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.95)',
-                      borderColor: '#10B981',
+                      backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : 'rgba(255, 255, 255, 0.90)',
+                      borderColor: isDark ? 'rgba(45, 212, 191, 0.40)' : 'rgba(46, 191, 142, 0.35)',
                       opacity: successOpacityAnim,
                       transform: [{ scale: successScaleAnim }],
                     },
                   ]}>
                   <View style={styles.successBadge}>
-                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                    <Text style={styles.successBadgeText}>Connected Successfully</Text>
+                    <Ionicons name="checkmark-circle" size={24} color={isDark ? '#34D399' : '#2EBF8E'} />
+                    <Text style={[styles.successBadgeText, { color: isDark ? '#34D399' : '#2EBF8E' }]}>Connected Successfully</Text>
                   </View>
 
                   <Text style={[styles.celebrationFamilyName, { color: colors.text }]}>
@@ -508,6 +517,12 @@ export default function FamilySetupScreen() {
                   </Text>
 
                   <Pressable style={styles.primaryCta} onPress={handleProceedToApp}>
+                    <LinearGradient
+                      colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={StyleSheet.absoluteFill}
+                    />
                     <Text style={styles.primaryCtaText}>Continue to Home</Text>
                     <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
                   </Pressable>
@@ -520,8 +535,8 @@ export default function FamilySetupScreen() {
                     style={[
                       styles.segmentedContainer,
                       {
-                        backgroundColor: isDark ? '#1E293B' : '#EDE9FE',
-                        borderColor: isDark ? '#334155' : 'rgba(99, 102, 241, 0.2)',
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(124, 92, 224, 0.10)',
+                        borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                       },
                     ]}>
                     <Pressable
@@ -530,8 +545,8 @@ export default function FamilySetupScreen() {
                         activeTab === 'create' && [
                           styles.segmentButtonActive,
                           {
-                            backgroundColor: isDark ? '#334155' : '#FFFFFF',
-                            shadowColor: '#000',
+                            backgroundColor: isDark ? 'rgba(20, 27, 74, 0.90)' : '#FFFFFF',
+                            shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
                           },
                         ],
                       ]}
@@ -539,7 +554,7 @@ export default function FamilySetupScreen() {
                       <Ionicons
                         name="add-circle"
                         size={18}
-                        color={activeTab === 'create' ? '#6366F1' : colors.textSecondary}
+                        color={activeTab === 'create' ? (isDark ? '#8B7CF6' : '#7C5CE0') : colors.textSecondary}
                       />
                       <Text
                         style={[
@@ -559,8 +574,8 @@ export default function FamilySetupScreen() {
                         activeTab === 'join' && [
                           styles.segmentButtonActive,
                           {
-                            backgroundColor: isDark ? '#334155' : '#FFFFFF',
-                            shadowColor: '#000',
+                            backgroundColor: isDark ? 'rgba(20, 27, 74, 0.90)' : '#FFFFFF',
+                            shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
                           },
                         ],
                       ]}
@@ -568,7 +583,7 @@ export default function FamilySetupScreen() {
                       <Ionicons
                         name="people"
                         size={18}
-                        color={activeTab === 'join' ? '#6366F1' : colors.textSecondary}
+                        color={activeTab === 'join' ? (isDark ? '#8B7CF6' : '#7C5CE0') : colors.textSecondary}
                       />
                       <Text
                         style={[
@@ -589,8 +604,8 @@ export default function FamilySetupScreen() {
                       style={[
                         styles.innerCard,
                         {
-                          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.9)',
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.12)',
+                          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.76)' : 'rgba(255, 255, 255, 0.85)',
+                          borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
                         },
                       ]}>
                       <Text style={[styles.cardHeading, { color: colors.text }]}>
@@ -610,15 +625,15 @@ export default function FamilySetupScreen() {
                           style={[
                             styles.inputWrapper,
                             {
-                              backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
-                              borderColor: isDark ? '#334155' : '#CBD5E1',
+                              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.70)',
+                              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                             },
                           ]}>
-                          <Ionicons name="home-outline" size={20} color="#6366F1" style={styles.inputIcon} />
+                          <Ionicons name="home-outline" size={20} color={isDark ? '#8B7CF6' : '#7C5CE0'} style={styles.inputIcon} />
                           <TextInput
                             style={[styles.textInput, { color: colors.text }]}
                             placeholder="e.g. The Anderson Family"
-                            placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
+                            placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                             value={familyName}
                             onChangeText={(val) => {
                               setFamilyName(val);
@@ -632,7 +647,7 @@ export default function FamilySetupScreen() {
                               <Ionicons
                                 name="close-circle"
                                 size={18}
-                                color={isDark ? '#64748B' : '#94A3B8'}
+                                color={isDark ? '#7C84C0' : '#A0A3BD'}
                               />
                             </Pressable>
                           )}
@@ -644,33 +659,33 @@ export default function FamilySetupScreen() {
                         style={[
                           styles.handlePreviewCard,
                           {
-                            backgroundColor: isDark ? '#0F172A' : '#F5F3FF',
-                            borderColor: isDark ? '#4338CA' : '#C7D2FE',
+                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(124, 92, 224, 0.06)',
+                            borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                           },
                         ]}>
                         <View style={styles.handleHeaderRow}>
                           <View style={styles.handleBadge}>
-                            <Ionicons name="at" size={16} color="#6366F1" />
-                            <Text style={styles.handleBadgeText}>Generated Family Username</Text>
+                            <Ionicons name="at" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+                            <Text style={[styles.handleBadgeText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Generated Family Username</Text>
                           </View>
                           <Pressable
                             style={styles.refreshHandleBtn}
                             onPress={handleRerollDiscriminator}
                             hitSlop={8}>
-                            <Ionicons name="dice-outline" size={18} color="#6366F1" />
-                            <Text style={styles.refreshHandleText}>Roll Code</Text>
+                            <Ionicons name="dice-outline" size={18} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+                            <Text style={[styles.refreshHandleText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>Roll Code</Text>
                           </Pressable>
                         </View>
 
                         {isEditingHandle ? (
-                          <View style={styles.customHandleInputRow}>
-                            <Text style={styles.atSymbol}>@</Text>
+                          <View style={[styles.customHandleInputRow, { borderBottomColor: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
+                            <Text style={[styles.atSymbol, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@</Text>
                             <TextInput
                               style={[styles.customHandleInput, { color: colors.text }]}
                               value={customUsername}
                               onChangeText={setCustomUsername}
                               placeholder="custom_handle"
-                              placeholderTextColor="#94A3B8"
+                              placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                               autoCapitalize="none"
                               autoCorrect={false}
                               maxLength={30}
@@ -678,19 +693,19 @@ export default function FamilySetupScreen() {
                             <Pressable
                               style={styles.customHandleDone}
                               onPress={() => setIsEditingHandle(false)}>
-                              <Ionicons name="checkmark" size={18} color="#10B981" />
+                              <Ionicons name="checkmark" size={18} color={isDark ? '#34D399' : '#2EBF8E'} />
                             </Pressable>
                           </View>
                         ) : (
                           <View style={styles.handleDisplayRow}>
-                            <Text style={styles.handleDisplayText}>@{generatedUsername}</Text>
+                            <Text style={[styles.handleDisplayText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@{generatedUsername}</Text>
                             <Pressable
                               style={styles.editHandleBtn}
                               onPress={() => {
                                 setCustomUsername(generatedUsername);
                                 setIsEditingHandle(true);
                               }}>
-                              <Ionicons name="pencil-outline" size={16} color="#6366F1" />
+                              <Ionicons name="pencil-outline" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
                             </Pressable>
                           </View>
                         )}
@@ -705,11 +720,11 @@ export default function FamilySetupScreen() {
                         style={[
                           styles.privacyNote,
                           {
-                            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                            borderColor: 'rgba(16, 185, 129, 0.25)',
+                            backgroundColor: isDark ? 'rgba(52, 211, 153, 0.08)' : 'rgba(46, 191, 142, 0.08)',
+                            borderColor: isDark ? 'rgba(52, 211, 153, 0.25)' : 'rgba(46, 191, 142, 0.25)',
                           },
                         ]}>
-                        <Ionicons name="shield-checkmark-outline" size={18} color="#10B981" />
+                        <Ionicons name="shield-checkmark-outline" size={18} color={isDark ? '#34D399' : '#2EBF8E'} />
                         <Text style={[styles.privacyNoteText, { color: isDark ? '#34D399' : '#059669' }]}>
                           Clean slate guaranteed: Zero preset accounts or mock tasks. Only you will be
                           in this family space.
@@ -731,6 +746,12 @@ export default function FamilySetupScreen() {
                         ]}
                         disabled={createLoading || !familyName.trim()}
                         onPress={handleCreateSubmit}>
+                        <LinearGradient
+                          colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={StyleSheet.absoluteFill}
+                        />
                         {createLoading ? (
                           <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
@@ -747,8 +768,8 @@ export default function FamilySetupScreen() {
                       style={[
                         styles.innerCard,
                         {
-                          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.9)',
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.12)',
+                          backgroundColor: isDark ? 'rgba(20, 27, 74, 0.76)' : 'rgba(255, 255, 255, 0.85)',
+                          borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.14)',
                         },
                       ]}>
                       <Text style={[styles.cardHeading, { color: colors.text }]}>
@@ -767,15 +788,15 @@ export default function FamilySetupScreen() {
                           style={[
                             styles.inputWrapper,
                             {
-                              backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
-                              borderColor: isDark ? '#334155' : '#CBD5E1',
+                              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.70)',
+                              borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
                             },
                           ]}>
-                          <Text style={styles.atSymbolInput}>@</Text>
+                          <Text style={[styles.atSymbolInput, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>@</Text>
                           <TextInput
                             style={[styles.textInput, { color: colors.text }]}
                             placeholder="e.g. anderson_4821 or KIN-4821"
-                            placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
+                            placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
                             value={joinInput}
                             onChangeText={(val) => {
                               setJoinInput(val);
@@ -785,13 +806,13 @@ export default function FamilySetupScreen() {
                             autoCorrect={false}
                           />
                           {isSearching ? (
-                            <ActivityIndicator size="small" color="#6366F1" />
+                            <ActivityIndicator size="small" color={isDark ? '#8B7CF6' : '#7C5CE0'} />
                           ) : joinInput.length > 0 ? (
                             <Pressable onPress={() => setJoinInput('')} hitSlop={8}>
                               <Ionicons
                                 name="close-circle"
                                 size={18}
-                                color={isDark ? '#64748B' : '#94A3B8'}
+                                color={isDark ? '#7C84C0' : '#A0A3BD'}
                               />
                             </Pressable>
                           ) : null}
@@ -802,8 +823,8 @@ export default function FamilySetupScreen() {
                       {foundFamily ? (
                         <View style={styles.verifiedFamilyCard}>
                           <View style={styles.verifiedTopRow}>
-                            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                            <Text style={styles.verifiedLabel}>Verified Household</Text>
+                            <Ionicons name="checkmark-circle" size={20} color={isDark ? '#34D399' : '#2EBF8E'} />
+                            <Text style={[styles.verifiedLabel, { color: isDark ? '#34D399' : '#2EBF8E' }]}>Verified Household</Text>
                           </View>
                           <Text style={[styles.verifiedFamilyName, { color: colors.text }]}>
                             {foundFamily.name}
@@ -839,25 +860,17 @@ export default function FamilySetupScreen() {
                                   styles.relationChip,
                                   {
                                     backgroundColor: isSelected
-                                      ? '#6366F1'
+                                      ? (isDark ? '#8B7CF6' : '#7C5CE0')
                                       : isDark
-                                      ? '#0F172A'
-                                      : '#F1F5F9',
+                                      ? 'rgba(255, 255, 255, 0.05)'
+                                      : 'rgba(255, 255, 255, 0.75)',
                                     borderColor: isSelected
-                                      ? '#6366F1'
+                                      ? (isDark ? '#8B7CF6' : '#7C5CE0')
                                       : isDark
-                                      ? '#334155'
-                                      : '#CBD5E1',
+                                      ? 'rgba(140, 150, 255, 0.25)'
+                                      : 'rgba(124, 92, 224, 0.18)',
                                   },
-                                ]}
-                                onPress={() => {
-                                  if (Platform.OS !== 'web') {
-                                    try {
-                                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    } catch {}
-                                  }
-                                  setSelectedRelation(rel);
-                                }}>
+                                ]}>
                                 <Text
                                   style={[
                                     styles.relationChipText,
@@ -865,11 +878,19 @@ export default function FamilySetupScreen() {
                                       color: isSelected
                                       ? '#FFFFFF'
                                       : isDark
-                                      ? '#CBD5E1'
-                                      : '#475569',
+                                      ? '#A6ADE0'
+                                      : '#1F1B6D',
                                       fontWeight: isSelected ? '700' : '500',
                                     },
-                                  ]}>
+                                  ]}
+                                  onPress={() => {
+                                    if (Platform.OS !== 'web') {
+                                      try {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                      } catch {}
+                                    }
+                                    setSelectedRelation(rel);
+                                  }}>
                                   {rel}
                                 </Text>
                               </Pressable>
@@ -893,6 +914,12 @@ export default function FamilySetupScreen() {
                         ]}
                         disabled={joinLoading || !joinInput.trim()}
                         onPress={handleJoinSubmit}>
+                        <LinearGradient
+                          colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={StyleSheet.absoluteFill}
+                        />
                         {joinLoading ? (
                           <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
@@ -941,6 +968,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -966,7 +994,7 @@ const styles = StyleSheet.create({
   },
   segmentedContainer: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 4,
     marginBottom: 20,
@@ -977,7 +1005,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
   },
   segmentButtonActive: {
@@ -990,13 +1018,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   innerCard: {
-    borderRadius: 20,
+    borderRadius: 26,
     borderWidth: 1,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#6E5ADC',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 3,
   },
   cardHeading: {
@@ -1014,7 +1043,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -1024,9 +1053,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 50,
+    height: 52,
   },
   inputIcon: {
     marginRight: 10,
@@ -1034,7 +1063,6 @@ const styles = StyleSheet.create({
   atSymbolInput: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#6366F1',
     marginRight: 6,
   },
   textInput: {
@@ -1043,8 +1071,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   handlePreviewCard: {
-    borderWidth: 1.5,
-    borderRadius: 14,
+    borderWidth: 1,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 16,
   },
@@ -1062,7 +1090,6 @@ const styles = StyleSheet.create({
   handleBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6366F1',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
@@ -1076,7 +1103,6 @@ const styles = StyleSheet.create({
   refreshHandleText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6366F1',
   },
   handleDisplayRow: {
     flexDirection: 'row',
@@ -1087,7 +1113,6 @@ const styles = StyleSheet.create({
   handleDisplayText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#6366F1',
     letterSpacing: -0.5,
   },
   editHandleBtn: {
@@ -1097,14 +1122,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#6366F1',
     paddingBottom: 4,
     marginBottom: 8,
   },
   atSymbol: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#6366F1',
     marginRight: 4,
   },
   customHandleInput: {
@@ -1124,7 +1147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     marginBottom: 18,
   },
@@ -1140,18 +1163,18 @@ const styles = StyleSheet.create({
   },
   relationChip: {
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   relationChipText: {
     fontSize: 13,
   },
   verifiedFamilyCard: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderWidth: 1.5,
-    borderColor: '#10B981',
-    borderRadius: 14,
+    backgroundColor: 'rgba(46, 191, 142, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 191, 142, 0.35)',
+    borderRadius: 18,
     padding: 16,
     marginBottom: 18,
   },
@@ -1164,7 +1187,6 @@ const styles = StyleSheet.create({
   verifiedLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#10B981',
     textTransform: 'uppercase',
   },
   verifiedFamilyName: {
@@ -1183,7 +1205,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239, 68, 68, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(239, 68, 68, 0.3)',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     marginBottom: 18,
   },
@@ -1197,7 +1219,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
@@ -1208,14 +1230,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   primaryCta: {
-    backgroundColor: '#6366F1',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 9999,
+    overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#6366F1',
+    shadowColor: '#8A6BF2',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -1229,14 +1251,15 @@ const styles = StyleSheet.create({
   },
   celebrationCard: {
     width: '100%',
-    borderRadius: 24,
-    borderWidth: 1.5,
+    borderRadius: 26,
+    borderWidth: 1,
     padding: 24,
+    overflow: 'hidden',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
+    shadowColor: '#6E5ADC',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 4,
   },
   successBadge: {
@@ -1248,7 +1271,6 @@ const styles = StyleSheet.create({
   successBadgeText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#10B981',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -1262,7 +1284,7 @@ const styles = StyleSheet.create({
   handleDisplayCard: {
     width: '100%',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
@@ -1291,8 +1313,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 40,
-    borderRadius: 10,
+    height: 42,
+    borderRadius: 9999,
   },
   handleActionBtnText: {
     fontSize: 13,

@@ -391,25 +391,25 @@ export const FamilyCard: React.FC<FamilyCardProps> = ({ onViewLiveMap }) => {
         </View>
       </View>
 
-      {/* 4. "View Live Map →" Pill Indicator (Anchored bottom-right with 12px inset, overlapping map thumbnail) */}
+      {/* 4. "View Live Map →" Pill Indicator */}
       <View
         accessibilityElementsHidden={true}
         importantForAccessibility="no"
         style={[
           styles.viewLiveMapPill,
           {
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(139, 124, 246, 0.50)' : 'transparent',
-            borderWidth: isDark ? 1 : 0,
-            shadowColor: isDark ? 'rgba(0, 0, 10, 0.25)' : '#6E5ADC',
-            shadowOpacity: isDark ? 0.15 : 0.15,
+            backgroundColor: isDark ? 'rgba(20, 27, 74, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+            borderColor: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.28)',
+            borderWidth: 1,
+            shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
+            shadowOpacity: isDark ? 0.25 : 0.10,
           },
         ]}>
         <Text
           numberOfLines={1}
           style={[
             styles.viewLiveMapText,
-            { color: isDark ? '#8B7CF6' : '#5B4BC4' },
+            { color: isDark ? '#8B7CF6' : '#6D5BD0' },
           ]}>
           View Live Map →
         </Text>

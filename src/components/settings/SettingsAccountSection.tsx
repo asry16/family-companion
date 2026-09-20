@@ -189,9 +189,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 9,
+    paddingHorizontal: 10,
     paddingVertical: 4.5,
-    borderRadius: 10,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   methodChipText: {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   logoutText: {

@@ -184,24 +184,24 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
           {/* Single Member Prompt if only 1 member exists */}
           {members.length === 1 && (
             <Pressable
-              onPress={handleAddPress}
+              onPress={() => onAddMember?.()}
               style={({ pressed }) => [
                 styles.singleMemberPrompt,
                 {
-                  backgroundColor: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
-                  borderColor: isDark ? 'rgba(129, 140, 248, 0.35)' : 'rgba(99, 102, 241, 0.30)',
+                  backgroundColor: isDark ? 'rgba(124, 92, 224, 0.08)' : 'rgba(124, 92, 224, 0.05)',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.35)' : 'rgba(124, 92, 224, 0.25)',
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
               <View
                 style={[
                   styles.promptIconWrap,
-                  { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.20)' : 'rgba(99, 102, 241, 0.12)' },
+                  { backgroundColor: isDark ? 'rgba(124, 92, 224, 0.20)' : 'rgba(124, 92, 224, 0.12)' },
                 ]}>
                 <Ionicons
                   name="share-social-outline"
                   size={19}
-                  color={isDark ? '#818CF8' : '#4F46E5'}
+                  color={isDark ? '#8B7CF6' : '#7C5CE0'}
                 />
               </View>
               <View style={styles.singlePromptCol}>
@@ -225,7 +225,7 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
                 <Ionicons
                   name="arrow-forward"
                   size={13}
-                  color="#818CF8"
+                  color="#8B7CF6"
                 />
               </View>
             </Pressable>
@@ -350,14 +350,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(124, 92, 224, 0.15)',
+    paddingHorizontal: 11,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 9999,
   },
   promptActionText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#818CF8',
+    color: '#8B7CF6',
   },
 });

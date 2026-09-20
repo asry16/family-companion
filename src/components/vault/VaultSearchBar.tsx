@@ -28,15 +28,15 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         styles.bar,
         {
           backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)',
-          borderColor: isDark ? 'rgba(140,150,255,0.22)' : 'rgba(109,91,208,0.16)',
-          shadowColor: isDark ? '#000' : '#6366F1',
+          borderColor: isDark ? 'rgba(140,150,255,0.25)' : 'rgba(124,92,224,0.18)',
+          shadowColor: isDark ? 'rgba(0, 0, 10, 0.35)' : '#6E5ADC',
         },
       ]}>
       {/* Search icon */}
       <Ionicons
         name="search-outline"
         size={18}
-        color={isDark ? colors.textMuted : '#6D5BD0'}
+        color={isDark ? '#8B7CF6' : '#7C5CE0'}
         style={styles.searchIcon}
       />
 
@@ -47,14 +47,14 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         onSubmitEditing={onSubmit}
         returnKeyType="search"
         placeholder="Ask e.g. 'Where is Dad's passport?' or 'Wi-Fi'"
-        placeholderTextColor={isDark ? colors.textMuted : '#94A3B8'}
+        placeholderTextColor={isDark ? '#7C84C0' : '#A0A3BD'}
         style={[styles.input, { color: colors.text, fontSize: isElderly ? 15 : 13 }]}
       />
 
       {/* Clear if typing */}
       {value.length > 0 && (
         <Pressable onPress={() => tap(() => onChangeText(''))} hitSlop={8}>
-          <Ionicons name="close-circle" size={16} color={isDark ? colors.textMuted : '#94A3B8'} />
+          <Ionicons name="close-circle" size={16} color={isDark ? colors.textMuted : '#A0A3BD'} />
         </Pressable>
       )}
 
@@ -64,7 +64,7 @@ export const VaultSearchBar: React.FC<VaultSearchBarProps> = ({
         hitSlop={6}
         style={({ pressed }) => [styles.micBtn, { opacity: pressed ? 0.8 : 1 }]}>
         <LinearGradient
-          colors={isDark ? ['#4F46E5', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+          colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden', flexShrink: 0,
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#8A6BF2', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35, shadowRadius: 5, elevation: 3,
   },
 });

@@ -24,8 +24,8 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
   };
 
   const iconBtnStyle = {
-    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(109,91,208,0.10)',
-    borderColor: isDark ? 'rgba(140,150,255,0.22)' : 'rgba(109,91,208,0.18)',
+    backgroundColor: isDark ? 'rgba(30, 36, 68, 0.65)' : 'rgba(255, 255, 255, 0.85)',
+    borderColor: isDark ? 'rgba(130, 140, 255, 0.22)' : 'rgba(124, 92, 224, 0.18)',
   };
 
   return (
@@ -35,7 +35,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
         {/* Shield + Title */}
         <View style={styles.left}>
           <LinearGradient
-            colors={isDark ? ['#5B5FD6', '#7C3AED'] : ['#6366F1', '#8B5CF6']}
+            colors={isDark ? ['#4F8EF7', '#8B6CF0'] : ['#4F8EF7', '#8A6BF2']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={styles.shieldGradient}>
             <Ionicons name="shield-checkmark" size={21} color="#FFFFFF" />
@@ -56,7 +56,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             hitSlop={6}
             onPress={() => tap(toggleTheme)}
             style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
-            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#FBBF24' : '#6D5BD0'} />
+            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#FBBF24' : '#7C5CE0'} />
           </Pressable>
 
           {/* Bell */}
@@ -64,8 +64,8 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             hitSlop={6}
             onPress={() => tap(() => router.push('/modal/notifications'))}
             style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
-            <Ionicons name="notifications-outline" size={16} color={isDark ? '#C9CEFF' : '#6D5BD0'} />
-            <View style={styles.badge}>
+            <Ionicons name="notifications-outline" size={16} color={isDark ? '#C9CEFF' : '#7C5CE0'} />
+            <View style={[styles.badge, { borderColor: isDark ? '#141828' : '#FFFFFF' }]}>
               <Text style={styles.badgeTxt}>{unreadCount > 0 ? Math.min(unreadCount, 9) : 1}</Text>
             </View>
           </Pressable>
@@ -75,7 +75,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             hitSlop={6}
             onPress={() => tap(() => onOpenSettings ? onOpenSettings() : router.push('/modal/family-settings'))}
             style={({ pressed }) => [styles.iconBtn, iconBtnStyle, { opacity: pressed ? 0.7 : 1 }]}>
-            <Ionicons name="settings-outline" size={16} color={isDark ? '#C9CEFF' : '#6D5BD0'} />
+            <Ionicons name="settings-outline" size={16} color={isDark ? '#C9CEFF' : '#7C5CE0'} />
           </Pressable>
         </View>
       </View>
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
   shieldGradient: {
     width: 48, height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 8, elevation: 5,
+    shadowColor: '#8A6BF2', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
   },
   titleBlock: { flex: 1, gap: 1 },
   title: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute', top: -3, right: -3,
     minWidth: 15, height: 15, borderRadius: 8,
-    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 3, borderWidth: 1.5, borderColor: '#FFFFFF',
+    backgroundColor: '#FF4D7A', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 3, borderWidth: 1.5,
   },
   badgeTxt: { color: '#FFF', fontSize: 8, fontWeight: '800' },
 });

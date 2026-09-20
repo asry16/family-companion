@@ -338,13 +338,13 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                 style={({ pressed }) => [
                   styles.modalSecondaryBtn,
                   {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F1F5F9',
-                    borderColor: isDark ? 'rgba(140, 150, 255, 0.25)' : '#E2E8F0',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.75)',
+                    borderColor: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.28)',
                     opacity: pressed ? 0.85 : 1,
                   },
                 ]}>
-                <Ionicons name="settings-outline" size={16} color={colors.text} />
-                <Text style={[styles.modalSecondaryBtnText, { color: colors.text }]}>
+                <Ionicons name="settings-outline" size={16} color={isDark ? '#8B7CF6' : '#6D5BD0'} />
+                <Text style={[styles.modalSecondaryBtnText, { color: isDark ? '#8B7CF6' : '#6D5BD0' }]}>
                   Family Settings
                 </Text>
               </Pressable>
@@ -355,8 +355,8 @@ export const PersonalizedHeader: React.FC<PersonalizedHeaderProps> = ({ onOpenSe
                   style={({ pressed }) => [
                     styles.signOutBtn,
                     {
-                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2',
-                      borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#FECACA',
+                      backgroundColor: isDark ? 'rgba(240, 82, 77, 0.15)' : 'rgba(225, 29, 72, 0.10)',
+                      borderColor: isDark ? 'rgba(240, 82, 77, 0.35)' : 'rgba(225, 29, 72, 0.25)',
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}>
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   modalSecondaryBtnText: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 11,
-    borderRadius: 14,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   signOutBtnText: {

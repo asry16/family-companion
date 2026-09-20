@@ -74,38 +74,43 @@ export const PillButton: React.FC<PillButtonProps> = ({
           textColor: '#FFFFFF',
           iconColor: '#FFFFFF',
           glow: glowColor || (isDark ? 'rgba(79, 142, 247, 0.40)' : '#8A6BF2'),
+          gradientColors: isDark ? (['#4F8EF7', '#8B6CF0'] as const) : (['#4F8EF7', '#8A6BF2'] as const),
         };
       case 'danger':
         return {
-          bg: colors.red,
-          border: colors.red,
+          bg: 'transparent',
+          border: 'transparent',
           textColor: '#FFFFFF',
           iconColor: '#FFFFFF',
-          glow: glowColor || colors.red,
+          glow: glowColor || (isDark ? 'rgba(255, 77, 122, 0.50)' : 'rgba(225, 29, 72, 0.35)'),
+          gradientColors: ['#FF4D7A', '#E11D48'] as const,
         };
       case 'success':
         return {
-          bg: colors.green,
-          border: colors.green,
+          bg: 'transparent',
+          border: 'transparent',
           textColor: '#FFFFFF',
           iconColor: '#FFFFFF',
-          glow: glowColor || colors.green,
+          glow: glowColor || (isDark ? 'rgba(45, 212, 191, 0.45)' : 'rgba(46, 191, 142, 0.35)'),
+          gradientColors: ['#2DD4BF', '#22C58B'] as const,
         };
       case 'glass':
         return {
-          bg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
-          border: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.16)',
-          textColor: isDark ? '#F2F4FF' : colors.text,
-          iconColor: isDark ? '#C9CEFF' : colors.text,
+          bg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.80)',
+          border: isDark ? 'rgba(140, 150, 255, 0.25)' : 'rgba(124, 92, 224, 0.22)',
+          textColor: isDark ? '#C9CEFF' : '#6D5BD0',
+          iconColor: isDark ? '#C9CEFF' : '#6D5BD0',
           glow: glowColor,
+          gradientColors: null,
         };
       case 'outline':
         return {
-          bg: isDark ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
-          border: isDark ? 'rgba(139, 124, 246, 0.50)' : '#7C5CE0',
-          textColor: isDark ? '#8B7CF6' : '#7C5CE0',
-          iconColor: isDark ? '#8B7CF6' : '#7C5CE0',
+          bg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.75)',
+          border: isDark ? 'rgba(139, 124, 246, 0.45)' : 'rgba(124, 92, 224, 0.28)',
+          textColor: isDark ? '#8B7CF6' : '#6D5BD0',
+          iconColor: isDark ? '#8B7CF6' : '#6D5BD0',
           glow: glowColor,
+          gradientColors: null,
         };
     }
   })();
@@ -127,6 +132,14 @@ export const PillButton: React.FC<PillButtonProps> = ({
         shadowRadius: 10,
         elevation: 3,
       }
+    : variant === 'danger'
+    ? {
+        shadowColor: '#E11D48',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.45 : 0.25,
+        shadowRadius: 12,
+        elevation: 4,
+      }
     : {
         shadowColor: '#6E5ADC',
         shadowOffset: { width: 0, height: 2 },
@@ -140,20 +153,20 @@ export const PillButton: React.FC<PillButtonProps> = ({
     switch (size) {
       case 'sm':
         return {
-          paddingHorizontal: 12,
+          paddingHorizontal: 14,
           paddingVertical: 6,
           minHeight: 32,
         };
       case 'lg':
         return {
-          paddingHorizontal: 22,
+          paddingHorizontal: 24,
           paddingVertical: 14,
           minHeight: isElderly ? 58 : 50,
         };
       case 'md':
       default:
         return {
-          paddingHorizontal: 16,
+          paddingHorizontal: 18,
           paddingVertical: 10,
           minHeight: 40,
         };
@@ -190,10 +203,10 @@ export const PillButton: React.FC<PillButtonProps> = ({
         },
         style,
       ]}>
-      {/* Primary Gradient Fill (90deg, #4F8EF7, #8B6CF0) */}
-      {variant === 'primary' && (
+      {/* Gradient Fill for primary, danger (SOS), and success (safe) */}
+      {config.gradientColors && (
         <LinearGradient
-          colors={['#4F8EF7', '#8B6CF0']}
+          colors={config.gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
