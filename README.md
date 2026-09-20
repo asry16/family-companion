@@ -36,11 +36,11 @@ Modern households rely on a chaotic patchwork of generic consumer tools:
 
 ### Our Solution
 **Kinly** (FamilyOS) is a private, multi-generational household companion designed specifically for family dynamics:
-1. **Passive Ambient Telemetry**: Provides at-a-glance awareness of phone battery levels, ringer states (`Sound`, `Vibrate`, `Silent`, `DND`), and broad safe zones without invasive continuous surveillance.
+1. **Passive Ambient Telemetry**: Provides at-a-glance awareness of phone battery levels, charging status, ringer states (`Sound`, `Vibrate`, `Silent`, `DND`), and broad safe zones without invasive continuous surveillance.
 2. **Physical Vault & Memory Engine**: Indexes physical storage locations (drawers, shelves, cupboards) alongside encrypted digital documents.
 3. **Emergency SOS & Multi-Channel Broadcast**: A 2-second hold-to-confirm SOS mechanism that dispatches real-time WebSocket alerts, stores immutable audit records in **Amazon DynamoDB**, broadcasts high-priority SMS via **Amazon SNS**, and records cloud telemetry alarms in **Amazon CloudWatch**.
-4. **Intelligent Assistance**: Integrates **Amazon SageMaker** and **Amazon Bedrock** for conversational family assistance and automatic receipt/bill OCR parsing.
-5. **Dual-Mode Experience**: Includes a simplified, high-contrast, large touch-target interface tailored for elderly family members alongside an intuitive glassmorphic dashboard for organizers.
+4. **Intelligent Assistance**: Integrates **Amazon SageMaker** and **Amazon Bedrock** for conversational family assistance and automated document processing.
+5. **Dual-Mode & Age-Aware Experience**: Includes an automatic simplified, high-contrast, large touch-target interface tailored for elderly family members (auto-enabled when age > 50) alongside an intuitive glassmorphic dashboard for organizers.
 
 ### Why It Matters
 Family safety and coordination cannot afford infrastructure downtime or data leaks. By anchoring critical event pipelines to managed AWS cloud infrastructure, Kinly provides enterprise-grade reliability and low latency to everyday families.
@@ -60,15 +60,15 @@ Rather than expecting family members to manually maintain complex databases or m
 
 | Feature Area | User Experience & Capability | Supported AWS / System Service |
 | :--- | :--- | :--- |
-| **Live Family Radar Map** | Visual SVG radar canvas tracking member locations, safe zone geofences (Home, Office, School), and device state indicators. | Real-time WebSocket Bus + `family_places` |
+| **Live Family Radar Map** | Visual SVG radar canvas tracking member locations, safe zone geofences (Home, Office, School), and live device state indicators. | Real-time WebSocket Bus + `family_places` |
 | **Passive Device Telemetry** | View each family member's battery percentage, charging state, ringer mode, and device model without demanding active check-ins. | **Amazon DynamoDB** (`KinlyTelemetryStream`) |
 | **Emergency SOS Dispatch** | 2-second hold-to-confirm SOS triggers animated alert overlays across all family devices, dispatches SMS, and logs incident records. | **Amazon SNS** + **Amazon DynamoDB** + **CloudWatch** |
 | **Physical Memory Engine** | Searchable catalog of household items ("Where is Dad's passport?") with drawer/shelf tags and photo verification. | Indexed Relational Engine (`memories`) |
 | **Digital Document Vault** | Upload medical prescriptions, utility bills, and insurance policies with automated category tagging and secure download access. | **Amazon S3** (`kinly-family-vault` with AES-256 SSE) |
 | **AI Document Analyzer & OCR** | Extracts amounts, due dates, and issuers from utility bills and health cards, suggesting automatic calendar reminders. | **Amazon SageMaker AI** & **Amazon Bedrock** |
-| **Unified Planner** | Cohesive timeline combining family calendar events, assigned household tasks, and recurring medication reminders. | `events`, `tasks`, and `reminders` repos |
-| **Elderly Accessibility Mode** | Single-tap dashboard with 48px+ touch targets, text-to-speech feedback (`expo-speech`), and direct family quick-dial cards. | Dedicated `ElderlyDashboard.tsx` view |
-| **Private Family Circles** | Secure 8-character household invite codes (`KIN-XXXX`) and camera-scanned household QR codes with zero third-party ad tracking. | Cryptographic Token Validator + SQLite |
+| **Interactive Event & Care Planner** | Unified timeline combining family calendar events, tasks, and recurring medication reminders with custom inline `CalendarDatePicker` and tactile `TimeDialerPicker`. | `events`, `tasks`, and `reminders` repos |
+| **Age-Aware Elderly Accessibility** | Single-tap dashboard with 48px+ touch targets, text-to-speech guidance (`expo-speech`), and direct quick-dial cards, **auto-activated when age > 50**. | Dedicated `ElderlyDashboard.tsx` view |
+| **Private Family Circles & Handles** | Join or create circles via custom unique **Family ID handles** (e.g. `@sharmafamily`) and instant QR code sharing with zero ad tracking. | Cryptographic Token Validator + SQLite |
 
 ---
 
@@ -78,14 +78,14 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 
 | AWS Service | Repository Implementation | Engineering Benefit |
 | :--- | :--- | :--- |
-| **Amazon S3** | [`server/src/aws/s3.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/s3.service.ts) | Encrypted object storage for sensitive family documents, medical records, and receipts with bucket-level AES-256 Server-Side Encryption and time-limited Presigned Get URLs. |
-| **Amazon DynamoDB** | [`server/src/aws/dynamodb.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/dynamodb.service.ts) | Single-table telemetry ingestion (`KinlyTelemetryStream`) handling frequent battery/location pings with a 30-day automated TTL, plus an immutable emergency incident ledger (`KinlyEmergencyEvents`). |
-| **Amazon SNS** | [`server/src/aws/sns.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/sns.service.ts) | Immediate delivery of transactional high-priority SMS alerts to family phone numbers when an Emergency SOS is triggered, alongside fan-out topic broadcasts (`KinlyEmergencyAlerts`). |
-| **Amazon CloudWatch & Logs** | [`server/src/aws/cloudwatch.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/cloudwatch.service.ts) | Publishes custom operational metrics (`EmergencySOSTriggered`, `ActiveFamilyPings`, `DocumentScannedCount`) to custom namespace `Kinly/FamilyOS`, paired with security audit streams in `/aws/kinly/backend`. |
-| **Amazon EventBridge** | [`server/src/aws/eventbridge.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/eventbridge.service.ts) | Asynchronous domain event bus (`KinlyEmergencySOS`, `KinlyTaskCreated`, `KinlyDocumentUploaded`) enabling decoupled downstream integrations without blocking client requests. |
-| **Amazon SageMaker & Bedrock** | [`server/src/aws/sagemaker.service.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/sagemaker.service.ts) | SageMaker endpoint execution (`InvokeEndpointCommand`) and Bedrock Foundation Model invocation (`InvokeModelCommand` with Claude 3 Haiku) for intelligent family context querying and multimodal document analysis. |
-| **AWS App Runner** | [`server/apprunner.yaml`](file:///Users/asmitas_mac/Developer/Kinly/server/apprunner.yaml), [`server/Dockerfile`](file:///Users/asmitas_mac/Developer/Kinly/server/Dockerfile) | Fully managed containerized service configuration for building, deploying, and auto-scaling the Node.js 20 backend with integrated health checks. |
-| **AWS STS** | [`server/src/aws/provision.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/provision.ts) | Verifies cloud caller identity (`GetCallerIdentityCommand`) during automated SDK-based resource provisioning. |
+| **Amazon S3** | [`server/src/aws/s3.service.ts`](./server/src/aws/s3.service.ts) | Encrypted object storage for sensitive family documents, medical records, and receipts with bucket-level AES-256 Server-Side Encryption and time-limited Presigned Get URLs. |
+| **Amazon DynamoDB** | [`server/src/aws/dynamodb.service.ts`](./server/src/aws/dynamodb.service.ts) | Single-table telemetry ingestion (`KinlyTelemetryStream`) handling frequent battery/location pings with a 30-day automated TTL, plus an immutable emergency incident ledger (`KinlyEmergencyEvents`). |
+| **Amazon SNS** | [`server/src/aws/sns.service.ts`](./server/src/aws/sns.service.ts) | Immediate delivery of transactional high-priority SMS alerts to family phone numbers when an Emergency SOS is triggered, alongside fan-out topic broadcasts (`KinlyEmergencyAlerts`). |
+| **Amazon CloudWatch & Logs** | [`server/src/aws/cloudwatch.service.ts`](./server/src/aws/cloudwatch.service.ts) | Publishes custom operational metrics (`EmergencySOSTriggered`, `ActiveFamilyPings`, `DocumentScannedCount`) to custom namespace `Kinly/FamilyOS`, paired with security audit streams in `/aws/kinly/backend`. |
+| **Amazon EventBridge** | [`server/src/aws/eventbridge.service.ts`](./server/src/aws/eventbridge.service.ts) | Asynchronous domain event bus (`KinlyEmergencySOS`, `KinlyTaskCreated`, `KinlyDocumentUploaded`) enabling decoupled downstream integrations without blocking client requests. |
+| **Amazon SageMaker & Bedrock** | [`server/src/aws/sagemaker.service.ts`](./server/src/aws/sagemaker.service.ts) | SageMaker endpoint execution (`InvokeEndpointCommand`) and Bedrock Foundation Model invocation (`InvokeModelCommand` with Claude 3 Haiku) for intelligent family context querying and multimodal document analysis. |
+| **AWS App Runner** | [`server/apprunner.yaml`](./server/apprunner.yaml), [`server/Dockerfile`](./server/Dockerfile) | Fully managed containerized service configuration for building, deploying, and auto-scaling the Node.js 20 backend with integrated health checks. |
+| **AWS STS** | [`server/src/aws/provision.ts`](./server/src/aws/provision.ts) | Verifies cloud caller identity (`GetCallerIdentityCommand`) during automated SDK-based resource provisioning. |
 
 ---
 
@@ -134,14 +134,14 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
    - **EventBridge**: Emits a `KinlyEmergencySOS` domain event.
 5. **Client Response**: Family members' screens render an urgent red banner with direct links to the live map.
 
-#### 2. Vault Document Ingestion & AI Analysis Flow
-1. **User Action**: A user scans a utility bill or prescription in the Vault tab.
-2. **Client Dispatch**: The client sends the document metadata and image payload to `POST /api/vault/scan`.
+#### 2. Vault Document Ingestion & Storage Flow
+1. **User Action**: A user uploads a prescription, medical record, or utility bill in the Vault tab.
+2. **Client Dispatch**: The client sends the document metadata and file payload to `POST /api/vault/documents`.
 3. **AWS Execution**:
-   - **S3**: The image is uploaded to `families/{familyId}/documents/{docId}.jpg` with AES-256 encryption. A 24-hour presigned URL is generated.
-   - **SageMaker / Bedrock**: The document is analyzed for document type, merchant/provider, total amount, and due date.
-4. **Data Persistence**: The parsed fields are saved in the relational database with a reference link to the S3 object key.
-5. **Event Delivery**: An event is published to EventBridge (`KinlyDocumentUploaded`) and pushed over WebSockets to sync all family members' vault lists.
+   - **S3**: The file is stored under `families/{familyId}/documents/{docId}.jpg` with AES-256 encryption. A secure 24-hour presigned URL is generated.
+   - **SageMaker / Bedrock**: Optional document parsing extracts provider, total amount, and due dates.
+4. **Data Persistence**: The parsed metadata and category tags are saved in the relational database with a reference link to the S3 object key.
+5. **Event Delivery**: An event is published to EventBridge (`KinlyDocumentUploaded`) and broadcast over WebSockets to sync all family members' vault lists.
 
 ---
 
@@ -153,7 +153,7 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 
 ### Reliability & Fault Isolation
 - **Dual-Storage Isolation**: Mission-critical reads (app navigation, member profiles) run with zero network overhead from the local database, while file storage (**S3**), audit logging (**CloudWatch**), and emergency notifications (**SNS**) leverage highly available AWS infrastructure.
-- **Graceful Cloud Fallback**: The codebase includes an adaptive configuration provider ([`awsConfig.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/awsConfig.ts)) that detects live AWS credentials and provides simulation fallback during offline or local development.
+- **Graceful Cloud Fallback**: The codebase includes an adaptive configuration provider ([`awsConfig.ts`](./server/src/aws/awsConfig.ts)) that detects live AWS credentials and provides simulation fallback during offline or local development.
 
 ### Security
 - **Encryption by Default**: All S3 assets use bucket-level server-side encryption (`AES256`).
@@ -173,6 +173,7 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 | **S3 Presigned URLs vs. Direct File Proxying** | Generating S3 presigned URLs offloads high-bandwidth file transfers directly to AWS S3, reducing memory and bandwidth pressure on the backend container. | Requires client handling of direct S3 URLs instead of routing all files through custom API streams. |
 | **AWS SDK v3 Modular Imports** | Only specific client packages (`@aws-sdk/client-s3`, `@aws-sdk/client-dynamodb`, etc.) are imported rather than the monolithic AWS SDK, keeping production bundle size lean. | Requires individual client dependency management across the server module. |
 | **Dual AI Gateway (SageMaker + Bedrock)** | Allows teams with provisioned custom SageMaker endpoints to use them, while supporting Bedrock Foundation Models (Claude 3 Haiku) as a serverless alternative. | Requires multi-provider fallback handling in the AI service layer. |
+| **In-House Gesture Date & Time Pickers** | Native modal date/time pickers present platform inconsistencies, modal stacking glitches, and dark-mode styling issues. Custom `CalendarDatePicker` and `TimeDialerPicker` components provide smooth inline tactile UX across platforms. | Requires maintaining dedicated calendar/time dialer gesture components in the codebase. |
 
 ---
 
@@ -181,15 +182,17 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 | Layer | Technologies |
 | :--- | :--- |
 | **Mobile / Frontend** | React Native 0.86, Expo SDK 57, Expo Router (File-based), React 19, TypeScript |
-| **UI & Styling** | Custom Glassmorphic Design System, Linear Gradients (`expo-linear-gradient`), Vector Icons (`@expo/vector-icons`), Tactile Haptics (`expo-haptics`) |
+| **UI & Styling** | Custom Glassmorphic Design System, Linear Gradients (`expo-linear-gradient`), Tactile Haptics (`expo-haptics`), Vector Icons (`@expo/vector-icons`) |
+| **Interactive Form Components** | Gesture-driven `CalendarDatePicker` (inline visual calendar grid) & `TimeDialerPicker` (smooth time selection dialer) |
+| **Accessibility & Voice** | `expo-speech` (Text-to-Speech feedback), automatic age-triggered Elderly Mode (age > 50), 48px+ touch targets |
 | **Backend Compute** | Node.js 20 LTS, Express 4, TypeScript, Native WebSocket (`ws`) |
-| **Cloud Storage** | **Amazon S3** (Secure Document Vault & Presigned URLs) |
-| **Cloud Database** | **Amazon DynamoDB** (Telemetry Streams & SOS Records) |
+| **Cloud Storage** | **Amazon S3** (Secure Document Vault & Presigned URLs with AES-256 SSE) |
+| **Cloud Database** | **Amazon DynamoDB** (Telemetry Streams & SOS Records with 30-day TTL) |
 | **Cloud Messaging** | **Amazon SNS** (Transactional SMS & Alert Fan-out) |
 | **Cloud Intelligence** | **Amazon Bedrock** (Claude 3 Haiku) & **Amazon SageMaker Runtime** |
 | **Observability** | **Amazon CloudWatch** (Custom Metrics) & **CloudWatch Logs** (Audit Streams) |
 | **Event Routing** | **Amazon EventBridge** (Domain Events) |
-| **Containerization** | Docker, **AWS App Runner** (`apprunner.yaml`) |
+| **Cloud Deployments** | Docker, **AWS App Runner** (`apprunner.yaml`), Render (`render.yaml`), Railway (`railway.json`), EAS Build (`eas.json`) |
 | **Local Persistence** | SQLite (`better-sqlite3`) with foreign key enforcement and indexed queries |
 | **Authentication** | Salted password hashes (`bcryptjs`), JWT Session Bearer tokens |
 
@@ -199,16 +202,16 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 
 ```
 1. Onboarding
-   User Register / Login ──> Verification Code ──> Create or Join Family Circle via 8-char code (e.g. KIN-2041)
+   User Register / Login ──> Verification Code ──> Create or Join Family Circle via Family ID (@handle) or QR Code
 
 2. Daily Ambient Presence
    Background Telemetry ──> POST /api/telemetry/device ──> Real-time WebSocket sync + Amazon DynamoDB TTL stream
 
 3. Physical & Digital Vault
-   Upload Asset ──> POST /api/vault/documents ──> Amazon S3 Encryption + SageMaker OCR Extraction ──> Saved to Family Vault
+   Upload Asset / Log Memory ──> POST /api/vault/documents ──> Amazon S3 Encryption + Metadata Tagging ──> Saved to Family Vault
 
 4. Unified Planning
-   Add Task / Event / Med ──> POST /api/planner/* ──> Synced to family timeline with assigned members & notification hooks
+   Add Task / Event / Med ──> Tactile Calendar & Time Dialer ──> POST /api/planner/* ──> Synced to family timeline
 
 5. Emergency Dispatch
    Hold SOS (2s) ──> POST /api/telemetry/sos ──> Amazon SNS SMS + Amazon DynamoDB Record + CloudWatch Alarms + WebSocket Fanout
@@ -226,7 +229,7 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 
 | 4. Unified Family Planner | 5. Elderly Accessibility Dashboard | 6. Household Invitation & QR |
 | :---: | :---: | :---: |
-| *Events, household tasks, and care reminders in one feed* | *High contrast, 48px+ touch targets, and voice support* | *8-character private code and instant camera QR linking* |
+| *Events, household tasks, and care reminders in one feed* | *High contrast, 48px+ touch targets, and voice support (auto age > 50)* | *Custom Family ID (@handle) and instant camera QR linking* |
 
 - 📦 **Repository**: [https://github.com/asry16/family-companion](https://github.com/asry16/family-companion)
 - 🌐 **Local Backend API**: `http://localhost:3001`
@@ -237,16 +240,16 @@ AWS services are not decorative add-ons in Kinly; they form the operational back
 ## 11. Getting Started
 
 ### Prerequisites
-- **Node.js**: v18.0.0 or higher (v20+ recommended)
+- **Node.js**: v18.0.0 or higher (v20+ LTS recommended)
 - **Package Manager**: `npm` v9+
-- **Mobile Testing**: [Expo Go](https://expo.dev/go) app on iOS / Android or a simulator
+- **Mobile Testing**: [Expo Go](https://expo.dev/go) app on iOS / Android or an emulator
 
 ### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/asry16/family-companion.git
 cd family-companion
 
-# Install mobile/frontend dependencies
+# Install mobile frontend dependencies
 npm install
 
 # Install backend dependencies
@@ -254,11 +257,23 @@ cd server && npm install && cd ..
 ```
 
 ### 2. Configure Environment Variables
-Copy the provided environment template into the server directory:
+
+#### App Configuration (`.env`)
+Copy the root environment template:
+```bash
+cp .env.example .env
+```
+Key configuration:
+```env
+# Point to local server (or live AWS backend e.g. http://100.54.121.185:3001)
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3001
+```
+
+#### Backend Server Configuration (`server/.env`)
+Copy the backend environment template:
 ```bash
 cp server/.env.example server/.env
 ```
-
 Key environment configuration variables in `server/.env`:
 ```env
 PORT=3001
@@ -289,22 +304,37 @@ cd ..
 ```
 
 ### 4. Run the Development Servers
-In two terminal windows:
 
-**Terminal 1 (Backend API & WebSocket Server):**
+In two separate terminal windows:
+
+**Terminal 1 — Backend API & WebSocket Server:**
 ```bash
 npm run server
-# Runs on http://localhost:3001
+# Starts API and WebSockets on http://localhost:3001
 ```
 
-**Terminal 2 (Expo Mobile & Web App):**
+**Terminal 2 — Expo Mobile & Web App:**
 ```bash
-npx expo start
+npm run dev
+# Or: npm start (expo start)
 ```
+> **Tip**: Use `npm run dev` (or `npm start`). Do not run `npx run dev`.
+
+From the Metro terminal:
 - Press **`w`** to open in Web browser (`http://localhost:8081`).
 - Press **`i`** to launch iOS Simulator.
 - Press **`a`** to launch Android Emulator.
 - Scan the displayed terminal QR code using **Expo Go** on a physical device.
+
+### 5. Building Standalone Mobile Binaries (EAS Build)
+Kinly includes configured EAS build profiles (`eas.json`) targeting standalone Android APKs and development builds:
+```bash
+# Build standalone preview Android APK
+npm run build:apk
+
+# Build standalone Android development client
+npm run build:dev
+```
 
 ---
 
@@ -312,7 +342,10 @@ npx expo start
 
 ```
 family-companion/
-├── app.json                       # Expo configuration & native permissions
+├── app.json                       # Expo config & native permissions (usesCleartextTraffic)
+├── eas.json                       # EAS Build profiles (preview APK & dev client)
+├── render.yaml                    # Render Cloud deployment blueprint
+├── railway.json                   # Railway container deployment configuration
 ├── assets/                        # Icons, splash screens, and image assets
 ├── server/                        # Cloud-Native Node.js Backend
 │   ├── Dockerfile                 # Multi-stage production container build
@@ -337,10 +370,16 @@ family-companion/
 │   ├── app/                       # Expo Router file-based screen routes
 │   │   ├── (auth)/                # Login, Register, Verification
 │   │   ├── (tabs)/                # Main bottom tabs (Dashboard, Circle, Plans, Vault, AI)
-│   │   └── modal/                 # Family settings, notifications, onboarding
+│   │   └── modal/                 # Family settings, notifications, new plan modal
 │   ├── components/                # Domain cards, radar map, and UI primitives
+│   │   ├── circle/                # Family Circle map, members, and invite sheets
+│   │   ├── home/                  # Command center, SOS trigger, telemetry cards
+│   │   ├── simple/                # Elderly accessibility dashboard & quick dials
+│   │   ├── ui/                    # CalendarDatePicker, TimeDialerPicker, FamilyQRCode
+│   │   └── vault/                 # Document lists, category filters, memory catalog
 │   ├── constants/                 # Theme tokens, spacing, and styling constants
 │   ├── context/                   # Auth, Family, Theme, and Voice contexts
+│   ├── services/                  # API client, WebSocket listener, Location services
 │   └── types/                     # Shared TypeScript domain models
 └── README.md
 ```
@@ -388,14 +427,24 @@ family-companion/
    - *Approach*: Implemented immediate in-memory WebSocket broadcasts to connected clients followed by non-blocking asynchronous dispatch to AWS SDK clients.
    - *Result*: Zero perceivable latency on user devices during emergency triggers.
 
-2. **Cross-Platform Audio & Accessibility for Multi-Generational Users**
-   - *Challenge*: Young family members prefer rapid navigation and rich glassmorphic visuals, whereas grandparents require large touch targets, simplified terminology, and voice confirmation.
-   - *Approach*: Built a dynamic `ElderlyDashboard` toggle with high contrast, 48px+ minimum touch targets, and `expo-speech` audio feedback.
-   - *Result*: A single application serving both demographics without fragmenting the codebase.
+2. **Cross-Platform Audio & Age-Aware Accessibility**
+   - *Challenge*: Younger household members favor rapid micro-interactions and sleek glassmorphism, whereas elderly parents or grandparents require high-contrast buttons, voice assistance, and zero visual clutter.
+   - *Approach*: Built an automated `ElderlyDashboard` system that detects user age (> 50) upon registration or profile updates to seamlessly transition into accessibility mode, accompanied by `expo-speech` voice announcements and 48px+ touch targets.
+   - *Result*: A single unified application serving all family generations without code fragmentation.
 
-3. **Hybrid Cloud Development Workflow**
+3. **Eliminating Native Date & Time Picker Flaws**
+   - *Challenge*: Default React Native date/time picker modules suffer from OS-dependent styling quirks, modal layering bugs on Android, and inconsistent dark-theme rendering.
+   - *Approach*: Engineered custom in-house gesture components—[`CalendarDatePicker`](./src/components/ui/CalendarDatePicker.tsx) featuring an intuitive month grid and [`TimeDialerPicker`](./src/components/ui/TimeDialerPicker.tsx) with a tactile smooth scroll dialer.
+   - *Result*: Seamless, reliable date and time input experience across iOS, Android, and Web.
+
+4. **Android Cleartext Traffic Handling for Cloud & LAN Backends**
+   - *Challenge*: Modern Android versions block cleartext HTTP network requests by default, preventing test devices and APK builds from connecting to development or self-hosted AWS App Runner IP addresses.
+   - *Approach*: Integrated `expo-build-properties` within `app.json` to enable `usesCleartextTraffic: true` for development and preview profiles.
+   - *Result*: Reliable, zero-hassle mobile device testing against remote AWS backend instances.
+
+5. **Hybrid Cloud Development Workflow**
    - *Challenge*: Enabling team members to develop and test features locally without requiring active AWS accounts or risking unexpected cloud charges during rapid frontend iteration.
-   - *Approach*: Developed an adaptive AWS configuration layer ([`awsConfig.ts`](file:///Users/asmitas_mac/Developer/Kinly/server/src/aws/awsConfig.ts)) that detects live AWS credentials and gracefully falls back to structured simulation logging when offline.
+   - *Approach*: Developed an adaptive AWS configuration layer ([`awsConfig.ts`](./server/src/aws/awsConfig.ts)) that detects live AWS credentials and gracefully falls back to structured simulation logging when offline.
    - *Result*: Seamless local development with zero configuration friction.
 
 ---
@@ -404,7 +453,7 @@ family-companion/
 
 - **AWS SDK v3 Modularity**: Transitioning from monolithic SDK imports to modular clients significantly streamlined our dependency footprint and reduced cold start times.
 - **Single-Table Design Nuances**: Structuring DynamoDB keys (`PK: FAMILY#<id>`, `SK: MEMBER#<id>#<timestamp>`) with automated TTL enabled scalable telemetry logging without manual cleanup cron jobs.
-- **Empathetic Engineering**: Building for families requires prioritizing calm, passive awareness over engagement-seeking notifications.
+- **Empathetic Engineering**: Building for families requires prioritizing calm, passive awareness over engagement-seeking notifications, coupled with smart age-aware adaptations that respect user capabilities.
 
 ---
 
