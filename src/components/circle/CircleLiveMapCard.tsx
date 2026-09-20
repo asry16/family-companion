@@ -61,46 +61,9 @@ export const CircleLiveMapCard: React.FC<CircleLiveMapCardProps> = ({
   const displayMembers = useMemo(() => {
     const list = propMembers && propMembers.length > 0 ? propMembers : ctxMembers;
     if (list && list.length > 0) return list;
-    // Mock 3 members fallback if empty
-    return [
-      {
-        id: 'member-1',
-        name: 'Sarah (Mom)',
-        relation: 'Self',
-        isSelf: true,
-        humanLocation: 'At Home',
-        lastUpdated: 'Just now',
-        batteryLevel: 88,
-        isCharging: false,
-        deviceModel: 'iPhone 15 Pro',
-        coords: { x: 50, y: 50, latitude: 37.7749, longitude: -122.4194 },
-      },
-      {
-        id: 'member-2',
-        name: 'Michael',
-        relation: 'Spouse',
-        isSelf: false,
-        humanLocation: 'Whole Foods Market',
-        lastUpdated: '2 min ago',
-        batteryLevel: 64,
-        isCharging: false,
-        deviceModel: 'Pixel 8',
-        coords: { x: 42, y: 38, latitude: 37.7849, longitude: -122.4094 },
-      },
-      {
-        id: 'member-3',
-        name: 'Emma',
-        relation: 'Daughter',
-        isSelf: false,
-        humanLocation: 'Lincoln High School',
-        lastUpdated: '12 min ago',
-        batteryLevel: 42,
-        isCharging: true,
-        deviceModel: 'iPhone 13',
-        coords: { x: 62, y: 64, latitude: 37.7649, longitude: -122.4294 },
-      },
-    ] as FamilyMember[];
-  }, [propMembers, ctxMembers]);
+    if (activeUser) return [activeUser];
+    return [];
+  }, [propMembers, ctxMembers, activeUser]);
 
   // Live Location from GPS
   const [liveLoc, setLiveLoc] = useState<LiveLocation | null>(null);

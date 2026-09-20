@@ -132,8 +132,15 @@ export const familiesRepo = {
   },
 
   findByInviteCode: (code: string): DbFamily | undefined => {
-    const stmt = db.prepare('SELECT * FROM families WHERE UPPER(invite_code) = UPPER(?)');
-    return stmt.get(code) as DbFamily | undefined;
+    const clean = code.trim();
+    const normalized = clean.replace(/[\s-]/g, '').toUpperCase();
+    const stmt = db.prepare(`
+      SELECT * FROM families 
+      WHERE REPLACE(UPPER(invite_code), '-', '') = ?
+         OR UPPER(invite_code) = UPPER(?)
+      LIMIT 1
+    `);
+    return stmt.get(normalized, clean) as DbFamily | undefined;
   },
 
   updateProfile: (id: string, profile: { name?: string; address?: string; homeCity?: string }) => {

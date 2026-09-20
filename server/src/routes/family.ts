@@ -201,7 +201,15 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
     // Check if user is already a member
     const existingMember = membersRepo.findByUserId(userId);
     if (existingMember && existingMember.family_id === targetFamily.id) {
-      return res.json({ success: true, message: 'You are already in this family circle.', familyId: targetFamily.id });
+      if (relation && relation !== existingMember.relation) {
+        membersRepo.update(existingMember.id, { relation });
+      }
+      return res.json({
+        success: true,
+        message: 'You are already connected to this family circle.',
+        familyId: targetFamily.id,
+        familyName: targetFamily.name,
+      });
     }
 
     // Create new member in target family
@@ -239,6 +247,7 @@ router.post('/join', async (req: AuthenticatedRequest, res: Response) => {
       success: true,
       message: `Successfully joined ${targetFamily.name}!`,
       familyId: targetFamily.id,
+      familyName: targetFamily.name,
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to join family.' });

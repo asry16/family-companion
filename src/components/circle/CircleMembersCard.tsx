@@ -188,37 +188,46 @@ export const CircleMembersCard: React.FC<CircleMembersCardProps> = ({
               style={({ pressed }) => [
                 styles.singleMemberPrompt,
                 {
-                  backgroundColor: isDark ? 'rgba(139, 124, 246, 0.08)' : 'rgba(124, 92, 224, 0.06)',
-                  borderColor: isDark ? 'rgba(139, 124, 246, 0.35)' : 'rgba(124, 92, 224, 0.25)',
-                  opacity: pressed ? 0.8 : 1,
+                  backgroundColor: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
+                  borderColor: isDark ? 'rgba(129, 140, 248, 0.35)' : 'rgba(99, 102, 241, 0.30)',
+                  opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Ionicons
-                name="person-add-outline"
-                size={22}
-                color={isDark ? '#8B7CF6' : '#7C5CE0'}
-              />
+              <View
+                style={[
+                  styles.promptIconWrap,
+                  { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.20)' : 'rgba(99, 102, 241, 0.12)' },
+                ]}>
+                <Ionicons
+                  name="share-social-outline"
+                  size={19}
+                  color={isDark ? '#818CF8' : '#4F46E5'}
+                />
+              </View>
               <View style={styles.singlePromptCol}>
                 <Text
                   style={[
                     styles.singlePromptTitle,
                     { color: colors.text },
                   ]}>
-                  Connect Your Household
+                  Invite Household Members
                 </Text>
                 <Text
                   style={[
                     styles.singlePromptSub,
-                    { color: isDark ? colors.textMuted : colors.textSecondary },
+                    { color: isDark ? '#94A3B8' : '#64748B' },
                   ]}>
-                  Invite kids, spouse, or grandparents to view safety statuses together.
+                  Share your family code so partners, kids, or grandparents can join.
                 </Text>
               </View>
-              <Ionicons
-                name="arrow-forward"
-                size={16}
-                color={isDark ? '#8B7CF6' : '#7C5CE0'}
-              />
+              <View style={styles.promptActionBadge}>
+                <Text style={styles.promptActionText}>Share</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={13}
+                  color="#818CF8"
+                />
+              </View>
             </Pressable>
           )}
         </View>
@@ -329,5 +338,26 @@ const styles = StyleSheet.create({
   singlePromptSub: {
     fontSize: 11.5,
     fontWeight: '500',
+  },
+  promptIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promptActionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  promptActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#818CF8',
   },
 });

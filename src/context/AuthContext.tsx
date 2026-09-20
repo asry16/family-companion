@@ -19,6 +19,7 @@ export interface AuthUser {
   provider: 'google' | 'apple' | 'email' | 'demo';
   familyMemberId: string;
   familyName?: string;
+  familyInviteCode?: string;
   relation?: MemberRelation;
   isEmailVerified?: boolean;
   rememberMe?: boolean;
@@ -199,6 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               provider: 'email',
               familyMemberId: sUser.familyMemberId || `member_${sUser.id}`,
               familyName: sUser.familyName || `${sUser.name}'s Family`,
+              familyInviteCode: sUser.familyInviteCode || apiRes.data?.family?.invite_code,
               relation: sUser.relation || 'Self',
               isEmailVerified: !!sUser.isVerified,
               rememberMe,

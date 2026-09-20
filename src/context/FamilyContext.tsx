@@ -214,7 +214,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const userProfile: FamilyProfile = {
               id: `fam_${user.id}`,
               name: user.familyName || `${user.name.split(' ')[0]}'s Family`,
-              code: `KIN-${Math.floor(1000 + Math.random() * 9000)}`,
+              code: user.familyInviteCode || 'KIN-4402',
               membersCount: 1,
               address: 'Home',
               homeCity: 'Local',
@@ -302,7 +302,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     apiClient.family.getFamily().then((res) => {
       if (!isSubscribed || !res.success || !res.data) return;
       const d = res.data;
-      if (d.profile) setProfile(d.profile);
+      if (d.profile) {
+        setProfile(d.profile);
+        AsyncStorage.getItem(currentStorageKey).then((raw) => {
+          if (!isSubscribed) return;
+          const current = raw ? JSON.parse(raw) : {};
+          AsyncStorage.setItem(currentStorageKey, JSON.stringify({ ...current, profile: d.profile })).catch(() => {});
+        }).catch(() => {});
+      }
       if (d.members && d.members.length > 0) setMembers(d.members);
       if (d.places && d.places.length > 0) setPlaces(d.places);
       if (d.tasks) setTasks(d.tasks);
@@ -1074,6 +1081,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     async (inviteCode: string, relation?: MemberRelation) => {
       try {
         const cleanCode = inviteCode.trim().toUpperCase();
+        const currentCode = (profile?.code || '').trim().toUpperCase();
+
+        // If user enters their own household invite code, confirm connection
+        if (
+          currentCode &&
+          cleanCode.replace(/[\s-]/g, '') === currentCode.replace(/[\s-]/g, '')
+        ) {
+          return {
+            success: true,
+            familyName: profile?.name || 'Family Circle',
+          };
+        }
+
         const res = await apiClient.family.joinFamily(cleanCode, relation);
         if (res.success) {
           const famRes = await apiClient.family.getFamily();
@@ -1088,14 +1108,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (famRes.data.memories) setMemories(famRes.data.memories);
             if (famRes.data.notifications) setNotifications(famRes.data.notifications);
           }
-          return { success: true, familyName: famRes.data?.profile?.name || 'Family Circle' };
+          return {
+            success: true,
+            familyName: famRes.data?.profile?.name || (res as any).familyName || 'Family Circle',
+          };
         }
         return { success: false, error: res.error || 'Invalid or expired invite code' };
       } catch (err: any) {
         return { success: false, error: err.message || 'Failed to join family circle' };
       }
     },
-    []
+    [profile]
   );
 
   const resetToDefaults = useCallback(() => {

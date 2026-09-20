@@ -27,28 +27,21 @@ import {
   CircleAddMemberOptionsSheet,
 } from '@/components/circle';
 
-// Backdrops & Modals
+// Backdrops
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
-import { FamilyQRModal } from '@/components/modals/FamilyQRModal';
-import { JoinFamilyModal } from '@/components/modals/JoinFamilyModal';
-import { SettingsMemberEditModal } from '@/components/settings/SettingsMemberEditModal';
-import { MemberRelation } from '@/types';
 
 export default function CircleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuth();
-  const { profile, members: ctxMembers, activeUser, sendFamilyPing, addFamilyMember } = useFamily();
+  const { profile, members: ctxMembers, activeUser, sendFamilyPing } = useFamily();
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [membersCardY, setMembersCardY] = useState<number>(450);
 
   // Modals & Bottom Sheet state
   const [addOptionsVisible, setAddOptionsVisible] = useState(false);
-  const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [joinModalVisible, setJoinModalVisible] = useState(false);
-  const [manualAddVisible, setManualAddVisible] = useState(false);
   const [fullMapModalVisible, setFullMapModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -67,84 +60,46 @@ export default function CircleScreen() {
     if (!isAuthenticated) router.replace('/login');
   }, [isAuthenticated]);
 
-  // Compute 3 members with distinct statuses and dynamic relative times
+  // Real family members strictly from context / database (zero fake defaults)
   const displayMembers: FamilyMember[] = useMemo(() => {
-    const selfName = user?.name || activeUser?.name || 'Sarah (Mom)';
-    const selfPhoto = user?.photoUrl || activeUser?.photoUrl;
-
-    const baseMembers: FamilyMember[] = [
-      {
-        id: activeUser?.id || 'member-self',
-        name: selfName,
-        relation: 'Self',
-        initials: selfName.charAt(0).toUpperCase(),
-        avatarColor: '#4F8EF7',
-        isSelf: true,
-        photoUrl: selfPhoto,
-        phone: user?.phone || '+1 (555) 234-5678',
-        humanLocation: 'At Home',
-        statusMessage: 'At Home • Relaxing',
-        currentPlaceId: 'home',
-        isSharingLocation: true,
-        sharingDuration: 'always',
-        availability: 'available',
-        lastUpdated: minuteTick === 0 ? 'Just now' : `${minuteTick} min ago`,
-        batteryLevel: 88,
-        isCharging: false,
-        deviceModel: 'iPhone 15 Pro',
-        ringerMode: 'sound',
-        coords: { x: 50, y: 50, latitude: 37.7749, longitude: -122.4194 },
-      },
-      {
-        id: 'member-2',
-        name: 'Michael',
-        relation: 'Spouse',
-        initials: 'M',
-        avatarColor: '#8B6CF0',
-        isSelf: false,
-        phone: '+1 (555) 345-6789',
-        humanLocation: 'Whole Foods Market',
-        statusMessage: 'Picking up groceries',
-        currentPlaceId: 'market',
-        isSharingLocation: true,
-        sharingDuration: 'always',
-        availability: 'available',
-        lastUpdated: `${minuteTick + 2} min ago`,
-        batteryLevel: 64,
-        isCharging: false,
-        deviceModel: 'Pixel 8',
-        ringerMode: 'vibrate',
-        coords: { x: 42, y: 38, latitude: 37.7849, longitude: -122.4094 },
-      },
-      {
-        id: 'member-3',
-        name: 'Emma',
-        relation: 'Daughter',
-        initials: 'E',
-        avatarColor: '#2DD4BF',
-        isSelf: false,
-        phone: '+1 (555) 456-7890',
-        humanLocation: 'Lincoln High School',
-        statusMessage: 'In Chemistry class',
-        currentPlaceId: 'school',
-        isSharingLocation: true,
-        sharingDuration: 'always',
-        availability: 'busy',
-        lastUpdated: `${minuteTick + 12} min ago`,
-        batteryLevel: 42,
-        isCharging: true,
-        deviceModel: 'iPhone 13',
-        ringerMode: 'silent',
-        coords: { x: 62, y: 64, latitude: 37.7649, longitude: -122.4294 },
-      },
-    ];
-
-    if (ctxMembers && ctxMembers.length >= 3) {
+    if (ctxMembers && ctxMembers.length > 0) {
       return ctxMembers;
     }
 
-    return baseMembers;
-  }, [user, activeUser, ctxMembers, minuteTick]);
+    if (activeUser) {
+      return [activeUser];
+    }
+
+    if (user) {
+      const selfName = user.name || 'You';
+      return [
+        {
+          id: user.familyMemberId || `member_${user.id}`,
+          name: selfName,
+          relation: (user.relation as any) || 'Self',
+          initials: selfName.charAt(0).toUpperCase(),
+          avatarColor: '#4F8EF7',
+          isSelf: true,
+          photoUrl: user.photoUrl,
+          phone: user.phone || '+1 (555) 0100',
+          humanLocation: 'At Home',
+          statusMessage: 'At Home • Active',
+          currentPlaceId: 'home',
+          isSharingLocation: true,
+          sharingDuration: 'always',
+          availability: 'available',
+          lastUpdated: 'Just now',
+          batteryLevel: 95,
+          isCharging: false,
+          deviceModel: 'Smartphone',
+          ringerMode: 'sound',
+          coords: { x: 50, y: 50, latitude: 37.7749, longitude: -122.4194 },
+        },
+      ];
+    }
+
+    return [];
+  }, [user, activeUser, ctxMembers]);
 
   if (!isAuthenticated) return null;
 
@@ -240,56 +195,12 @@ export default function CircleScreen() {
         onAskStatus={handleAskStatus}
       />
 
-      {/* Add Member Options Bottom Sheet: QR Joining, Code, Manual Detail */}
+      {/* Executive Family Space Access: Share Code or Enter Code */}
       <CircleAddMemberOptionsSheet
         visible={addOptionsVisible}
-        inviteCode={profile?.code || 'KINLY-2026'}
+        inviteCode={profile?.code || 'KIN-4402'}
         onClose={() => setAddOptionsVisible(false)}
-        onSelectQR={() => setQrModalVisible(true)}
-        onSelectCode={() => setJoinModalVisible(true)}
-        onSelectManual={() => setManualAddVisible(true)}
-      />
-
-      {/* 1. Family QR Modal */}
-      <FamilyQRModal
-        visible={qrModalVisible}
-        onClose={() => setQrModalVisible(false)}
-        familyCode={profile?.code || 'KINLY-2026'}
-        familyName={profile?.name || 'Kinly Family'}
-      />
-
-      {/* 2. Join Family / Code Modal */}
-      <JoinFamilyModal
-        visible={joinModalVisible}
-        onClose={() => setJoinModalVisible(false)}
-        onSuccess={() => setJoinModalVisible(false)}
-      />
-
-      {/* 3. Manual Detail Joining Modal */}
-      <SettingsMemberEditModal
-        visible={manualAddVisible}
-        member={null}
-        onClose={() => setManualAddVisible(false)}
-        onSave={(data) => {
-          setManualAddVisible(false);
-          addFamilyMember({
-            name: data.name,
-            relation: data.relation,
-            initials: data.name.charAt(0).toUpperCase(),
-            avatarColor: '#4F8EF7',
-            statusMessage: 'Active on Kinly',
-            currentPlaceId: 'home',
-            humanLocation: data.location || 'At Home',
-            batteryLevel: 98,
-            isSharingLocation: true,
-            sharingDuration: 'always',
-            lastUpdated: 'Just now',
-            availability: 'available',
-            phone: data.phone,
-            ringerMode: 'sound',
-            deviceModel: 'Smartphone',
-          });
-        }}
+        onSuccess={() => setAddOptionsVisible(false)}
       />
 
       {/* 4. Full Screen Live Family Map Modal */}

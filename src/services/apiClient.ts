@@ -98,7 +98,7 @@ export const apiClient = {
   // -----------------------------------------------------------
   auth: {
     login: async (email: string, pass: string) => {
-      const res = await request<{ token: string; user: any }>('/api/auth/login', {
+      const res = await request<{ token: string; user: any; family?: any; member?: any }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password: pass }),
       });
@@ -136,7 +136,7 @@ export const apiClient = {
       familyName?: string;
       relation?: string;
     }) => {
-      const res = await request<{ token: string; user: any; verificationCode?: string; delivered?: boolean }>('/api/auth/register', {
+      const res = await request<{ token: string; user: any; family?: any; member?: any; verificationCode?: string; delivered?: boolean }>('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
