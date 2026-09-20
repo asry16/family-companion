@@ -16,9 +16,10 @@ import { StatusChip, StatusChipVariant } from '@/components/ui/StatusChip';
 interface VaultItemCardProps {
   item: MemoryItem;
   onPress?: () => void;
+  onDelete?: () => void;
 }
 
-export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) => {
+export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress, onDelete }) => {
   const { colors, isDark, isElderly } = useAppTheme();
 
   const triggerHaptic = () => {
@@ -131,7 +132,7 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
           </View>
         </View>
 
-        {/* Right: Category StatusChip, "Saved By" Avatar, Chevron */}
+        {/* Right: Category StatusChip, Delete button, Saved By Avatar, Chevron */}
         <View style={styles.rightActionsGroup}>
           <StatusChip
             label={categoryConfig.chipLabel}
@@ -140,6 +141,27 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
             size="sm"
             showDot={false}
           />
+
+          {onDelete && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                triggerHaptic();
+                onDelete();
+              }}
+              hitSlop={8}
+              accessibilityLabel={`Delete ${item.title}`}
+              style={({ pressed }) => [
+                styles.deleteBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.30)' : 'rgba(239, 68, 68, 0.20)',
+                  opacity: pressed ? 0.65 : 1,
+                },
+              ]}>
+              <Ionicons name="trash-outline" size={13} color="#EF4444" />
+            </Pressable>
+          )}
 
           {/* Saved By Initial Avatar */}
           <View
@@ -155,7 +177,7 @@ export const VaultItemCard: React.FC<VaultItemCardProps> = ({ item, onPress }) =
                 styles.savedByText,
                 { color: isDark ? '#8B7CF6' : '#7C5CE0' },
               ]}>
-              A
+              {item.title ? item.title.charAt(0).toUpperCase() : 'A'}
             </Text>
           </View>
 
@@ -216,6 +238,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  deleteBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   savedByAvatar: {
     width: 22,

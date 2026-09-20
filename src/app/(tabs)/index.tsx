@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { PersonalizedHeader } from '@/components/home/PersonalizedHeader';
 import { FamilyCard } from '@/components/home/FamilyCard';
 import { EmergencySosCard } from '@/components/home/EmergencySosCard';
+import { VaultUpdatesCard } from '@/components/home/VaultUpdatesCard';
 import { QuickActionsGrid } from '@/components/home/QuickActionsGrid';
 import { CircleTimelineCard } from '@/components/home/CircleTimelineCard';
 import { FamilyCommandCenter } from '@/components/home/FamilyCommandCenter';
@@ -106,12 +107,13 @@ export default function HomeScreen() {
           onOpenSosModal={() => setSosModalVisible(true)}
         />
 
-        {/* 4. Quick Actions (2×2 grid: Add Plan, Scan Document, Check In, AI Brief) */}
-        <QuickActionsGrid
-          onSeeAll={() => router.push('/(tabs)/plans')}
-        />
+        {/* 4. Quick Actions Grid (Plan, Scan, Check In, AI Brief) */}
+        <QuickActionsGrid />
 
-        {/* 5. Activity / Timeline Card ("Today in your Circle" vertical timeline with glowing nodes, timestamps, status pills) */}
+        {/* 5. Day-to-Day Vault Updates (Recent item & storage logs from the vault) */}
+        <VaultUpdatesCard />
+
+        {/* 6. Activity / Timeline Card ("Today in your Circle" vertical timeline with glowing nodes, timestamps, status pills) */}
         <CircleTimelineCard />
       </ScrollView>
 

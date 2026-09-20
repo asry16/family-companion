@@ -21,6 +21,7 @@ import { useVoice } from '@/context/VoiceContext';
 import { useAuth } from '@/context/AuthContext';
 import { MemoryItem } from '@/types';
 import { LightBackdrop, DarkBackdrop } from '@/components/ui';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 
 // Vault Components
 import { VaultHeader } from '@/components/vault/VaultHeader';
@@ -36,7 +37,7 @@ export default function MemoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isAuthenticated, user } = useAuth();
-  const { memories, searchMemories, addMemory, activeUser } = useFamily();
+  const { memories, searchMemories, addMemory, deleteMemory, activeUser } = useFamily();
   const { startListening, speak } = useVoice();
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function MemoryScreen() {
   const [newLocation, setNewLocation] = useState('');
   const [newCategory, setNewCategory] = useState<'documents' | 'household' | 'health'>('household');
   const [selectedDetailItem, setSelectedDetailItem] = useState<MemoryItem | null>(null);
+  const [deleteTargetItem, setDeleteTargetItem] = useState<MemoryItem | null>(null);
 
   // Use live memories if available
   const baseMemories = memories || [];
@@ -147,7 +149,14 @@ export default function MemoryScreen() {
           onSaveLocationPress={() => setAddModalVisible(true)}
         />
 
-        {/* 5 & 6. Empty State Card / Populated State Items List */}
+        {/* 5. Section Header for Saved Details */}
+        <SectionHeader
+          title="Saved Family Details"
+          categoryTag="VAULT"
+          actionText={filteredMemories.length > 0 ? `${filteredMemories.length} item${filteredMemories.length === 1 ? '' : 's'}` : undefined}
+        />
+
+        {/* 7. Empty State Card / Populated State Items List */}
         {filteredMemories.length === 0 ? (
           /* Search yielded no matches or empty vault */
           <VaultEmptyStateCard
@@ -176,6 +185,7 @@ export default function MemoryScreen() {
                 key={item.id}
                 item={item}
                 onPress={() => setSelectedDetailItem(item)}
+                onDelete={() => setDeleteTargetItem(item)}
               />
             ))}
           </View>
@@ -317,17 +327,109 @@ export default function MemoryScreen() {
         </Pressable>
       </Modal>
 
-      {/* Item Details Modal */}
+      {/* Item Details Custom Modal with Delete Action */}
       {selectedDetailItem && (
-        <ConfirmationModal
+        <Modal
           visible={Boolean(selectedDetailItem)}
-          title={selectedDetailItem.title}
-          description={`📍 Location: ${selectedDetailItem.savedLocation}\n\n📝 Notes: ${selectedDetailItem.notes}\n\nLast verified: ${selectedDetailItem.lastVerified}`}
-          confirmLabel="Done"
-          onConfirm={() => setSelectedDetailItem(null)}
-          onCancel={() => setSelectedDetailItem(null)}
-        />
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedDetailItem(null)}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setSelectedDetailItem(null)}>
+            <Pressable
+              style={[
+                styles.modalCard,
+                {
+                  backgroundColor: isDark ? 'rgba(20, 27, 74, 0.96)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(130, 140, 255, 0.25)' : 'rgba(124, 92, 224, 0.18)',
+                },
+              ]}
+              onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalHeaderRow}>
+                <View style={styles.modalTitleGroup}>
+                  <Text style={{ fontSize: 20 }}>{selectedDetailItem.emoji || '📌'}</Text>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                    {selectedDetailItem.title}
+                  </Text>
+                </View>
+                <Pressable onPress={() => setSelectedDetailItem(null)} hitSlop={8}>
+                  <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+                </Pressable>
+              </View>
+
+              <View style={styles.detailInfoBox}>
+                <View style={styles.detailRow}>
+                  <Ionicons name="location" size={16} color={isDark ? '#8B7CF6' : '#7C5CE0'} />
+                  <Text style={[styles.detailRowText, { color: colors.text }]}>
+                    {selectedDetailItem.savedLocation}
+                  </Text>
+                </View>
+
+                {selectedDetailItem.notes ? (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="document-text-outline" size={16} color={colors.textMuted} />
+                    <Text style={[styles.detailRowText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                      {selectedDetailItem.notes}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.detailRow}>
+                  <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                  <Text style={[styles.detailRowText, { color: isDark ? colors.textMuted : colors.textSecondary }]}>
+                    Last verified: {selectedDetailItem.lastVerified}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Action Buttons: Delete and Done */}
+              <View style={styles.detailActionsRow}>
+                <Pressable
+                  onPress={() => {
+                    const toDelete = selectedDetailItem;
+                    setSelectedDetailItem(null);
+                    setDeleteTargetItem(toDelete);
+                  }}
+                  style={[
+                    styles.detailDeleteBtn,
+                    {
+                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+                      borderColor: isDark ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.20)',
+                    },
+                  ]}>
+                  <Ionicons name="trash-outline" size={15} color="#EF4444" />
+                  <Text style={styles.detailDeleteBtnText}>Delete</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setSelectedDetailItem(null)}
+                  style={[styles.detailDoneBtn, { backgroundColor: colors.brandAccent }]}>
+                  <Text style={styles.detailDoneBtnText}>Done</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       )}
+
+      {/* Delete Item Confirmation Modal */}
+      <ConfirmationModal
+        visible={Boolean(deleteTargetItem)}
+        title="Delete Saved Detail?"
+        description={`Are you sure you want to delete "${deleteTargetItem?.title}" from your family vault? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        iconName="trash-outline"
+        variant="red"
+        onConfirm={() => {
+          if (deleteTargetItem) {
+            deleteMemory(deleteTargetItem.id);
+            setDeleteTargetItem(null);
+          }
+        }}
+        onCancel={() => setDeleteTargetItem(null)}
+      />
     </View>
   );
 }
@@ -434,5 +536,51 @@ const styles = StyleSheet.create({
   saveSubmitBtnText: {
     fontSize: 14,
     fontWeight: '800',
+  },
+  detailInfoBox: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailRowText: {
+    fontSize: 13.5,
+    fontWeight: '500',
+    flex: 1,
+  },
+  detailActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  detailDeleteBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  detailDeleteBtnText: {
+    color: '#EF4444',
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
+  detailDoneBtn: {
+    flex: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  detailDoneBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

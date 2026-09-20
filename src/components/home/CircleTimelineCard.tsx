@@ -45,7 +45,7 @@ export const CircleTimelineCard: React.FC = () => {
         nodeColor: isUrgent ? colors.red : isImportant ? colors.yellow : colors.green,
         variant: (isUrgent ? 'Safe' : 'All good') as StatusChipVariant,
         colorScheme: isUrgent ? 'yellow' : 'green',
-        route: '/(tabs)/plans',
+        route: '/(tabs)/family',
       });
     });
 
@@ -90,7 +90,7 @@ export const CircleTimelineCard: React.FC = () => {
         <Pressable
           onPress={() => {
             triggerHaptic();
-            router.push('/(tabs)/plans');
+            router.push('/(tabs)/family');
           }}
           hitSlop={10}
           style={({ pressed }) => [

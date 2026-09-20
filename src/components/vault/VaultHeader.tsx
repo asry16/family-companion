@@ -22,8 +22,8 @@ interface VaultHeaderProps {
 export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, toggleTheme, isElderly } = useAppTheme();
-  const { profile, unreadCount, simpleMode, setSimpleMode } = useFamily();
+  const { colors, isDark, toggleTheme } = useAppTheme();
+  const { profile, unreadCount } = useFamily();
   const { user } = useAuth();
 
   const initial = (user?.name?.trim().charAt(0) || profile?.name?.trim().charAt(0) || 'K').toUpperCase();
@@ -34,11 +34,6 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
         Haptics.impactAsync(style);
       } catch (e) {}
     }
-  };
-
-  const handleToggleElderly = () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    setSimpleMode(!simpleMode);
   };
 
   return (
@@ -75,7 +70,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
             <Text
               style={[
                 styles.screenTitle,
-                { color: colors.text, fontSize: isElderly ? 22 : 19.5 },
+                { color: colors.text, fontSize: 19.5 },
               ]}>
               Family Hub
             </Text>
@@ -89,39 +84,8 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ onOpenSettings }) => {
           </View>
         </View>
 
-        {/* Right: Actions (Elderly Outlined Pill, Theme Toggle, Bell, Settings) */}
+        {/* Right: Actions (Theme Toggle, Bell, Settings) */}
         <View style={styles.rightActionCluster}>
-          {/* "Elderly" Outlined Pill (people icon; toggles elderly mode) */}
-          <Pressable
-            onPress={handleToggleElderly}
-            style={({ pressed }) => [
-              styles.elderlyPill,
-              {
-                borderColor: isDark
-                  ? 'rgba(139, 124, 246, 0.50)'
-                  : simpleMode
-                  ? '#7C5CE0'
-                  : 'rgba(124, 92, 224, 0.25)',
-                backgroundColor: simpleMode
-                  ? isDark
-                    ? 'rgba(139, 124, 246, 0.18)'
-                    : 'rgba(124, 92, 224, 0.12)'
-                  : isDark
-                  ? 'rgba(255, 255, 255, 0.03)'
-                  : 'rgba(124, 92, 224, 0.06)',
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}>
-            <Ionicons
-              name={simpleMode ? 'people' : 'people-outline'}
-              size={13}
-              color={isDark ? '#8B7CF6' : '#7C5CE0'}
-            />
-            <Text style={[styles.elderlyPillText, { color: isDark ? '#8B7CF6' : '#7C5CE0' }]}>
-              Elderly
-            </Text>
-          </Pressable>
-
           {/* Theme Toggle Button (sun in light mode, moon in dark mode) */}
           <IconCircleButton
             name={isDark ? 'sunny' : 'moon'}
@@ -226,18 +190,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  elderlyPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1.2,
-  },
-  elderlyPillText: {
-    fontSize: 11.5,
-    fontWeight: '700',
   },
 });
