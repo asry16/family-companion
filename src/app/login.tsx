@@ -77,6 +77,10 @@ export default function LoginScreen() {
   const keyboardScale = useRef(new Animated.Value(1)).current;
   const keyboardTranslateY = useRef(new Animated.Value(0)).current;
   const keyboardOpacity = useRef(new Animated.Value(1)).current;
+  const cardKeyboardTranslateY = useRef(new Animated.Value(0)).current;
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Phase 1 Intro Elements
   const logoOpacity = useRef(new Animated.Value(hasPlayedIntroGlobal ? 1 : 0)).current;
@@ -308,54 +312,90 @@ export default function LoginScreen() {
     return () => sub.remove();
   }, [phase, startHaloPulse, stopHaloPulse]);
 
-  // Keyboard listeners: scale brand group down to 0.7 so card has room
+  // Keyboard listeners: scale brand group down and translate credentials card upwards
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = (e: any) => {
+      const kh = e?.endCoordinates?.height || 300;
+      setKeyboardHeight(kh);
+      setIsKeyboardVisible(true);
+
+      const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
+
+      // Dynamic card lift depending on auth form state and keyboard height
+      let targetCardLift = -155;
+      if (authState === 'signUp') {
+        targetCardLift = -Math.round(Math.min(200, Math.max(165, kh * 0.55)));
+      } else if (authState === 'verifySignUpOtp') {
+        targetCardLift = -Math.round(Math.min(150, Math.max(120, kh * 0.42)));
+      } else {
+        // signIn / default
+        targetCardLift = -Math.round(Math.min(185, Math.max(145, kh * 0.48)));
+      }
+
+      const targetBrandLift = -Math.round(Math.min(95, Math.max(75, kh * 0.26)));
+
       Animated.parallel([
         Animated.timing(keyboardScale, {
-          toValue: 0.45,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          toValue: 0.38,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardTranslateY, {
-          toValue: -60,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          toValue: targetBrandLift,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardOpacity, {
-          toValue: 0.35,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          toValue: 0.28,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
-        })
+        }),
+        Animated.timing(cardKeyboardTranslateY, {
+          toValue: targetCardLift,
+          duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
       ]).start();
     };
 
     const onHide = (e: any) => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+
+      const duration = Platform.OS === 'ios' ? (e?.duration || 250) : 250;
+
       Animated.parallel([
         Animated.timing(keyboardScale, {
           toValue: 1,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardTranslateY, {
           toValue: 0,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(keyboardOpacity, {
           toValue: 1,
-          duration: Platform.OS === 'ios' ? (e?.duration || 250) : 250,
+          duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: Platform.OS !== 'web',
-        })
+        }),
+        Animated.timing(cardKeyboardTranslateY, {
+          toValue: 0,
+          duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
       ]).start();
     };
 
@@ -366,7 +406,7 @@ export default function LoginScreen() {
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardScale]);
+  }, [keyboardScale, keyboardTranslateY, keyboardOpacity, cardKeyboardTranslateY, authState]);
 
   // Handle tap anywhere during Phase 1 to skip straight to Phase 2
   const handlePhase1Tap = () => {
@@ -527,12 +567,13 @@ export default function LoginScreen() {
 
       {/* Screen container: safe-area aware, centered column max width 440 */}
       <ScrollView
+        ref={scrollViewRef}
         style={styles.rootContainer}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingTop: insets.top + finalTopY,
-            paddingBottom: insets.bottom + 120,
+            paddingBottom: isKeyboardVisible ? keyboardHeight + 80 : insets.bottom + 120,
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -643,7 +684,10 @@ export default function LoginScreen() {
             {
               marginTop: FrontPageTokens.brandCardGap,
               opacity: cardOpacity,
-              transform: [{ translateY: cardTranslateY }],
+              transform: [
+                { translateY: cardTranslateY },
+                { translateY: cardKeyboardTranslateY },
+              ],
             },
           ]}>
           <AuthCard

@@ -12,6 +12,7 @@ import {
   ViewStyle,
   LayoutAnimation,
   UIManager,
+  Keyboard,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -116,6 +117,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   // Sliding transition between card states
   const switchState = (nextState: AuthCardState) => {
+    Keyboard.dismiss();
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
